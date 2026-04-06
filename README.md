@@ -2,6 +2,122 @@
 
 A step-by-step character creation wizard for the **Delta Green** RPG system in Foundry VTT. A port of the [DELTA-GREEN-STATS](https://github.com/PigeonFX/DELTA-GREEN-STATS) web app — same profession data, same skill rules, same optional pick logic — packaged as a Foundry module.
 
+## Wizard Flow
+
+```mermaid
+flowchart LR
+    A([🟢 Open Wizard]) --> B[1 · Statistics]
+    B --> C[2 · Profession]
+    C --> D[3 · Skills]
+    D --> E[4 · Bonus Skills]
+    E --> F[5 · Bonds]
+    F --> G[6 · Biography]
+    G --> H[7 · Equipment]
+    H --> I[8 · Review]
+    I -->|✔ Apply to Sheet| J[(Foundry Actor)]
+    I -->|📄 Export PDF| K[DD Form 315]
+    B -->|📄 Export PDF| K
+    C -->|📄 Export PDF| K
+    D -->|📄 Export PDF| K
+```
+
+> Export PDF is available on **every step** — not just Review.
+
+---
+
+## Step Previews
+
+<details>
+<summary>Step 1 — Statistics</summary>
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  STATISTICS                                                  │
+│  ● ○ ○ ○ ○ ○ ○ ○ ○   Step 1 of 9                           │
+│─────────────────────────────────────────────────────────────│
+│  Points remaining: 12 / 72                                  │
+│                                                             │
+│  ┌───────┐ ┌───────┐ ┌───────┐                             │
+│  │  STR  │ │  CON  │ │  DEX  │                             │
+│  │  [−] 10 [+]     │ …                                     │
+│  └───────┘ └───────┘ └───────┘                             │
+│  ┌───────┐ ┌───────┐ ┌───────┐                             │
+│  │  INT  │ │  POW  │ │  CHA  │                             │
+│  │  [−] 10 [+]     │ …                                     │
+│  └───────┘ └───────┘ └───────┘                             │
+│                                                             │
+│  [🎲 Roll All]  [🔀 Randomize]  [↺ Reset]                  │
+│─────────────────────────────────────────────────────────────│
+│  [📄 Export PDF]                         [Next →]          │
+└─────────────────────────────────────────────────────────────┘
+```
+</details>
+
+<details>
+<summary>Step 3 — Skills (optional picks at top, required table below)</summary>
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  SKILLS                           ○ ○ ● ○ ○ ○ ○ ○ ○        │
+│─────────────────────────────────────────────────────────────│
+│  ┌ Choose any 2 of these: ─────────────────────────────┐   │
+│  │  Optional picks: 1 / 2                               │   │
+│  │                                                       │   │
+│  │  ☑  Anthropology                              40%    │   │
+│  │  ☐  Archeology                                40%    │   │
+│  │  ☐  HUMINT                                    50%    │   │
+│  │  ☐  Navigate                                  50%    │   │
+│  │  ☐  Ride                                      50%    │   │
+│  │  ☐  Search                                    60%    │   │
+│  │  ☐  Survival                                  50%    │   │
+│  └───────────────────────────────────────────────────────┘  │
+│                                                             │
+│  ┌ Specialty Skills ────────────────────────────────────┐   │
+│  │  Foreign Language  [Spanish ▾]               50%    │   │
+│  │  Foreign Language  [Chinese ▾]               40%    │   │
+│  └───────────────────────────────────────────────────────┘  │
+│                                                             │
+│  Required skills (automatically assigned):                  │
+│  ┌──────────────────────────┬───────┐                       │
+│  │ Bureaucracy              │  40   │                       │
+│  │ History                  │  60   │                       │
+│  │ Occult                   │  40   │                       │
+│  │ Persuade                 │  40   │                       │
+│  └──────────────────────────┴───────┘                       │
+│─────────────────────────────────────────────────────────────│
+│  [← Back]    [📄 Export PDF]                  [Next →]     │
+└─────────────────────────────────────────────────────────────┘
+```
+</details>
+
+<details>
+<summary>Step 8 — Review → Apply to Sheet</summary>
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  REVIEW                           ○ ○ ○ ○ ○ ○ ○ ○ ●        │
+│─────────────────────────────────────────────────────────────│
+│  Agent:    Marcus Webb                                      │
+│  Profession: Federal Agent          Bonds: 3               │
+│                                                             │
+│  STR 12  CON 14  DEX 11  INT 13  POW 10  CHA 10           │
+│  HP 13   WP 10   SAN 50  BP 40                             │
+│                                                             │
+│  Skills (sample)                                           │
+│    Alertness 50  Firearms 50  HUMINT 60  Persuade 50       │
+│    Unarmed Combat 60  …                                    │
+│                                                             │
+│  Bonds                                                     │
+│    Sarah Webb (Spouse) · Score 10                          │
+│    …                                                       │
+│─────────────────────────────────────────────────────────────│
+│  [← Back]    [📄 Export PDF]          [✔ Apply to Sheet]  │
+└─────────────────────────────────────────────────────────────┘
+```
+</details>
+
+---
+
 ## Requirements
 
 - Foundry VTT v13+
