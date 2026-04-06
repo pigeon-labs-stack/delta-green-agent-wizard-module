@@ -200,7 +200,7 @@
                 <div class="dg-specialty-row{{#unless label}} dg-specialty-empty{{/unless}}">
                     <span class="dg-specialty-group">{{groupDisplay}}</span>
                     <input type="text" name="specialty.req.{{id}}" value="{{label}}"
-                        list="dg-sp-{{group}}" placeholder="Choose {{groupDisplay}} type…"
+                        list="dg-sp-{{group}}" placeholder="e.g. {{groupDisplay}} (Spanish) — choose from list or type your own"
                         class="dg-specialty-input" />
                     <span class="dg-specialty-value">{{proficiency}}%</span>
                 </div>
@@ -213,7 +213,7 @@
                 <div class="dg-specialty-opt-row">
                     <span class="dg-specialty-group">{{groupDisplay}}</span>
                     <input type="text" name="specialty.opt.{{optIndex}}" value="{{label}}"
-                        list="dg-sp-{{group}}" placeholder="Choose {{groupDisplay}} type…"
+                        list="dg-sp-{{group}}" placeholder="e.g. {{groupDisplay}} (Spanish) — choose from list or type your own"
                         class="dg-specialty-input" />
                     <span class="dg-specialty-value">{{proficiency}}%</span>
                 </div>
@@ -248,6 +248,20 @@
             </details>
 
             {{#if bonusSkills}}
+            <div class="dg-bonus-pack-row">
+                <label>Background package:
+                    <select id="dg-bonus-pack-select">
+                        <option value="">— choose a background —</option>
+                        {{#each bonusSkills.packages}}
+                        <option value="{{@index}}" {{#if (eq @index ../bonusSkills.packIdx)}}selected{{/if}}>{{label}}</option>
+                        {{/each}}
+                    </select>
+                </label>
+                <button type="button" data-action="fillPack" class="dg-btn-secondary">Fill Slots</button>
+                {{#if bonusSkills.packDesc}}
+                <p class="dg-bonus-pack-desc">{{bonusSkills.packDesc}}</p>
+                {{/if}}
+            </div>
             <div class="dg-bonus-skills-header">
                 <span class="dg-picks-counter">Picks used: <strong>{{bonusSkills.picksUsed}}</strong> / 8</span>
             </div>

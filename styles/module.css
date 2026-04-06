@@ -624,7 +624,7 @@
     padding-top: 0.4rem;
 }
 
-.dg-tips-inner > summary {
+.dg-tips-inner>summary {
     font-size: 0.8rem;
     color: #aaa;
     cursor: pointer;
@@ -632,12 +632,12 @@
     user-select: none;
 }
 
-.dg-tips-inner > summary::before {
+.dg-tips-inner>summary::before {
     content: '▶ ';
     font-size: 0.65rem;
 }
 
-.dg-tips-inner[open] > summary::before {
+.dg-tips-inner[open]>summary::before {
     content: '▼ ';
 }
 
@@ -708,12 +708,53 @@
     font-family: inherit;
 }
 
+/* Background package picker row */
+.dg-bonus-pack-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.6rem;
+    padding: 0.4rem 0.6rem;
+    background: #1c2318;
+    border: 1px solid #3a4a30;
+    border-radius: 4px;
+}
+
+.dg-bonus-pack-row label {
+    font-size: 0.82rem;
+    color: #aaa;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.dg-bonus-pack-row select {
+    background: #1a1a1a;
+    color: #ddd;
+    border: 1px solid #444;
+    border-radius: 3px;
+    padding: 0.2rem 0.4rem;
+    font-size: 0.8rem;
+    font-family: inherit;
+}
+
+.dg-bonus-pack-desc {
+    width: 100%;
+    margin: 0.2rem 0 0;
+    font-size: 0.78rem;
+    color: #999;
+    font-style: italic;
+    line-height: 1.5;
+}
+
 /* optional-picks counter in skills step */
 .dg-opt-picks-counter {
     font-size: 0.82rem;
     color: #8db84f;
     margin-bottom: 0.5rem;
 }
+
 .dg-opt-picks-counter.at-limit {
     color: #d97742;
 }
@@ -792,7 +833,10 @@
     letter-spacing: 0.05em;
     margin: 0.75rem 0 0.4rem;
 }
-.dg-specialty-heading:first-of-type { margin-top: 0; }
+
+.dg-specialty-heading:first-of-type {
+    margin-top: 0;
+}
 
 .dg-specialty-row,
 .dg-specialty-opt-row {

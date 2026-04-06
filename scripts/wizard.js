@@ -221,6 +221,74 @@ const BOND_DATASETS = [
     { key: 'PISCES_UK',      label: 'PISCES (British Intel)' },
 ];
 
+// Background bonus packages from the Delta Green rulebook (p.20).
+// Slot values use BONUS_SKILL_OPTIONS keys; '_custom_*' = type-your-own specialty; '' = free pick.
+const BONUS_PACKAGES = [
+    { label: 'Artist, Actor, or Musician',
+      desc: 'Alertness · Craft (choose) · Disguise · Persuade · Art (choose) ×3 · HUMINT',
+      skills: ['alertness', '_custom_Craft', 'disguise', 'persuade', '_custom_Art', '_custom_Art', '_custom_Art', 'humint'] },
+    { label: 'Athlete',
+      desc: 'Alertness · Athletics · Dodge · First Aid · HUMINT · Persuade · Swim · Unarmed Combat',
+      skills: ['alertness', 'athletics', 'dodge', 'first_aid', 'humint', 'persuade', 'swim', 'unarmed_combat'] },
+    { label: 'Author, Editor, or Journalist',
+      desc: 'Anthropology · Art (choose) · Bureaucracy · History · HUMINT · Law · Occult · Persuade',
+      skills: ['anthropology', '_custom_Art', 'bureaucracy', 'history', 'humint', 'law', 'occult', 'persuade'] },
+    { label: '"Black Bag" Training',
+      desc: 'Alertness · Athletics · Craft (Electrician) · Craft (Locksmithing) · Criminology · Disguise · Search · Stealth',
+      skills: ['alertness', 'athletics', 'craft_electrician', 'craft_locksmithing', 'criminology', 'disguise', 'search', 'stealth'] },
+    { label: 'Blue-Collar Worker',
+      desc: 'Alertness · Craft (choose) ×2 · Drive · First Aid · Heavy Machinery · Navigate · Search',
+      skills: ['alertness', '_custom_Craft', '_custom_Craft', 'drive', 'first_aid', 'heavy_machiner', 'navigate', 'search'] },
+    { label: 'Bureaucrat',
+      desc: 'Accounting · Bureaucracy · Computer Science · Criminology · HUMINT · Law · Persuade · personal specialty (choose)',
+      skills: ['accounting', 'bureaucracy', 'computer_science', 'criminology', 'humint', 'law', 'persuade', ''] },
+    { label: 'Clergy',
+      desc: 'Foreign Language (choose) ×3 · History · HUMINT · Occult · Persuade · Psychotherapy',
+      skills: ['_custom_ForeignLanguage', '_custom_ForeignLanguage', '_custom_ForeignLanguage', 'history', 'humint', 'occult', 'persuade', 'psychotherapy'] },
+    { label: 'Combat Veteran',
+      desc: 'Alertness · Dodge · Firearms · First Aid · Heavy Weapons · Melee Weapons · Stealth · Unarmed Combat',
+      skills: ['alertness', 'dodge', 'firearms', 'first_aid', 'heavy_weapons', 'melee_weapons', 'stealth', 'unarmed_combat'] },
+    { label: 'Computer Enthusiast or Hacker',
+      desc: 'Computer Science · Craft (Microelectronics) · Science (Mathematics) · SIGINT · personal specialties ×4 (choose freely)',
+      skills: ['computer_science', 'craft_microelectronics', 'science_mathematics', 'sigint', '', '', '', ''] },
+    { label: 'Counselor',
+      desc: 'Bureaucracy · First Aid · Foreign Language (choose) · HUMINT · Law · Persuade · Psychotherapy · Search',
+      skills: ['bureaucracy', 'first_aid', '_custom_ForeignLanguage', 'humint', 'law', 'persuade', 'psychotherapy', 'search'] },
+    { label: 'Criminalist',
+      desc: 'Accounting · Bureaucracy · Computer Science · Criminology · Forensics · Law · Pharmacy · Search',
+      skills: ['accounting', 'bureaucracy', 'computer_science', 'criminology', 'forensics', 'law', 'pharmacy', 'search'] },
+    { label: 'Firefighter',
+      desc: 'Alertness · Demolitions · Drive · First Aid · Forensics · Heavy Machinery · Navigate · Search',
+      skills: ['alertness', 'demolitions', 'drive', 'first_aid', 'forensics', 'heavy_machiner', 'navigate', 'search'] },
+    { label: 'Gangster or Deep Cover',
+      desc: 'Alertness · Criminology · Dodge · Drive · Persuade · Stealth · choose 2 freely',
+      skills: ['alertness', 'criminology', 'dodge', 'drive', 'persuade', 'stealth', '', ''] },
+    { label: 'Interrogator',
+      desc: 'Criminology · Foreign Language (choose) ×2 · HUMINT · Law · Persuade · Pharmacy · Search',
+      skills: ['criminology', '_custom_ForeignLanguage', '_custom_ForeignLanguage', 'humint', 'law', 'persuade', 'pharmacy', 'search'] },
+    { label: 'Liberal Arts Degree',
+      desc: 'Anthropology · Art (choose) · Foreign Language (choose) · History · Persuade · personal specialties ×3',
+      skills: ['anthropology', '_custom_Art', '_custom_ForeignLanguage', 'history', 'persuade', '', '', ''] },
+    { label: 'Military Officer',
+      desc: 'Bureaucracy · Firearms · History · Military Science (choose) · Navigate · Persuade · Unarmed Combat · choose 1 freely',
+      skills: ['bureaucracy', 'firearms', 'history', '_custom_MilitaryScience', 'navigate', 'persuade', 'unarmed_combat', ''] },
+    { label: 'MBA',
+      desc: 'Accounting · Bureaucracy · HUMINT · Law · Persuade · personal specialties ×3 (choose freely)',
+      skills: ['accounting', 'bureaucracy', 'humint', 'law', 'persuade', '', '', ''] },
+    { label: 'Nurse, Paramedic, or Pre-Med',
+      desc: 'Alertness · First Aid · Medicine · Persuade · Pharmacy · Psychotherapy · Science (Biology) · Search',
+      skills: ['alertness', 'first_aid', 'medicine', 'persuade', 'pharmacy', 'psychotherapy', 'science_biology', 'search'] },
+    { label: 'Occult Investigator or Conspiracy Theorist',
+      desc: 'Anthropology · Archeology · Computer Science · Criminology · History · Occult · Persuade · Search',
+      skills: ['anthropology', 'archeology', 'computer_science', 'criminology', 'history', 'occult', 'persuade', 'search'] },
+    { label: 'Outdoorsman',
+      desc: 'Alertness · Athletics · Firearms · Navigate · Ride · Search · Stealth · Survival',
+      skills: ['alertness', 'athletics', 'firearms', 'navigate', 'ride', 'search', 'stealth', 'survival'] },
+    { label: 'Photographer',
+      desc: 'Alertness · Art (Photography) · Computer Science · Persuade · Search · Stealth · personal specialties ×2',
+      skills: ['alertness', 'art_photography', 'computer_science', 'persuade', 'search', 'stealth', '', ''] },
+];
+
 const STAT_LABELS = { str: 'STR', con: 'CON', dex: 'DEX', int: 'INT', pow: 'POW', cha: 'CHA' };
 
 const STAT_DESCRIPTOR_TIERS = {
@@ -270,6 +338,7 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
         bonusBoosts: ['', '', '', '', '', '', '', ''],  // 8 bonus-pick slots (each holds a skill key)
         bonusCustom: ['', '', '', '', '', '', '', ''],  // custom label text for '_custom_*' bonus slots
         bondDataset: 'FRIENDS_FAMILY',                  // active bond suggestion dataset
+        selectedPackIdx: -1,                            // last applied background package index
         bonds: [],           // array of { name, score, relationship, description }
         specialtySlots: [],  // [{id, group, label, proficiency, required, optIndex}] typed/specialty skills
         optSpecialtyLabels: {},  // optIndex → label string for checked optional specialty picks
@@ -305,6 +374,7 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
             clearEquipment: DeltaGreenChargenWizard.#onClearEquipment,
             finish: DeltaGreenChargenWizard.#onFinish,
             loadLoadout: DeltaGreenChargenWizard.#onLoadLoadout,
+            fillPack: DeltaGreenChargenWizard.#onFillPack,
         },
     };
 
@@ -510,7 +580,10 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
                 return { key: `profslot__${sl.group}__${sl.label}`, label: `${groupDisplay} (${sl.label})` };
             });
 
-        return { options: BONUS_SKILL_OPTIONS, profSlotOptions, slots, picksUsed };
+        const packIdx = this.#data.selectedPackIdx ?? -1;
+        const packDesc = packIdx >= 0 ? (BONUS_PACKAGES[packIdx]?.desc ?? '') : '';
+
+        return { options: BONUS_SKILL_OPTIONS, profSlotOptions, packages: BONUS_PACKAGES, packIdx, packDesc, slots, picksUsed };
     }
 
     // -----------------------------------------------------------------------
@@ -894,6 +967,22 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
 
     static async #onClearEquipment(event, target) {
         this.#data.equipment = [];
+        this.render({ force: true });
+    }
+
+    static async #onFillPack(event, target) {
+        const form = this.element?.querySelector('form.dg-wizard-form');
+        if (!form) return;
+        const sel = form.querySelector('#dg-bonus-pack-select');
+        if (!sel || sel.value === '') return;
+        const idx = parseInt(sel.value);
+        const pkg = BONUS_PACKAGES[idx];
+        if (!pkg) return;
+        const newBoosts = pkg.skills.slice(0, 8);
+        while (newBoosts.length < 8) newBoosts.push('');
+        this.#data.bonusBoosts = newBoosts;
+        this.#data.bonusCustom = ['', '', '', '', '', '', '', ''];
+        this.#data.selectedPackIdx = idx;
         this.render({ force: true });
     }
 
