@@ -1,5 +1,7 @@
 import { PROFESSIONS } from './professions.js';
 import { BONDS } from './bonds.js';
+import { EQUIPMENT_CATALOG, EQUIPMENT_CATEGORIES } from './equipment.js';
+import { generateBio } from './bio-data.js';
 
 // ---------------------------------------------------------------------------
 // Skill key → Foundry system.skills path mapping
@@ -77,7 +79,7 @@ function getStatDescriptor(key, value) {
     return desc;
 }
 
-const STEPS = ['welcome', 'stats', 'profession', 'skills', 'bonds', 'biography', 'review'];
+const STEPS = ['welcome', 'stats', 'profession', 'skills', 'bonus_skills', 'bonds', 'biography', 'equipment', 'review'];
 
 // ---------------------------------------------------------------------------
 // Wizard Application (ApplicationV2, Foundry v13)
@@ -92,14 +94,22 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
     /** @type {number}  index into STEPS[] */
     #step = 0;
 
+    /** Active equipment category filter */
+    #equipCategory = 'All';
+
+    /** Equipment catalog search query */
+    #equipSearch = '';
+
     /** Transient data collected across steps before writing to the Actor. */
     #data = {
         stats: { str: 10, con: 10, dex: 10, int: 10, pow: 10, cha: 10 },
         professionKey: '',
         skills: {},          // key → value
         optionalPicks: [],   // indices of chosen optional skills
+        bonusBoosts: {},     // key → number of +20 boosts applied
         bonds: [],           // array of { name, score }
-        biography: { profession: '', employer: '', nationality: '', sex: '', age: '', education: '' },
+        biography: { name: '', profession: '', employer: '', nationality: '', sex: '', age: '', education: '', notes: '' },
+        equipment: [],       // array of item names from catalog
     };
 
     constructor(actor, options = {}) {
@@ -114,7 +124,7 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
             title: 'Delta Green — Character Creation Wizard',
             resizable: true,
         },
-        position: { width: 760, height: 680 },
+        position: { width: 900, height: 700 },
         actions: {
             nextStep: DeltaGreenChargenWizard.#onNextStep,
             prevStep: DeltaGreenChargenWizard.#onPrevStep,
@@ -122,9 +132,13 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
             adjustStat: DeltaGreenChargenWizard.#onAdjustStat,
             randomizeStats: DeltaGreenChargenWizard.#onRandomizeStats,
             resetStats: DeltaGreenChargenWizard.#onResetStats,
+            boostSkill: DeltaGreenChargenWizard.#onBoostSkill,
+            unboostSkill: DeltaGreenChargenWizard.#onUnboostSkill,
             addBond: DeltaGreenChargenWizard.#onAddBond,
             removeBond: DeltaGreenChargenWizard.#onRemoveBond,
             suggestBond: DeltaGreenChargenWizard.#onSuggestBond,
+            randomBio: DeltaGreenChargenWizard.#onRandomBio,
+            clearEquipment: DeltaGreenChargenWizard.#onClearEquipment,
             finish: DeltaGreenChargenWizard.#onFinish,
         },
     };
@@ -148,6 +162,8 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
             Object.entries(statValues).map(([k, v]) => [k, getStatDescriptor(k, v)])
         );
 
+        const bonusSkills = step === 'bonus_skills' ? this.#buildBonusSkillContext() : null;
+
         return {
             step,
             stepIndex: this.#step,
@@ -164,10 +180,12 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
             professionKey: profKey,
             profession: prof,
             skills: this.#buildSkillContext(prof),
+            bonusSkills,
             bonds: this.#data.bonds,
             bondLimit,
             bondsAtLimit: this.#data.bonds.length >= bondLimit,
             biography: this.#data.biography,
+            equipmentCount: this.#data.equipment.length,
             review: step === 'review' ? this.#buildReviewContext() : null,
         };
     }
@@ -234,6 +252,27 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
     }
 
     // -----------------------------------------------------------------------
+    // Build bonus skill context for the bonus_skills step
+    // -----------------------------------------------------------------------
+    #buildBonusSkillContext() {
+        const picksUsed = Object.values(this.#data.bonusBoosts).reduce((a, b) => a + b, 0);
+        const picksRemaining = 8 - picksUsed;
+
+        const skills = Object.entries(SKILL_DEFAULTS).map(([key, baseValue]) => {
+            const profValue = this.#data.skills[key] ?? baseValue;
+            const boosts = this.#data.bonusBoosts[key] ?? 0;
+            const current = Math.min(80, profValue + boosts * 20);
+            const label = key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+            return {
+                key, label, current, boosts,
+                canBoost: picksRemaining > 0 && current < 80,
+                canUnboost: boosts > 0,
+            };
+        });
+        return { skills, picksUsed, picksRemaining };
+    }
+
+    // -----------------------------------------------------------------------
     // Build summary for the review step
     // -----------------------------------------------------------------------
     #buildReviewContext() {
@@ -244,10 +283,146 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
             profession: this.#data.professionKey
                 ? PROFESSIONS[this.#data.professionKey]?.title ?? this.#data.professionKey
                 : '—',
-            skills: Object.entries(this.#data.skills).map(([k, v]) => ({ key: k, label: k, value: v })),
+            skills: Object.entries(this.#data.skills).map(([k, v]) => {
+                const boosts = this.#data.bonusBoosts[k] ?? 0;
+                const effective = Math.min(80, v + boosts * 20);
+                const label = k.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+                return { key: k, label, value: effective };
+            }),
             bonds: this.#data.bonds,
             biography: this.#data.biography,
+            equipment: this.#data.equipment,
         };
+    }
+
+    // -----------------------------------------------------------------------
+    // _onRender — called after every Handlebars re-render; wire up equipment UI
+    // -----------------------------------------------------------------------
+    async _onRender(context, options) {
+        await super._onRender?.(context, options);
+        if (STEPS[this.#step] === 'equipment') this.#buildEquipmentUI();
+    }
+
+    // -----------------------------------------------------------------------
+    // Equipment step: build interactive catalog + loadout panels
+    // -----------------------------------------------------------------------
+    #buildEquipmentUI() {
+        const el = this.element;
+        if (!el) return;
+
+        const searchInput = el.querySelector('#dg-eq-search');
+        const catTabsEl   = el.querySelector('#dg-eq-cat-tabs');
+        const catalogEl   = el.querySelector('#dg-eq-catalog');
+        const loadoutEl   = el.querySelector('#dg-eq-loadout');
+        if (!searchInput || !catTabsEl || !catalogEl || !loadoutEl) return;
+
+        // Sync search input to stored state
+        searchInput.value = this.#equipSearch;
+        searchInput.addEventListener('input', (e) => {
+            this.#equipSearch = e.target.value;
+            this.#renderEquipmentCatalog(catalogEl);
+        });
+
+        // Catalog click delegation — add item to loadout
+        catalogEl.addEventListener('click', (e) => {
+            const btn = e.target.closest('[data-item-name]');
+            if (!btn) return;
+            const name = btn.dataset.itemName;
+            if (name && !this.#data.equipment.includes(name)) {
+                this.#data.equipment.push(name);
+                this.#renderEquipmentLoadout(loadoutEl);
+                this.#renderEquipmentCatalog(catalogEl);
+                this.#updateEquipCountBadge(el);
+            }
+        });
+
+        // Loadout click delegation — remove item
+        loadoutEl.addEventListener('click', (e) => {
+            const btn = e.target.closest('[data-item-idx]');
+            if (!btn) return;
+            const idx = parseInt(btn.dataset.itemIdx, 10);
+            if (!isNaN(idx)) {
+                this.#data.equipment.splice(idx, 1);
+                this.#renderEquipmentLoadout(loadoutEl);
+                this.#renderEquipmentCatalog(catalogEl);
+                this.#updateEquipCountBadge(el);
+            }
+        });
+
+        this.#renderEquipmentTabs(catTabsEl, catalogEl);
+        this.#renderEquipmentCatalog(catalogEl);
+        this.#renderEquipmentLoadout(loadoutEl);
+        this.#updateEquipCountBadge(el);
+    }
+
+    #renderEquipmentTabs(tabsEl, catalogEl) {
+        tabsEl.innerHTML = '';
+        for (const cat of EQUIPMENT_CATEGORIES) {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.textContent = cat;
+            btn.className = 'dg-eq-cat-btn' + (cat === this.#equipCategory ? ' active' : '');
+            btn.addEventListener('click', () => {
+                this.#equipCategory = cat;
+                tabsEl.querySelectorAll('.dg-eq-cat-btn').forEach(b =>
+                    b.classList.toggle('active', b.textContent === cat));
+                this.#renderEquipmentCatalog(catalogEl);
+            });
+            tabsEl.appendChild(btn);
+        }
+    }
+
+    #renderEquipmentCatalog(catalogEl) {
+        const query = this.#equipSearch.toLowerCase().trim();
+        const filtered = EQUIPMENT_CATALOG.filter(item => {
+            const catMatch = this.#equipCategory === 'All' || item.category === this.#equipCategory;
+            const srchMatch = !query
+                || item.name.toLowerCase().includes(query)
+                || item.category.toLowerCase().includes(query);
+            return catMatch && srchMatch;
+        });
+
+        if (filtered.length === 0) {
+            catalogEl.innerHTML = '<div class="dg-eq-empty">No items match.</div>';
+            return;
+        }
+        catalogEl.innerHTML = filtered.map(item => {
+            const inLoadout = this.#data.equipment.includes(item.name);
+            const exp = item.system?.expense ?? '';
+            const expClass = `dg-exp-${exp.toLowerCase()}`;
+            const safeName = item.name.replace(/"/g, '&quot;');
+            return `<div class="dg-eq-item${inLoadout ? ' in-loadout' : ''}">
+  <div class="dg-eq-item-info">
+    <span class="dg-eq-item-name">${item.name}</span>
+    <span class="dg-eq-expense ${expClass}">${exp}</span>
+  </div>
+  <button type="button" class="dg-eq-add-btn" data-item-name="${safeName}"${inLoadout ? ' disabled' : ''}>
+    ${inLoadout ? '✓' : '+'}
+  </button>
+</div>`;
+        }).join('');
+    }
+
+    #renderEquipmentLoadout(loadoutEl) {
+        if (this.#data.equipment.length === 0) {
+            loadoutEl.innerHTML = '<div class="dg-eq-empty">No items selected.</div>';
+            return;
+        }
+        loadoutEl.innerHTML = this.#data.equipment.map((name, idx) => {
+            const item = EQUIPMENT_CATALOG.find(i => i.name === name);
+            const exp = item?.system?.expense ?? '';
+            const expClass = `dg-exp-${exp.toLowerCase()}`;
+            return `<div class="dg-eq-loadout-item">
+  <span class="dg-eq-loadout-name">${name}</span>
+  <span class="dg-eq-expense ${expClass}">${exp}</span>
+  <button type="button" class="dg-eq-remove-btn" data-item-idx="${idx}" title="Remove">✕</button>
+</div>`;
+        }).join('');
+    }
+
+    #updateEquipCountBadge(el) {
+        const badge = el.querySelector('.dg-eq-count');
+        if (badge) badge.textContent = this.#data.equipment.length > 0 ? `${this.#data.equipment.length} selected` : '';
     }
 
     // -----------------------------------------------------------------------
@@ -339,6 +514,41 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
         this.render({ force: true });
     }
 
+    static async #onBoostSkill(event, target) {
+        const key = target.dataset.skill;
+        if (!key) return;
+        const picksUsed = Object.values(this.#data.bonusBoosts).reduce((a, b) => a + b, 0);
+        if (picksUsed >= 8) { ui.notifications.warn('You have used all 8 bonus skill picks.'); return; }
+        const profValue = this.#data.skills[key] ?? SKILL_DEFAULTS[key] ?? 0;
+        const boosts = this.#data.bonusBoosts[key] ?? 0;
+        if (Math.min(80, profValue + boosts * 20) >= 80) {
+            ui.notifications.warn('Skills cannot exceed 80% during character creation.');
+            return;
+        }
+        this.#data.bonusBoosts[key] = boosts + 1;
+        this.render({ force: true });
+    }
+
+    static async #onUnboostSkill(event, target) {
+        const key = target.dataset.skill;
+        if (!key) return;
+        const boosts = this.#data.bonusBoosts[key] ?? 0;
+        if (boosts <= 0) return;
+        this.#data.bonusBoosts[key] = boosts - 1;
+        this.render({ force: true });
+    }
+
+    static async #onRandomBio(event, target) {
+        const bio = generateBio(this.#data.stats, this.#data.professionKey);
+        Object.assign(this.#data.biography, bio);
+        this.render({ force: true });
+    }
+
+    static async #onClearEquipment(event, target) {
+        this.#data.equipment = [];
+        this.render({ force: true });
+    }
+
     static async #onFinish(event, target) {
         if (!this.#collectCurrentStep()) return;
         await this.#applyToActor();
@@ -399,6 +609,11 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
             }
         }
 
+        if (step === 'bonus_skills') {
+            // Boosts are already applied via action buttons — nothing to collect from form
+            return true;
+        }
+
         if (step === 'bonds') {
             this.#data.bonds = this.#data.bonds.map((bond, i) => ({
                 name: (raw[`bonds.${i}.name`] ?? bond.name).toString().trim(),
@@ -410,6 +625,11 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
             for (const k of Object.keys(this.#data.biography)) {
                 this.#data.biography[k] = (raw[`biography.${k}`] ?? '').toString().trim();
             }
+        }
+
+        if (step === 'equipment') {
+            // Equipment is managed via DOM actions — nothing to collect from form
+            return true;
         }
 
         return true;
@@ -437,23 +657,33 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
         updates['system.sanity.value'] = this.#data.stats.pow * 5;
         updates['system.sanity.currentBreakingPoint'] = this.#data.stats.pow * 5 - this.#data.stats.pow;
 
-        // Skills
+        // Skills — base profession values
         for (const [key, value] of Object.entries(this.#data.skills)) {
             if (SKILL_KEY_MAP[key]) {
                 updates[`system.skills.${key}.proficiency`] = value;
             }
         }
 
-        // Biography
+        // Bonus skill boosts — added on top of profession values, capped at 80
+        for (const [key, boosts] of Object.entries(this.#data.bonusBoosts)) {
+            if (boosts > 0 && SKILL_KEY_MAP[key]) {
+                const base = this.#data.skills[key] ?? SKILL_DEFAULTS[key] ?? 0;
+                updates[`system.skills.${key}.proficiency`] = Math.min(80, base + boosts * 20);
+            }
+        }
+
+        // Biography — actor name is top-level; remaining fields go to system.biography
+        const bioName = this.#data.biography.name;
+        if (bioName) updates['name'] = bioName;
         for (const [k, v] of Object.entries(this.#data.biography)) {
+            if (k === 'name') continue;
             updates[`system.biography.${k}`] = v;
         }
 
         await this.#actor.update(updates);
 
-        // Bonds — create as Bond items
+        // Bonds — create as Bond items (remove existing first to avoid duplicates)
         if (this.#data.bonds.length > 0) {
-            // Remove existing bonds first to avoid duplicates on re-run
             const existingBonds = this.#actor.items.filter(i => i.type === 'bond');
             if (existingBonds.length > 0) {
                 await this.#actor.deleteEmbeddedDocuments('Item', existingBonds.map(i => i.id));
@@ -461,13 +691,25 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
             const bondItems = this.#data.bonds.map(b => ({
                 name: b.name || 'Unnamed Bond',
                 type: 'bond',
-                system: {
-                    score: b.score,
-                    relationship: '',
-                    description: '',
-                },
+                system: { score: b.score, relationship: '', description: '' },
             }));
             await this.#actor.createEmbeddedDocuments('Item', bondItems);
+        }
+
+        // Equipment — create as Items on the actor
+        if (this.#data.equipment.length > 0) {
+            // Map 'gear' type to 'item' for DG system compatibility
+            const typeMap = { gear: 'item' };
+            const eqItems = this.#data.equipment
+                .map(name => {
+                    const item = EQUIPMENT_CATALOG.find(i => i.name === name);
+                    if (!item) return null;
+                    return { ...item, type: typeMap[item.type] ?? item.type };
+                })
+                .filter(Boolean);
+            if (eqItems.length > 0) {
+                await this.#actor.createEmbeddedDocuments('Item', eqItems);
+            }
         }
     }
 }

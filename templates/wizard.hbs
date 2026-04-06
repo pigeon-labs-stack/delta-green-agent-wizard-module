@@ -24,7 +24,7 @@
             </p>
             <p>
                 This wizard will guide you through:<br>
-                <strong>Statistics → Profession → Skills → Bonds → Biography → Review</strong>
+                <strong>Statistics → Profession → Skills → Bonus Skills → Bonds → Biography → Equipment → Review</strong>
             </p>
         </div>
         {{/if}}
@@ -35,6 +35,21 @@
         {{#if (eq step "stats")}}
         <div class="dg-step dg-step-stats">
             <h2>Statistics</h2>
+
+            <details class="dg-tips">
+                <summary>Tips</summary>
+                <p>Distribute <strong>72 points</strong> across your six statistics (min 3, max 18). You can also roll 4d6 drop-lowest, or randomize a balanced spread.</p>
+                <ul class="dg-tips-list">
+                    <li><strong>STR</strong> — Physical strength. Affects melee damage, climb, lift, and some physical skill checks.</li>
+                    <li><strong>CON</strong> — Endurance and resilience. Combined with STR to set your Hit Points.</li>
+                    <li><strong>DEX</strong> — Agility and coordination. Affects initiative, Dodge, and physical dexterity tasks.</li>
+                    <li><strong>INT</strong> — Reason and perception. Many investigative and technical skills derive from INT.</li>
+                    <li><strong>POW</strong> — Willpower and psychic force. Sets your Willpower Points and starting Sanity (POW × 5).</li>
+                    <li><strong>CHA</strong> — Personality and presence. Your Bond score starts equal to CHA.</li>
+                </ul>
+                <p><em>HP = ⌈(STR+CON)÷2⌉ &nbsp;|&nbsp; WP = POW &nbsp;|&nbsp; SAN = POW×5</em></p>
+            </details>
+
             <p class="dg-hint">Distribute 72 points across your six statistics (3–18). HP = ⌈(STR+CON)÷2⌉ · WP = POW · SAN = POW×5</p>
 
             <div class="dg-points-bar">
@@ -70,6 +85,13 @@
         {{#if (eq step "profession")}}
         <div class="dg-step dg-step-profession">
             <h2>Profession</h2>
+
+            <details class="dg-tips">
+                <summary>Tips</summary>
+                <p>Your profession is your biggest decision. It determines your skill set, starting resources, number of bonds, and role in the Program.</p>
+                <p>Each profession provides <em>required skills</em> at fixed values and <em>optional skills</em> you may choose from. After you pick your skills, you'll get <strong>8 background bonus skill picks</strong> (+20 each) to customize further.</p>
+            </details>
+
             <p class="dg-hint">Choose the profession that best fits your agent's background.</p>
             <div class="dg-profession-picker">
                 <select name="professionKey" class="dg-select-profession">
@@ -93,7 +115,20 @@
         {{#if (eq step "skills")}}
         <div class="dg-step dg-step-skills">
             <h2>Skills</h2>
-            {{#if profession}}
+
+            <details class="dg-tips">
+                <summary>Tips</summary>
+                <p>Skills are rated as a percentage. Rolling at or below your skill value is a success.</p>
+                <ul class="dg-tips-list">
+                    <li><strong>1–19%</strong> — Dabbler: you know the basics but are unreliable.</li>
+                    <li><strong>20–39%</strong> — Trained: basic competence; you usually get simple tasks right.</li>
+                    <li><strong>40–59%</strong> — Experienced: solid and dependable under normal conditions.</li>
+                    <li><strong>60–79%</strong> — Expert: you rarely fail; pressure and opposition are your main threats.</li>
+                    <li><strong>80–99%</strong> — Master: a lifetime of dedication. Failure is a genuine surprise.</li>
+                </ul>
+                <p>Required skills are pre-filled by your profession. Check optional skills (up to the listed limit) to add them at their listed value. In the next step you'll distribute 8 bonus picks of +20 each.</p>
+            </details>
+
             <p class="dg-hint">
                 Professional skills are pre-filled. Choose up to <strong>{{skills.0.optLimit}}</strong> optional skills.
             </p>
@@ -133,11 +168,59 @@
         {{/if}}
 
         {{!-- ================================================================
+        STEP: bonus_skills
+        ================================================================ --}}
+        {{#if (eq step "bonus_skills")}}
+        <div class="dg-step dg-step-bonus-skills">
+            <h2>Bonus Skills</h2>
+
+            <details class="dg-tips">
+                <summary>Tips</summary>
+                <p>You get <strong>8 background skill picks</strong> representing past experience — hobbies, side gigs, a previous career, or extra training.</p>
+                <p>Each pick adds <strong>+20%</strong> to a skill. You can stack multiple picks on the same skill, but no skill can exceed <strong>80%</strong> during character creation.</p>
+                <p>Use + and − to allocate and take back picks. All unused picks are simply lost.</p>
+            </details>
+
+            {{#if bonusSkills}}
+            <div class="dg-bonus-skills-header">
+                <span class="dg-picks-counter">Picks used: <strong>{{bonusSkills.picksUsed}}</strong> / 8</span>
+                <span class="dg-picks-remaining {{#if (eq bonusSkills.picksRemaining 0)}}depleted{{/if}}">
+                    {{bonusSkills.picksRemaining}} remaining
+                </span>
+            </div>
+            <div class="dg-bonus-skills-grid">
+                {{#each bonusSkills.skills}}
+                <div class="dg-bonus-skill-row {{#if boosts}}boosted{{/if}}">
+                    <span class="dg-bonus-skill-label">{{label}}</span>
+                    <span class="dg-bonus-skill-val">{{current}}%</span>
+                    {{#if boosts}}<span class="dg-bonus-boost-badge">+{{multiply boosts 20}}</span>{{/if}}
+                    <div class="dg-bonus-skill-btns">
+                        <button type="button" data-action="unboostSkill" data-skill="{{key}}"
+                            class="dg-adjust-btn" {{#unless canUnboost}}disabled{{/unless}}>−</button>
+                        <button type="button" data-action="boostSkill" data-skill="{{key}}"
+                            class="dg-adjust-btn" {{#unless canBoost}}disabled{{/unless}}>+</button>
+                    </div>
+                </div>
+                {{/each}}
+            </div>
+            {{/if}}
+        </div>
+        {{/if}}
+
+        {{!-- ================================================================
         STEP: bonds
         ================================================================ --}}
         {{#if (eq step "bonds")}}
         <div class="dg-step dg-step-bonds">
             <h2>Bonds</h2>
+
+            <details class="dg-tips">
+                <summary>Tips</summary>
+                <p>Bonds are the personal relationships that keep your agent sane — family members, close friends, romantic partners, trusted colleagues.</p>
+                <p>Each Bond starts at your <strong>CHA</strong> value ({{stats.cha}}). Bonds can be damaged when you lose Sanity, and losing a Bond entirely costs additional Sanity. Protect them.</p>
+                <p>Your profession allows <strong>{{bondLimit}} bond(s)</strong>. Click 💡 next to any bond for a random suggestion of what kind of relationship this could be.</p>
+            </details>
+
             <p class="dg-hint">
                 Your profession permits <strong>{{bondLimit}}</strong> bond(s).
                 Bonds start at your CHA score ({{stats.cha}}).
@@ -171,8 +254,22 @@
         {{#if (eq step "biography")}}
         <div class="dg-step dg-step-biography">
             <h2>Biography</h2>
-            <p class="dg-hint">Fill in your agent's personal details. All fields are optional.</p>
+
+            <details class="dg-tips">
+                <summary>Tips</summary>
+                <p>Fill in who your agent is — their name, background, and physical appearance. All fields are optional but bring your character to life on the sheet.</p>
+                <p>Click <strong>Random Bio</strong> to auto-generate a name and physical description based on your stats and profession. You can always edit the result afterward.</p>
+            </details>
+
+            <div class="dg-bio-actions">
+                <button type="button" data-action="randomBio" class="dg-btn-secondary">🎲 Random Bio</button>
+            </div>
+
             <div class="dg-bio-grid">
+                <label class="dg-bio-full-row">Agent Name
+                    <input type="text" name="biography.name" value="{{biography.name}}"
+                        placeholder="First and last name" />
+                </label>
                 <label>Profession / Job Title
                     <input type="text" name="biography.profession" value="{{biography.profession}}"
                         placeholder="e.g. FBI Special Agent" />
@@ -196,6 +293,51 @@
                     <input type="text" name="biography.education" value="{{biography.education}}"
                         placeholder="e.g. BA Criminology, Quantico" />
                 </label>
+                <label class="dg-bio-full-row">Physical Description
+                    <textarea name="biography.notes" rows="3" placeholder="Build, height, hair, eyes, notable features…">{{biography.notes}}</textarea>
+                </label>
+            </div>
+        </div>
+        {{/if}}
+
+        {{!-- ================================================================
+        STEP: equipment
+        ================================================================ --}}
+        {{#if (eq step "equipment")}}
+        <div class="dg-step dg-step-equipment">
+            <h2>Equipment</h2>
+
+            <details class="dg-tips">
+                <summary>Tips</summary>
+                <p>Select gear for your agent. Operational mission equipment is issued and returned; personal gear belongs to the agent.</p>
+                <p>Expense levels:</p>
+                <ul class="dg-tips-list">
+                    <li><span class="dg-exp-badge dg-exp-incidental">Incidental</span> — Freely available; negligible cost.</li>
+                    <li><span class="dg-exp-badge dg-exp-standard">Standard</span> — Normal consumer purchase.</li>
+                    <li><span class="dg-exp-badge dg-exp-unusual">Unusual</span> — Difficult to source legally; requires effort.</li>
+                    <li><span class="dg-exp-badge dg-exp-major">Major</span> — Significant expense or official channels required.</li>
+                    <li><span class="dg-exp-badge dg-exp-extreme">Extreme</span> — Rare, heavy, or highly restricted.</li>
+                </ul>
+                <p>Items marked <strong>RESTRICTED</strong> require Program authorization or special legal access.</p>
+            </details>
+
+            <div class="dg-eq-layout">
+                <div class="dg-eq-left">
+                    <div class="dg-eq-search-row">
+                        <input type="text" id="dg-eq-search" class="dg-eq-search-input" placeholder="Search catalog…" />
+                        <span class="dg-eq-count"></span>
+                    </div>
+                    <div id="dg-eq-cat-tabs" class="dg-eq-cat-tabs"></div>
+                    <div id="dg-eq-catalog" class="dg-eq-catalog"></div>
+                </div>
+                <div class="dg-eq-right">
+                    <div class="dg-eq-loadout-header">
+                        Loadout
+                        {{#if equipmentCount}}<span class="dg-eq-loadout-badge">{{equipmentCount}}</span>{{/if}}
+                    </div>
+                    <div id="dg-eq-loadout" class="dg-eq-loadout"></div>
+                    <button type="button" data-action="clearEquipment" class="dg-btn-secondary dg-eq-clear-btn">✕ Clear Loadout</button>
+                </div>
             </div>
         </div>
         {{/if}}
@@ -205,7 +347,7 @@
         ================================================================ --}}
         {{#if (eq step "review")}}
         <div class="dg-step dg-step-review">
-            <h2>Review & Confirm</h2>
+            <h2>Review &amp; Confirm</h2>
             <p class="dg-hint">Verify your agent before committing changes to the actor sheet.</p>
 
             <section class="dg-review-section">
@@ -230,7 +372,7 @@
                 <h3>Key Skills</h3>
                 <div class="dg-review-skills">
                     {{#each review.skills}}
-                    <span class="dg-review-skill">{{key}}: <strong>{{value}}</strong></span>
+                    <span class="dg-review-skill">{{label}}: <strong>{{value}}%</strong></span>
                     {{/each}}
                 </div>
             </section>
@@ -254,6 +396,17 @@
                     {{/each}}
                 </dl>
             </section>
+
+            {{#if review.equipment.length}}
+            <section class="dg-review-section">
+                <h3>Equipment ({{review.equipment.length}} items)</h3>
+                <div class="dg-review-equipment">
+                    {{#each review.equipment}}
+                    <span class="dg-review-eq-item">{{this}}</span>
+                    {{/each}}
+                </div>
+            </section>
+            {{/if}}
         </div>
         {{/if}}
 
