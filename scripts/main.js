@@ -134,6 +134,7 @@ function injectWizardButton(app, element) {
         </div>
         <button type="button" class="dg-wizard-bar-toggle" title="Collapse wizard bar">
             <span class="dg-wizard-bar-triangle"></span>
+            <span class="dg-wizard-bar-toggle-label">Collapse</span>
         </button>`;
 
     bar.querySelector('.dg-agent-wizard-launch').addEventListener('click', () => {
