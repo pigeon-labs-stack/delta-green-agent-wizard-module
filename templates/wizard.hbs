@@ -128,11 +128,9 @@
                     {{/each}}
                 </select>
             </div>
-            {{#if profession}}
-            <div class="dg-profession-desc">
-                <pre class="dg-desc-text">{{profession.description}}</pre>
+            <div class="dg-profession-desc" {{#unless profession}}style="display:none"{{/unless}}>
+                <pre class="dg-desc-text">{{#if profession}}{{profession.description}}{{/if}}</pre>
             </div>
-            {{/if}}
         </div>
         {{/if}}
 

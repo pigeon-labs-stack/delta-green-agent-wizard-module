@@ -403,7 +403,7 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
         this.#actor.setFlag('delta-green-agent-wizard', 'wizardState', {
             step: this.#step,
             data: this.#data,
-        }).catch(() => {});
+        }).catch(() => { });
     }
 
     #loadState() {
@@ -486,7 +486,7 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
             statLabels: STAT_LABELS,
             statDescriptors,
             pointsRemaining,
-            professions: Object.entries(PROFESSIONS).map(([key, p]) => ({ key, title: p.title })),
+            professions: Object.entries(PROFESSIONS).map(([key, p]) => ({ key, title: p.title, description: p.description })),
             professionKey: profKey,
             profession: prof,
             skills: this.#buildSkillContext(prof),
@@ -871,9 +871,35 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
     // -----------------------------------------------------------------------
     async _onRender(context, options) {
         await super._onRender?.(context, options);
+        if (STEPS[this.#step] === 'profession') this.#setupProfessionUI();
         if (STEPS[this.#step] === 'equipment') this.#buildEquipmentUI();
         if (STEPS[this.#step] === 'skills') this.#setupSkillsUI();
         if (STEPS[this.#step] === 'bonus_skills') this.#setupBonusSkillsUI();
+    }
+
+    // -----------------------------------------------------------------------
+    // Profession step: live description update on dropdown change
+    // -----------------------------------------------------------------------
+    #setupProfessionUI() {
+        const el = this.element;
+        if (!el) return;
+        const select = el.querySelector('.dg-select-profession');
+        const descEl = el.querySelector('.dg-profession-desc');
+        if (!select || !descEl) return;
+
+        const update = () => {
+            const key = select.value;
+            const prof = key ? PROFESSIONS[key] : null;
+            if (prof) {
+                descEl.style.display = '';
+                descEl.querySelector('.dg-desc-text').textContent = prof.description;
+            } else {
+                descEl.style.display = 'none';
+            }
+        };
+
+        select.addEventListener('change', update);
+        update(); // run immediately in case a profession is already selected
     }
 
     // -----------------------------------------------------------------------
@@ -1220,7 +1246,7 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
         if (!this.#collectCurrentStep()) return;
         await this.#applyToActor();
         // Clear saved wizard state now that it's been applied
-        await this.#actor.unsetFlag('delta-green-agent-wizard', 'wizardState').catch(() => {});
+        await this.#actor.unsetFlag('delta-green-agent-wizard', 'wizardState').catch(() => { });
         this.close();
         ui.notifications.info(`${this.#actor.name} is ready for fieldwork.`);
     }
