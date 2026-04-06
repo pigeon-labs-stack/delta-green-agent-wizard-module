@@ -158,16 +158,15 @@
 
             {{#if profession}}
             <p class="dg-hint">
-                Professional skills are pre-filled. Choose up to <strong>{{optLimit}}</strong> optional skills.
+                Professional skills — required and optional — are all included below.
             </p>
-            <p class="dg-opt-picks-counter" data-limit="{{optLimit}}"></p>
             <table class="dg-skills-table">
                 <thead>
                     <tr>
                         <th>Skill</th>
                         <th>Base</th>
                         <th>Current</th>
-                        <th>Optional?</th>
+                        <th></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -177,12 +176,7 @@
                         <td class="dg-num">{{base}}</td>
                         <td class="dg-num dg-skill-current">{{current}}</td>
                         <td class="dg-center">
-                            {{#if optional}}
-                            <input type="checkbox" name="optPick" data-index="{{optIndex}}" {{#if
-                                picked}}checked{{/if}} />
-                            {{else}}
                             <span class="dg-required-badge">✓</span>
-                            {{/if}}
                         </td>
                     </tr>
                     {{/each}}
@@ -217,12 +211,10 @@
                 <h4 class="dg-specialty-heading">Optional Specialty Skills</h4>
                 {{#each specialtyContext.optional}}
                 <div class="dg-specialty-opt-row">
-                    <input type="checkbox" name="optPick" data-index="{{optIndex}}"
-                        {{#if picked}}checked{{/if}} class="dg-opt-check" />
                     <span class="dg-specialty-group">{{groupDisplay}}</span>
                     <input type="text" name="specialty.opt.{{optIndex}}" value="{{label}}"
                         list="dg-sp-{{group}}" placeholder="Choose {{groupDisplay}} type…"
-                        class="dg-specialty-input" {{#unless picked}}disabled{{/unless}} />
+                        class="dg-specialty-input" />
                     <span class="dg-specialty-value">{{proficiency}}%</span>
                 </div>
                 {{/each}}
@@ -265,6 +257,13 @@
                     <label class="dg-bonus-slot-label">Pick {{inc index}}</label>
                     <select name="bonusSlot.{{index}}" class="dg-bonus-slot-select">
                         <option value="">— None —</option>
+                        {{#if ../bonusSkills.profSlotOptions}}
+                        <optgroup label="Your Profession Specialties">
+                            {{#each ../bonusSkills.profSlotOptions}}
+                            <option value="{{key}}" {{#if (eq key ../key)}}selected{{/if}}>{{label}}</option>
+                            {{/each}}
+                        </optgroup>
+                        {{/if}}
                         {{#each ../bonusSkills.options}}
                         <option value="{{key}}" {{#if (eq key ../key)}}selected{{/if}}>{{label}}</option>
                         {{/each}}

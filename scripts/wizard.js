@@ -100,8 +100,11 @@ const BONUS_SKILL_OPTIONS = [
     { key: 'law',                     label: 'Law' },
     { key: 'medicine',                label: 'Medicine' },
     { key: 'melee_weapons',           label: 'Melee Weapons' },
-    { key: 'military_science_land',   label: 'Military Science (Land)' },
-    { key: '_custom_MilitaryScience', label: 'Military Science (Other…)' },
+    { key: 'military_science_air',              label: 'Military Science (Air)' },
+    { key: 'military_science_land',              label: 'Military Science (Land)' },
+    { key: 'military_science_sea',               label: 'Military Science (Sea)' },
+    { key: 'military_science_special_operations', label: 'Military Science (Special Ops)' },
+    { key: '_custom_MilitaryScience',            label: 'Military Science (Other…)' },
     { key: 'navigate',                label: 'Navigate' },
     { key: 'occult',                  label: 'Occult' },
     { key: 'persuade',                label: 'Persuade' },
@@ -498,7 +501,16 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
             customLabel: customLabels[i] ?? '',
         }));
         const picksUsed = rawSlots.filter(k => k !== '').length;
-        return { options: BONUS_SKILL_OPTIONS, slots, picksUsed };
+
+        // Build options from profession specialty slots (e.g. Foreign Language (Swahili) typed in skills step)
+        const profSlotOptions = this.#data.specialtySlots
+            .filter(sl => sl.label.trim())
+            .map(sl => {
+                const groupDisplay = Object.entries(SPECIALTY_PREFIXES).find(([, g]) => g === sl.group)?.[0] ?? sl.group;
+                return { key: `profslot__${sl.group}__${sl.label}`, label: `${groupDisplay} (${sl.label})` };
+            });
+
+        return { options: BONUS_SKILL_OPTIONS, profSlotOptions, slots, picksUsed };
     }
 
     // -----------------------------------------------------------------------
@@ -522,8 +534,15 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
         }
         const bonusAllocations = [
             ...Object.entries(boostCounts).map(([key, count]) => {
-                const label = BONUS_SKILL_OPTIONS.find(s => s.key === key)?.label
-                    ?? key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+                let label;
+                if (key.startsWith('profslot__')) {
+                    const parts = key.split('__');
+                    const groupDisplay = Object.entries(SPECIALTY_PREFIXES).find(([, g]) => g === parts[1])?.[0] ?? parts[1];
+                    label = `${groupDisplay} (${parts[2]})`;
+                } else {
+                    label = BONUS_SKILL_OPTIONS.find(s => s.key === key)?.label
+                        ?? key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+                }
                 return { label, count, total: count * 20 };
             }),
             ...Object.entries(customLabels).map(([label, count]) => ({ label, count, total: count * 20 })),
@@ -862,7 +881,15 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
     static async #onRandomBio(event, target) {
         const bio = generateBio(this.#data.stats, this.#data.professionKey);
         Object.assign(this.#data.biography, bio);
-        this.render({ force: true });
+        await this.render({ force: true });
+        // Foundry's DOM diff preserves existing input values, so set them directly after render
+        const form = this.element?.querySelector('form.dg-wizard-form');
+        if (form) {
+            for (const [k, v] of Object.entries(this.#data.biography)) {
+                const el = form.querySelector(`[name="biography.${k}"]`);
+                if (el) el.value = v ?? '';
+            }
+        }
     }
 
     static async #onClearEquipment(event, target) {
@@ -945,16 +972,9 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
 
         if (step === 'skills') {
             const prof = PROFESSIONS[this.#data.professionKey];
-            const optLimit = prof?.optionalSkills?.[0]?.limit ?? 2;
-            // Collect optional picks from checkboxes (covers both plain and specialty optionals)
+            // Auto-pick ALL optional skills — no checkbox interaction required
             const picks = [];
-            form.querySelectorAll('input[name="optPick"]:checked').forEach(cb => {
-                picks.push(Number(cb.dataset.index));
-            });
-            if (picks.length > optLimit) {
-                ui.notifications.warn(`You may only choose ${optLimit} optional skills.`);
-                return false;
-            }
+            for (let i = 0; i < (prof?.optionalSkills?.length ?? 0); i++) picks.push(i);
             this.#data.optionalPicks = picks;
 
             // Update required specialty slot labels
@@ -1071,7 +1091,16 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
         const bonusTypedMap = {};  // tsKey → {group, label, proficiency}
         for (const [key, boosts] of Object.entries(boostCounts)) {
             if (boosts <= 0) continue;
-            if (SKILL_KEY_MAP[key]) {
+            if (key.startsWith('profslot__')) {
+                // Profession-typed specialty (e.g. Foreign Language (Swahili) from skills step)
+                const parts = key.split('__');
+                const group = parts[1];
+                const label = parts[2];
+                const tsKey = ('tskill_wiz_' + group + '_' + label)
+                    .toLowerCase().replace(/[^a-z0-9_]/g, '_').replace(/_+/g, '_').replace(/_$/g, '');
+                if (!bonusTypedMap[tsKey]) bonusTypedMap[tsKey] = { group, label, proficiency: 0 };
+                bonusTypedMap[tsKey].proficiency = Math.min(80, bonusTypedMap[tsKey].proficiency + boosts * 20);
+            } else if (SKILL_KEY_MAP[key]) {
                 const base = this.#data.skills[key] ?? SKILL_DEFAULTS[key] ?? 0;
                 updates[`system.skills.${key}.proficiency`] = Math.min(80, base + boosts * 20);
             } else {
