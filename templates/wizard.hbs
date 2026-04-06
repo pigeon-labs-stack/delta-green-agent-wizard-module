@@ -41,17 +41,25 @@
                 <summary>Tips</summary>
                 <p>Your Agent's six core abilities. You have three ways to set them:</p>
                 <ul class="dg-tips-list">
-                    <li><strong>🔀 Randomize (72 pts)</strong> — Spreads 72 points across all six stats randomly within the point-buy rules.</li>
-                    <li><strong>🎲 Roll All (4d6 drop lowest)</strong> — Old-school: rolls 4d6 drop-lowest for each stat.</li>
-                    <li><strong>+ / −</strong> — Manual point-buy: use the + and − buttons on each stat card to spend your 72 points exactly as you want.</li>
+                    <li><strong>🔀 Randomize (72 pts)</strong> — Spreads 72 points across all six stats randomly within
+                        the point-buy rules.</li>
+                    <li><strong>🎲 Roll All (4d6 drop lowest)</strong> — Old-school: rolls 4d6 drop-lowest for each
+                        stat.</li>
+                    <li><strong>+ / −</strong> — Manual point-buy: use the + and − buttons on each stat card to spend
+                        your 72 points exactly as you want.</li>
                 </ul>
                 <ul class="dg-tips-list">
-                    <li><strong>STR</strong> (Strength) — Physical power and size. Break down doors, drag a witness to safety.</li>
+                    <li><strong>STR</strong> (Strength) — Physical power and size. Break down doors, drag a witness to
+                        safety.</li>
                     <li><strong>DEX</strong> (Dexterity) — Agility and coordination. React quickly, keep balance.</li>
-                    <li><strong>CON</strong> (Constitution) — Health and resilience. Resist illness, exhaustion, and pain.</li>
-                    <li><strong>INT</strong> (Intelligence) — How well your Agent notices, remembers, and connects things.</li>
-                    <li><strong>POW</strong> (Power) — Force of personality and psychic resilience. Keep your head in a crisis.</li>
-                    <li><strong>CHA</strong> (Charisma) — Charm and personal appeal. Make impressions, talk your way in.</li>
+                    <li><strong>CON</strong> (Constitution) — Health and resilience. Resist illness, exhaustion, and
+                        pain.</li>
+                    <li><strong>INT</strong> (Intelligence) — How well your Agent notices, remembers, and connects
+                        things.</li>
+                    <li><strong>POW</strong> (Power) — Force of personality and psychic resilience. Keep your head in a
+                        crisis.</li>
+                    <li><strong>CHA</strong> (Charisma) — Charm and personal appeal. Make impressions, talk your way in.
+                    </li>
                 </ul>
                 <p><em>HP = ⌈(STR+CON)÷2⌉ &nbsp;|&nbsp; WP = POW &nbsp;|&nbsp; SAN = POW×5</em></p>
             </details>
@@ -141,16 +149,21 @@
                     (Foreign Language, Science, Craft, etc.). The full list of automatically assigned skills is
                     shown in the table below for reference.</p>
                 <p><strong>Skill Ratings:</strong><br>
-                    1–19%: Dabbler &nbsp;|&nbsp; 20–29%: Hobbyist &nbsp;|&nbsp; 30–39%: Basic training or a college minor<br>
-                    40–59%: Years of experience or a college major &nbsp;|&nbsp; 60–79%: Decades of experience or a grad degree &nbsp;|&nbsp; 80–99%: A lifetime's mastery
+                    1–19%: Dabbler &nbsp;|&nbsp; 20–29%: Hobbyist &nbsp;|&nbsp; 30–39%: Basic training or a college
+                    minor<br>
+                    40–59%: Years of experience or a college major &nbsp;|&nbsp; 60–79%: Decades of experience or a grad
+                    degree &nbsp;|&nbsp; 80–99%: A lifetime's mastery
                 </p>
                 <details class="dg-tips-inner">
                     <summary>Notable Skills</summary>
                     <ul class="dg-tips-list">
-                        <li><strong>Craft</strong> — Mastery of a difficult trade such as electronics, carpentry, or plumbing.</li>
-                        <li><strong>HUMINT</strong> — Human intelligence: the study and deciphering of behavior and motivations.</li>
+                        <li><strong>Craft</strong> — Mastery of a difficult trade such as electronics, carpentry, or
+                            plumbing.</li>
+                        <li><strong>HUMINT</strong> — Human intelligence: the study and deciphering of behavior and
+                            motivations.</li>
                         <li><strong>SIGINT</strong> — Encryption, decryption, and signals intelligence.</li>
-                        <li><strong>Unnatural</strong> — Knowledge of Things Man Was Not Meant to Know. This skill cannot be raised during character creation.</li>
+                        <li><strong>Unnatural</strong> — Knowledge of Things Man Was Not Meant to Know. This skill
+                            cannot be raised during character creation.</li>
                     </ul>
                 </details>
             </details>
@@ -171,7 +184,8 @@
             <div class="dg-optional-picks-section">
                 <div class="dg-opt-section-header">
                     <h3 class="dg-opt-heading">Choose any {{optLimit}} of these:</h3>
-                    <span class="dg-opt-picks-counter" data-limit="{{optLimit}}">Optional picks: <strong>{{optPicksUsed}} / {{optLimit}}</strong></span>
+                    <span class="dg-opt-picks-counter" data-limit="{{optLimit}}">Optional picks:
+                        <strong>{{optPicksUsed}} / {{optLimit}}</strong></span>
                 </div>
                 {{#each optionalSkillItems}}
                 <div class="dg-opt-skill-row{{#if isSpecialty}} dg-opt-spec-row{{/if}}">
@@ -182,10 +196,8 @@
                     </label>
                     {{#if isSpecialty}}
                     <input type="text" name="specialty.opt.{{optIndex}}" value="{{specialtyLabel}}"
-                        list="dg-sp-{{group}}"
-                        placeholder="Choose or type subspecialty"
-                        class="dg-specialty-input dg-opt-spec-input"
-                        {{#unless picked}}disabled{{/unless}} />
+                        list="dg-sp-{{group}}" placeholder="Choose or type subspecialty"
+                        class="dg-specialty-input dg-opt-spec-input" {{#unless picked}}disabled{{/unless}} />
                     {{/if}}
                 </div>
                 {{/each}}
@@ -199,8 +211,8 @@
                 {{#each specialtyContext.required}}
                 <div class="dg-specialty-row{{#unless label}} dg-specialty-empty{{/unless}}">
                     <span class="dg-specialty-group">{{groupDisplay}}</span>
-                    <input type="text" name="specialty.req.{{id}}" value="{{label}}"
-                        list="dg-sp-{{group}}" placeholder="e.g. {{groupDisplay}} (Spanish) — choose from list or type your own"
+                    <input type="text" name="specialty.req.{{id}}" value="{{label}}" list="dg-sp-{{group}}"
+                        placeholder="e.g. {{groupDisplay}} (Spanish) — choose from list or type your own"
                         class="dg-specialty-input" />
                     <span class="dg-specialty-value">{{proficiency}}%</span>
                 </div>
@@ -248,7 +260,8 @@
                     speaks three languages, a Soldier who paints.</p>
                 <p>No skill can go above <strong>80%</strong> during character creation.</p>
                 <p>For specialty skills (Art, Craft, Foreign Language, Pilot, Science, Military Science) choose the
-                    <em>Other…</em> option at the bottom of each group to type in a custom specialty.</p>
+                    <em>Other…</em> option at the bottom of each group to type in a custom specialty.
+                </p>
             </details>
 
             {{#if bonusSkills}}
@@ -257,7 +270,8 @@
                     <select id="dg-bonus-pack-select">
                         <option value="">— choose a background —</option>
                         {{#each bonusSkills.packages}}
-                        <option value="{{@index}}" {{#if (eq @index ../bonusSkills.packIdx)}}selected{{/if}}>{{label}}</option>
+                        <option value="{{@index}}" {{#if (eq @index ../bonusSkills.packIdx)}}selected{{/if}}>{{label}}
+                        </option>
                         {{/each}}
                     </select>
                 </label>
@@ -305,7 +319,8 @@
             <details class="dg-tips">
                 <summary>Tips</summary>
                 <p>Profession determines how many Bonds your Agent gets. Each Bond should have a name and specify the
-                    relationship — <em>"Ex-husband, Taylor"</em> or <em>"Special Agent Waite, frequent FBI partner."</em>
+                    relationship — <em>"Ex-husband, Taylor"</em> or <em>"Special Agent Waite, frequent FBI
+                        partner."</em>
                     Each Bond starts with a score equal to your Agent's CHA.</p>
                 <ul class="dg-tips-list">
                     <li>» Spouse or ex-spouse</li>
@@ -444,27 +459,37 @@
             <details class="dg-tips">
                 <summary>Tips</summary>
                 <p>Browse and add items by category. Click <strong>+</strong> to include gear, or remove it with the
-                    <strong>✕</strong> on each item card.</p>
+                    <strong>✕</strong> on each item card.
+                </p>
                 <p><strong>Operational Gear:</strong> Agents usually start an operation with duffel bags and footlockers
                     of equipment. No need to list everything in advance — assume the basics are covered.</p>
                 <details class="dg-tips-inner">
                     <summary>Expense Categories</summary>
                     <ul class="dg-tips-list">
-                        <li><span class="dg-exp-badge dg-exp-incidental">Incidental</span> (up to $150) — No tracking needed. Meals, ammo, burner phones, shovels.</li>
-                        <li><span class="dg-exp-badge dg-exp-standard">Standard</span> ($200–$800) — A pistol, same-day plane ticket, or a week at a modest hotel.</li>
-                        <li><span class="dg-exp-badge dg-exp-unusual">Unusual</span> ($1,000–$5,000) — A scoped rifle, forged passport, powerful computer.</li>
-                        <li><span class="dg-exp-badge dg-exp-major">Major</span> ($6,000–$30,000) — Heavy weapons, professional forgery, a new vehicle.</li>
-                        <li><span class="dg-exp-badge dg-exp-extreme">Extreme</span> ($36,000+) — Black-budget territory. Handler's call entirely.</li>
+                        <li><span class="dg-exp-badge dg-exp-incidental">Incidental</span> (up to $150) — No tracking
+                            needed. Meals, ammo, burner phones, shovels.</li>
+                        <li><span class="dg-exp-badge dg-exp-standard">Standard</span> ($200–$800) — A pistol, same-day
+                            plane ticket, or a week at a modest hotel.</li>
+                        <li><span class="dg-exp-badge dg-exp-unusual">Unusual</span> ($1,000–$5,000) — A scoped rifle,
+                            forged passport, powerful computer.</li>
+                        <li><span class="dg-exp-badge dg-exp-major">Major</span> ($6,000–$30,000) — Heavy weapons,
+                            professional forgery, a new vehicle.</li>
+                        <li><span class="dg-exp-badge dg-exp-extreme">Extreme</span> ($36,000+) — Black-budget
+                            territory. Handler's call entirely.</li>
                     </ul>
                 </details>
             </details>
 
             <div class="dg-eq-loadout-btns">
                 <span class="dg-eq-loadout-btns-label">Quick Loadouts:</span>
-                <button type="button" data-action="loadLoadout" data-loadout="federal_agent" class="dg-btn-secondary dg-eq-loadout-btn">🕵 Federal Agent</button>
-                <button type="button" data-action="loadLoadout" data-loadout="police_officer" class="dg-btn-secondary dg-eq-loadout-btn">🚓 Police Officer</button>
-                <button type="button" data-action="loadLoadout" data-loadout="swat" class="dg-btn-secondary dg-eq-loadout-btn">🛡 SWAT</button>
-                <button type="button" data-action="loadLoadout" data-loadout="special_operator" class="dg-btn-secondary dg-eq-loadout-btn">⚔ Special Operator</button>
+                <button type="button" data-action="loadLoadout" data-loadout="federal_agent"
+                    class="dg-btn-secondary dg-eq-loadout-btn">🕵 Federal Agent</button>
+                <button type="button" data-action="loadLoadout" data-loadout="police_officer"
+                    class="dg-btn-secondary dg-eq-loadout-btn">🚓 Police Officer</button>
+                <button type="button" data-action="loadLoadout" data-loadout="swat"
+                    class="dg-btn-secondary dg-eq-loadout-btn">🛡 SWAT</button>
+                <button type="button" data-action="loadLoadout" data-loadout="special_operator"
+                    class="dg-btn-secondary dg-eq-loadout-btn">⚔ Special Operator</button>
             </div>
 
             <div class="dg-eq-layout">
@@ -527,7 +552,8 @@
                     <span class="dg-review-skill">{{label}}: <strong>{{value}}%</strong></span>
                     {{/each}}
                     {{#each review.specialtySkills}}
-                    <span class="dg-review-skill dg-review-skill-specialty">{{label}}: <strong>{{value}}%</strong></span>
+                    <span class="dg-review-skill dg-review-skill-specialty">{{label}}:
+                        <strong>{{value}}%</strong></span>
                     {{/each}}
                 </div>
             </section>
@@ -568,9 +594,9 @@
             <section class="dg-review-section">
                 <h3>Bonus Skill Picks</h3>
                 <div class="dg-review-skills">
-            {{/if}}
+                    {{/if}}
                     <span class="dg-review-skill">{{label}}: <strong>+{{total}}%</strong></span>
-            {{#if @last}}
+                    {{#if @last}}
                 </div>
             </section>
             {{/if}}
@@ -597,10 +623,11 @@
         <button type="button" data-action="prevStep" class="dg-btn-secondary">← Back</button>
         {{/unless}}
         <span class="dg-nav-spacer"></span>
-        {{#if isLast}}
-        <button type="button" data-action="exportPdf" class="dg-btn-secondary dg-btn-export-pdf" title="Export to DD Form 315 PDF">
+        <button type="button" data-action="exportPdf" class="dg-btn-secondary dg-btn-export-pdf"
+            title="Export to DD Form 315 PDF">
             <i class="fa-solid fa-file-pdf"></i> Export PDF
         </button>
+        {{#if isLast}}
         <button type="button" data-action="finish" class="dg-btn-primary dg-btn-finish">✔ Apply to Sheet</button>
         {{else}}
         <button type="button" data-action="nextStep" class="dg-btn-primary">Next →</button>

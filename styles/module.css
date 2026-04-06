@@ -43,7 +43,9 @@
     letter-spacing: 0.02em;
 }
 
-.dg-agent-wizard-launch i { font-size: 1.1rem; }
+.dg-agent-wizard-launch i {
+    font-size: 1.1rem;
+}
 
 .dg-agent-wizard-launch:hover {
     background: #3a5a22;
@@ -68,7 +70,9 @@
     letter-spacing: 0.02em;
 }
 
-.dg-agent-pdf-export i { font-size: 1.1rem; }
+.dg-agent-pdf-export i {
+    font-size: 1.1rem;
+}
 
 .dg-agent-pdf-export:hover {
     background: #22405a;

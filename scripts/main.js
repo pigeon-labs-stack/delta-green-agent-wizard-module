@@ -26,8 +26,8 @@ const WIZARD_BAR_COLLAPSED_KEY = 'dg-wizard-bar-collapsed';
  * Used by the bar's "Export PDF" button for already-created agents.
  */
 function buildActorPdfState(actor) {
-    const sys  = actor.system ?? {};
-    const st   = sys.statistics ?? {};
+    const sys = actor.system ?? {};
+    const st = sys.statistics ?? {};
 
     const csStats = {
         STR: st.str?.value ?? 10,
@@ -38,10 +38,10 @@ function buildActorPdfState(actor) {
         CHA: st.cha?.value ?? 10,
     };
 
-    const hp  = sys.health?.max   ?? sys.health?.value  ?? 0;
-    const wp  = sys.wp?.max       ?? sys.wp?.value       ?? 0;
+    const hp = sys.health?.max ?? sys.health?.value ?? 0;
+    const wp = sys.wp?.max ?? sys.wp?.value ?? 0;
     const san = sys.sanity?.value ?? 0;
-    const bp  = sys.sanity?.currentBreakingPoint ?? 0;
+    const bp = sys.sanity?.currentBreakingPoint ?? 0;
     const derived = { hp, wp, san, bp };
 
     // Plain skills
@@ -54,12 +54,12 @@ function buildActorPdfState(actor) {
 
     // Typed skills (specialty instances)
     const GROUP_KEY_MAP = {
-        Art:            'art',
-        Craft:          'craft',
-        ForeignLanguage:'foreign_language',
-        Science:        'science',
-        Pilot:          'pilot',
-        MilitaryScience:'military_science',
+        Art: 'art',
+        Craft: 'craft',
+        ForeignLanguage: 'foreign_language',
+        Science: 'science',
+        Pilot: 'pilot',
+        MilitaryScience: 'military_science',
     };
     const specialtyInstances = [];
     for (const ts of Object.values(sys.typedSkills ?? {})) {
@@ -80,27 +80,27 @@ function buildActorPdfState(actor) {
 
     const bioSys = sys.biography ?? {};
     const bio = {
-        name:            actor.name,
-        profession:      bioSys.profession    ?? '',
-        employer:        bioSys.employer      ?? '',
-        nationality:     bioSys.nationality   ?? '',
-        sex:             bioSys.sex           ?? '',
-        age:             bioSys.age           ?? '',
-        education:       bioSys.education     ?? '',
-        physicalDesc:    sys.physicalDescription ?? '',
-        motivations:     motivationStrings,
-        personalDetails: bioSys.notes         ?? '',
+        name: actor.name,
+        profession: bioSys.profession ?? '',
+        employer: bioSys.employer ?? '',
+        nationality: bioSys.nationality ?? '',
+        sex: bioSys.sex ?? '',
+        age: bioSys.age ?? '',
+        education: bioSys.education ?? '',
+        physicalDesc: sys.physicalDescription ?? '',
+        motivations: motivationStrings,
+        personalDetails: bioSys.notes ?? '',
     };
 
     return {
         csStats, derived, bio, skills,
-        skillSpecs:           {},
-        customSkills:         [],
+        skillSpecs: {},
+        customSkills: [],
         specialtyInstances,
         bonds,
-        sanity:               { violence: [false, false, false], helplessness: [false, false, false] },
-        lpNotes:              { wounds: '', gear: '', remarks: '' },
-        lpFeat:               {
+        sanity: { violence: [false, false, false], helplessness: [false, false, false] },
+        lpNotes: { wounds: '', gear: '', remarks: '' },
+        lpFeat: {
             STR: st.str?.distinguishing_feature ?? '',
             CON: st.con?.distinguishing_feature ?? '',
             DEX: st.dex?.distinguishing_feature ?? '',
@@ -115,18 +115,18 @@ function buildActorPdfState(actor) {
                 const wsys = item.system ?? {};
                 const skillKey = wsys.skill ?? '';
                 const skillVal = skills[skillKey] ?? 0;
-                const rawPct   = skillVal + (wsys.skillModifier ?? 0);
+                const rawPct = skillVal + (wsys.skillModifier ?? 0);
                 return {
-                    name:       item.name,
-                    skillPct:   rawPct || '',
-                    range:      wsys.range      ?? '',
-                    damage:     wsys.damage     ?? '',
-                    lethality:  wsys.lethality  ? wsys.lethality + '%' : '',
+                    name: item.name,
+                    skillPct: rawPct || '',
+                    range: wsys.range ?? '',
+                    damage: wsys.damage ?? '',
+                    lethality: wsys.lethality ? wsys.lethality + '%' : '',
                     killRadius: (wsys.killRadius && wsys.killRadius !== 'N/A') ? wsys.killRadius : '',
-                    ammo:       wsys.ammo       ?? '',
+                    ammo: wsys.ammo ?? '',
                 };
             }),
-        equipment:            actor.items.filter(i => i.type === 'gear').map(i => i.name),
+        equipment: actor.items.filter(i => i.type === 'gear').map(i => i.name),
     };
 }
 
@@ -163,9 +163,9 @@ function injectWizardButton(app, element) {
 
     // Always set display via inline style — Foundry CSS can override class-based flex/block rules
     const buttonsEl = bar.querySelector('.dg-wizard-bar-buttons');
-    const labelEl   = bar.querySelector('.dg-wizard-bar-toggle-label');
+    const labelEl = bar.querySelector('.dg-wizard-bar-toggle-label');
     buttonsEl.style.display = collapsed ? 'none' : 'flex';
-    labelEl.style.display   = collapsed ? 'none' : '';
+    labelEl.style.display = collapsed ? 'none' : '';
 
     bar.querySelector('.dg-agent-wizard-launch').addEventListener('click', () => {
         new DeltaGreenChargenWizard(actor).render({ force: true });
@@ -179,7 +179,7 @@ function injectWizardButton(app, element) {
         const isNowCollapsed = bar.classList.toggle('dg-wizard-bar-collapsed');
         localStorage.setItem(WIZARD_BAR_COLLAPSED_KEY, isNowCollapsed ? '1' : '0');
         buttonsEl.style.display = isNowCollapsed ? 'none' : 'flex';
-        labelEl.style.display   = isNowCollapsed ? 'none' : '';
+        labelEl.style.display = isNowCollapsed ? 'none' : '';
     });
 
     content.prepend(bar);

@@ -63,90 +63,90 @@ const SKILL_DEFAULTS = {
 
 // All skill options for bonus picks: base skills + common subspecialties, sorted alphabetically.
 const BONUS_SKILL_OPTIONS = [
-    { key: 'accounting',              label: 'Accounting' },
-    { key: 'alertness',               label: 'Alertness' },
-    { key: 'anthropology',            label: 'Anthropology' },
-    { key: 'archeology',              label: 'Archeology' },
-    { key: 'art_painting',            label: 'Art (Painting)' },
-    { key: 'art_photography',         label: 'Art (Photography)' },
-    { key: 'art_writing',             label: 'Art (Writing)' },
-    { key: '_custom_Art',             label: 'Art (Other…)' },
-    { key: 'artillery',               label: 'Artillery' },
-    { key: 'athletics',               label: 'Athletics' },
-    { key: 'bureaucracy',             label: 'Bureaucracy' },
-    { key: 'computer_science',        label: 'Computer Science' },
-    { key: 'craft_electrician',       label: 'Craft (Electrician)' },
-    { key: 'craft_locksmithing',      label: 'Craft (Locksmithing)' },
-    { key: 'craft_mechanic',          label: 'Craft (Mechanic)' },
-    { key: 'craft_microelectronics',  label: 'Craft (Microelectronics)' },
-    { key: '_custom_Craft',           label: 'Craft (Other…)' },
-    { key: 'criminology',             label: 'Criminology' },
-    { key: 'demolitions',             label: 'Demolitions' },
-    { key: 'disguise',                label: 'Disguise' },
-    { key: 'dodge',                   label: 'Dodge' },
-    { key: 'drive',                   label: 'Drive' },
-    { key: 'firearms',                label: 'Firearms' },
-    { key: 'first_aid',               label: 'First Aid' },
+    { key: 'accounting', label: 'Accounting' },
+    { key: 'alertness', label: 'Alertness' },
+    { key: 'anthropology', label: 'Anthropology' },
+    { key: 'archeology', label: 'Archeology' },
+    { key: 'art_painting', label: 'Art (Painting)' },
+    { key: 'art_photography', label: 'Art (Photography)' },
+    { key: 'art_writing', label: 'Art (Writing)' },
+    { key: '_custom_Art', label: 'Art (Other…)' },
+    { key: 'artillery', label: 'Artillery' },
+    { key: 'athletics', label: 'Athletics' },
+    { key: 'bureaucracy', label: 'Bureaucracy' },
+    { key: 'computer_science', label: 'Computer Science' },
+    { key: 'craft_electrician', label: 'Craft (Electrician)' },
+    { key: 'craft_locksmithing', label: 'Craft (Locksmithing)' },
+    { key: 'craft_mechanic', label: 'Craft (Mechanic)' },
+    { key: 'craft_microelectronics', label: 'Craft (Microelectronics)' },
+    { key: '_custom_Craft', label: 'Craft (Other…)' },
+    { key: 'criminology', label: 'Criminology' },
+    { key: 'demolitions', label: 'Demolitions' },
+    { key: 'disguise', label: 'Disguise' },
+    { key: 'dodge', label: 'Dodge' },
+    { key: 'drive', label: 'Drive' },
+    { key: 'firearms', label: 'Firearms' },
+    { key: 'first_aid', label: 'First Aid' },
     { key: 'foreign_language_arabic', label: 'Foreign Language (Arabic)' },
-    { key: 'foreign_language_chinese',label: 'Foreign Language (Chinese)' },
+    { key: 'foreign_language_chinese', label: 'Foreign Language (Chinese)' },
     { key: 'foreign_language_french', label: 'Foreign Language (French)' },
-    { key: 'foreign_language_russian',label: 'Foreign Language (Russian)' },
-    { key: 'foreign_language_spanish',label: 'Foreign Language (Spanish)' },
+    { key: 'foreign_language_russian', label: 'Foreign Language (Russian)' },
+    { key: 'foreign_language_spanish', label: 'Foreign Language (Spanish)' },
     { key: '_custom_ForeignLanguage', label: 'Foreign Language (Other…)' },
-    { key: 'forensics',               label: 'Forensics' },
-    { key: 'heavy_machiner',          label: 'Heavy Machinery' },
-    { key: 'heavy_weapons',           label: 'Heavy Weapons' },
-    { key: 'history',                 label: 'History' },
-    { key: 'humint',                  label: 'HUMINT' },
-    { key: 'law',                     label: 'Law' },
-    { key: 'medicine',                label: 'Medicine' },
-    { key: 'melee_weapons',           label: 'Melee Weapons' },
-    { key: 'military_science_air',              label: 'Military Science (Air)' },
-    { key: 'military_science_land',              label: 'Military Science (Land)' },
-    { key: 'military_science_sea',               label: 'Military Science (Sea)' },
+    { key: 'forensics', label: 'Forensics' },
+    { key: 'heavy_machiner', label: 'Heavy Machinery' },
+    { key: 'heavy_weapons', label: 'Heavy Weapons' },
+    { key: 'history', label: 'History' },
+    { key: 'humint', label: 'HUMINT' },
+    { key: 'law', label: 'Law' },
+    { key: 'medicine', label: 'Medicine' },
+    { key: 'melee_weapons', label: 'Melee Weapons' },
+    { key: 'military_science_air', label: 'Military Science (Air)' },
+    { key: 'military_science_land', label: 'Military Science (Land)' },
+    { key: 'military_science_sea', label: 'Military Science (Sea)' },
     { key: 'military_science_special_operations', label: 'Military Science (Special Ops)' },
-    { key: '_custom_MilitaryScience',            label: 'Military Science (Other…)' },
-    { key: 'navigate',                label: 'Navigate' },
-    { key: 'occult',                  label: 'Occult' },
-    { key: 'persuade',                label: 'Persuade' },
-    { key: 'pharmacy',                label: 'Pharmacy' },
-    { key: 'pilot_airplane',          label: 'Pilot (Airplane)' },
-    { key: 'pilot_helicopter',        label: 'Pilot (Helicopter)' },
-    { key: '_custom_Pilot',           label: 'Pilot (Other…)' },
-    { key: 'psychotherapy',           label: 'Psychotherapy' },
-    { key: 'ride',                    label: 'Ride' },
-    { key: 'science_biology',         label: 'Science (Biology)' },
-    { key: 'science_chemistry',       label: 'Science (Chemistry)' },
-    { key: 'science_mathematics',     label: 'Science (Mathematics)' },
-    { key: 'science_physics',         label: 'Science (Physics)' },
-    { key: '_custom_Science',         label: 'Science (Other…)' },
-    { key: 'search',                  label: 'Search' },
-    { key: 'sigint',                  label: 'SIGINT' },
-    { key: 'stealth',                 label: 'Stealth' },
-    { key: 'surgery',                 label: 'Surgery' },
-    { key: 'survival',                label: 'Survival' },
-    { key: 'swim',                    label: 'Swim' },
-    { key: 'unarmed_combat',          label: 'Unarmed Combat' },
-    { key: 'unnatural',               label: 'Unnatural' },
+    { key: '_custom_MilitaryScience', label: 'Military Science (Other…)' },
+    { key: 'navigate', label: 'Navigate' },
+    { key: 'occult', label: 'Occult' },
+    { key: 'persuade', label: 'Persuade' },
+    { key: 'pharmacy', label: 'Pharmacy' },
+    { key: 'pilot_airplane', label: 'Pilot (Airplane)' },
+    { key: 'pilot_helicopter', label: 'Pilot (Helicopter)' },
+    { key: '_custom_Pilot', label: 'Pilot (Other…)' },
+    { key: 'psychotherapy', label: 'Psychotherapy' },
+    { key: 'ride', label: 'Ride' },
+    { key: 'science_biology', label: 'Science (Biology)' },
+    { key: 'science_chemistry', label: 'Science (Chemistry)' },
+    { key: 'science_mathematics', label: 'Science (Mathematics)' },
+    { key: 'science_physics', label: 'Science (Physics)' },
+    { key: '_custom_Science', label: 'Science (Other…)' },
+    { key: 'search', label: 'Search' },
+    { key: 'sigint', label: 'SIGINT' },
+    { key: 'stealth', label: 'Stealth' },
+    { key: 'surgery', label: 'Surgery' },
+    { key: 'survival', label: 'Survival' },
+    { key: 'swim', label: 'Swim' },
+    { key: 'unarmed_combat', label: 'Unarmed Combat' },
+    { key: 'unnatural', label: 'Unnatural' },
 ];
 
 // Specialty skill bases and their Foundry DG.TypeSkills group key suffix.
 const SPECIALTY_PREFIXES = {
-    'Art':              'Art',
-    'Craft':            'Craft',
+    'Art': 'Art',
+    'Craft': 'Craft',
     'Foreign Language': 'ForeignLanguage',
-    'Science':          'Science',
-    'Pilot':            'Pilot',
+    'Science': 'Science',
+    'Pilot': 'Pilot',
     'Military Science': 'MilitaryScience',
 };
 
 // Suggested subspecialties shown as datalist in the skills step.
 const SPECIALTY_OPTIONS = {
-    Art:             ['Acting', 'Drawing', 'Fine Art', 'Music', 'Painting', 'Photography', 'Sculpture', 'Writing'],
-    Craft:           ['Carpentry', 'Electrician', 'Locksmithing', 'Mechanic', 'Microelectronics', 'Plumbing', 'Welding'],
+    Art: ['Acting', 'Drawing', 'Fine Art', 'Music', 'Painting', 'Photography', 'Sculpture', 'Writing'],
+    Craft: ['Carpentry', 'Electrician', 'Locksmithing', 'Mechanic', 'Microelectronics', 'Plumbing', 'Welding'],
     ForeignLanguage: ['Arabic', 'Chinese (Mandarin)', 'Farsi/Persian', 'French', 'German', 'Hebrew', 'Hindi', 'Italian', 'Japanese', 'Korean', 'Portuguese', 'Russian', 'Spanish', 'Swahili', 'Turkish'],
-    Science:         ['Astronomy', 'Biology', 'Chemistry', 'Geology', 'Mathematics', 'Meteorology', 'Oceanography', 'Pharmacology', 'Physics'],
-    Pilot:           ['Airplane', 'Drone', 'Helicopter', 'Jet Aircraft', 'Ship', 'Small Boat'],
+    Science: ['Astronomy', 'Biology', 'Chemistry', 'Geology', 'Mathematics', 'Meteorology', 'Oceanography', 'Pharmacology', 'Physics'],
+    Pilot: ['Airplane', 'Drone', 'Helicopter', 'Jet Aircraft', 'Ship', 'Small Boat'],
     MilitaryScience: ['Air', 'Land', 'Sea', 'Special Operations'],
 };
 
@@ -174,10 +174,10 @@ function parseSpecialtyFromKey(key) {
     const prefixMap = [
         ['military_science_', 'MilitaryScience'],
         ['foreign_language_', 'ForeignLanguage'],
-        ['science_',          'Science'],
-        ['craft_',            'Craft'],
-        ['pilot_',            'Pilot'],
-        ['art_',              'Art'],
+        ['science_', 'Science'],
+        ['craft_', 'Craft'],
+        ['pilot_', 'Pilot'],
+        ['art_', 'Art'],
     ];
     for (const [prefix, group] of prefixMap) {
         if (key.startsWith(prefix)) {
@@ -216,78 +216,120 @@ const LOADOUTS = {
 
 const BOND_DATASETS = [
     { key: 'FRIENDS_FAMILY', label: 'Friends & Family' },
-    { key: 'DELTA_GREEN',    label: 'Delta Green' },
-    { key: 'UNDERWORLD',     label: 'Underworld / Criminal' },
-    { key: 'LGBTQ',          label: 'LGBTQ+' },
-    { key: 'PISCES_UK',      label: 'PISCES (British Intel)' },
+    { key: 'DELTA_GREEN', label: 'Delta Green' },
+    { key: 'UNDERWORLD', label: 'Underworld / Criminal' },
+    { key: 'LGBTQ', label: 'LGBTQ+' },
+    { key: 'PISCES_UK', label: 'PISCES (British Intel)' },
 ];
 
 // Background bonus packages from the Delta Green rulebook (p.20).
 // Slot values use BONUS_SKILL_OPTIONS keys; '_custom_*' = type-your-own specialty; '' = free pick.
 const BONUS_PACKAGES = [
-    { label: 'Artist, Actor, or Musician',
-      desc: 'Alertness · Craft (choose) · Disguise · Persuade · Art (choose) ×3 · HUMINT',
-      skills: ['alertness', '_custom_Craft', 'disguise', 'persuade', '_custom_Art', '_custom_Art', '_custom_Art', 'humint'] },
-    { label: 'Athlete',
-      desc: 'Alertness · Athletics · Dodge · First Aid · HUMINT · Persuade · Swim · Unarmed Combat',
-      skills: ['alertness', 'athletics', 'dodge', 'first_aid', 'humint', 'persuade', 'swim', 'unarmed_combat'] },
-    { label: 'Author, Editor, or Journalist',
-      desc: 'Anthropology · Art (choose) · Bureaucracy · History · HUMINT · Law · Occult · Persuade',
-      skills: ['anthropology', '_custom_Art', 'bureaucracy', 'history', 'humint', 'law', 'occult', 'persuade'] },
-    { label: '"Black Bag" Training',
-      desc: 'Alertness · Athletics · Craft (Electrician) · Craft (Locksmithing) · Criminology · Disguise · Search · Stealth',
-      skills: ['alertness', 'athletics', 'craft_electrician', 'craft_locksmithing', 'criminology', 'disguise', 'search', 'stealth'] },
-    { label: 'Blue-Collar Worker',
-      desc: 'Alertness · Craft (choose) ×2 · Drive · First Aid · Heavy Machinery · Navigate · Search',
-      skills: ['alertness', '_custom_Craft', '_custom_Craft', 'drive', 'first_aid', 'heavy_machiner', 'navigate', 'search'] },
-    { label: 'Bureaucrat',
-      desc: 'Accounting · Bureaucracy · Computer Science · Criminology · HUMINT · Law · Persuade · personal specialty (choose)',
-      skills: ['accounting', 'bureaucracy', 'computer_science', 'criminology', 'humint', 'law', 'persuade', ''] },
-    { label: 'Clergy',
-      desc: 'Foreign Language (choose) ×3 · History · HUMINT · Occult · Persuade · Psychotherapy',
-      skills: ['_custom_ForeignLanguage', '_custom_ForeignLanguage', '_custom_ForeignLanguage', 'history', 'humint', 'occult', 'persuade', 'psychotherapy'] },
-    { label: 'Combat Veteran',
-      desc: 'Alertness · Dodge · Firearms · First Aid · Heavy Weapons · Melee Weapons · Stealth · Unarmed Combat',
-      skills: ['alertness', 'dodge', 'firearms', 'first_aid', 'heavy_weapons', 'melee_weapons', 'stealth', 'unarmed_combat'] },
-    { label: 'Computer Enthusiast or Hacker',
-      desc: 'Computer Science · Craft (Microelectronics) · Science (Mathematics) · SIGINT · personal specialties ×4 (choose freely)',
-      skills: ['computer_science', 'craft_microelectronics', 'science_mathematics', 'sigint', '', '', '', ''] },
-    { label: 'Counselor',
-      desc: 'Bureaucracy · First Aid · Foreign Language (choose) · HUMINT · Law · Persuade · Psychotherapy · Search',
-      skills: ['bureaucracy', 'first_aid', '_custom_ForeignLanguage', 'humint', 'law', 'persuade', 'psychotherapy', 'search'] },
-    { label: 'Criminalist',
-      desc: 'Accounting · Bureaucracy · Computer Science · Criminology · Forensics · Law · Pharmacy · Search',
-      skills: ['accounting', 'bureaucracy', 'computer_science', 'criminology', 'forensics', 'law', 'pharmacy', 'search'] },
-    { label: 'Firefighter',
-      desc: 'Alertness · Demolitions · Drive · First Aid · Forensics · Heavy Machinery · Navigate · Search',
-      skills: ['alertness', 'demolitions', 'drive', 'first_aid', 'forensics', 'heavy_machiner', 'navigate', 'search'] },
-    { label: 'Gangster or Deep Cover',
-      desc: 'Alertness · Criminology · Dodge · Drive · Persuade · Stealth · choose 2 freely',
-      skills: ['alertness', 'criminology', 'dodge', 'drive', 'persuade', 'stealth', '', ''] },
-    { label: 'Interrogator',
-      desc: 'Criminology · Foreign Language (choose) ×2 · HUMINT · Law · Persuade · Pharmacy · Search',
-      skills: ['criminology', '_custom_ForeignLanguage', '_custom_ForeignLanguage', 'humint', 'law', 'persuade', 'pharmacy', 'search'] },
-    { label: 'Liberal Arts Degree',
-      desc: 'Anthropology · Art (choose) · Foreign Language (choose) · History · Persuade · personal specialties ×3',
-      skills: ['anthropology', '_custom_Art', '_custom_ForeignLanguage', 'history', 'persuade', '', '', ''] },
-    { label: 'Military Officer',
-      desc: 'Bureaucracy · Firearms · History · Military Science (choose) · Navigate · Persuade · Unarmed Combat · choose 1 freely',
-      skills: ['bureaucracy', 'firearms', 'history', '_custom_MilitaryScience', 'navigate', 'persuade', 'unarmed_combat', ''] },
-    { label: 'MBA',
-      desc: 'Accounting · Bureaucracy · HUMINT · Law · Persuade · personal specialties ×3 (choose freely)',
-      skills: ['accounting', 'bureaucracy', 'humint', 'law', 'persuade', '', '', ''] },
-    { label: 'Nurse, Paramedic, or Pre-Med',
-      desc: 'Alertness · First Aid · Medicine · Persuade · Pharmacy · Psychotherapy · Science (Biology) · Search',
-      skills: ['alertness', 'first_aid', 'medicine', 'persuade', 'pharmacy', 'psychotherapy', 'science_biology', 'search'] },
-    { label: 'Occult Investigator or Conspiracy Theorist',
-      desc: 'Anthropology · Archeology · Computer Science · Criminology · History · Occult · Persuade · Search',
-      skills: ['anthropology', 'archeology', 'computer_science', 'criminology', 'history', 'occult', 'persuade', 'search'] },
-    { label: 'Outdoorsman',
-      desc: 'Alertness · Athletics · Firearms · Navigate · Ride · Search · Stealth · Survival',
-      skills: ['alertness', 'athletics', 'firearms', 'navigate', 'ride', 'search', 'stealth', 'survival'] },
-    { label: 'Photographer',
-      desc: 'Alertness · Art (Photography) · Computer Science · Persuade · Search · Stealth · personal specialties ×2',
-      skills: ['alertness', 'art_photography', 'computer_science', 'persuade', 'search', 'stealth', '', ''] },
+    {
+        label: 'Artist, Actor, or Musician',
+        desc: 'Alertness · Craft (choose) · Disguise · Persuade · Art (choose) ×3 · HUMINT',
+        skills: ['alertness', '_custom_Craft', 'disguise', 'persuade', '_custom_Art', '_custom_Art', '_custom_Art', 'humint']
+    },
+    {
+        label: 'Athlete',
+        desc: 'Alertness · Athletics · Dodge · First Aid · HUMINT · Persuade · Swim · Unarmed Combat',
+        skills: ['alertness', 'athletics', 'dodge', 'first_aid', 'humint', 'persuade', 'swim', 'unarmed_combat']
+    },
+    {
+        label: 'Author, Editor, or Journalist',
+        desc: 'Anthropology · Art (choose) · Bureaucracy · History · HUMINT · Law · Occult · Persuade',
+        skills: ['anthropology', '_custom_Art', 'bureaucracy', 'history', 'humint', 'law', 'occult', 'persuade']
+    },
+    {
+        label: '"Black Bag" Training',
+        desc: 'Alertness · Athletics · Craft (Electrician) · Craft (Locksmithing) · Criminology · Disguise · Search · Stealth',
+        skills: ['alertness', 'athletics', 'craft_electrician', 'craft_locksmithing', 'criminology', 'disguise', 'search', 'stealth']
+    },
+    {
+        label: 'Blue-Collar Worker',
+        desc: 'Alertness · Craft (choose) ×2 · Drive · First Aid · Heavy Machinery · Navigate · Search',
+        skills: ['alertness', '_custom_Craft', '_custom_Craft', 'drive', 'first_aid', 'heavy_machiner', 'navigate', 'search']
+    },
+    {
+        label: 'Bureaucrat',
+        desc: 'Accounting · Bureaucracy · Computer Science · Criminology · HUMINT · Law · Persuade · personal specialty (choose)',
+        skills: ['accounting', 'bureaucracy', 'computer_science', 'criminology', 'humint', 'law', 'persuade', '']
+    },
+    {
+        label: 'Clergy',
+        desc: 'Foreign Language (choose) ×3 · History · HUMINT · Occult · Persuade · Psychotherapy',
+        skills: ['_custom_ForeignLanguage', '_custom_ForeignLanguage', '_custom_ForeignLanguage', 'history', 'humint', 'occult', 'persuade', 'psychotherapy']
+    },
+    {
+        label: 'Combat Veteran',
+        desc: 'Alertness · Dodge · Firearms · First Aid · Heavy Weapons · Melee Weapons · Stealth · Unarmed Combat',
+        skills: ['alertness', 'dodge', 'firearms', 'first_aid', 'heavy_weapons', 'melee_weapons', 'stealth', 'unarmed_combat']
+    },
+    {
+        label: 'Computer Enthusiast or Hacker',
+        desc: 'Computer Science · Craft (Microelectronics) · Science (Mathematics) · SIGINT · personal specialties ×4 (choose freely)',
+        skills: ['computer_science', 'craft_microelectronics', 'science_mathematics', 'sigint', '', '', '', '']
+    },
+    {
+        label: 'Counselor',
+        desc: 'Bureaucracy · First Aid · Foreign Language (choose) · HUMINT · Law · Persuade · Psychotherapy · Search',
+        skills: ['bureaucracy', 'first_aid', '_custom_ForeignLanguage', 'humint', 'law', 'persuade', 'psychotherapy', 'search']
+    },
+    {
+        label: 'Criminalist',
+        desc: 'Accounting · Bureaucracy · Computer Science · Criminology · Forensics · Law · Pharmacy · Search',
+        skills: ['accounting', 'bureaucracy', 'computer_science', 'criminology', 'forensics', 'law', 'pharmacy', 'search']
+    },
+    {
+        label: 'Firefighter',
+        desc: 'Alertness · Demolitions · Drive · First Aid · Forensics · Heavy Machinery · Navigate · Search',
+        skills: ['alertness', 'demolitions', 'drive', 'first_aid', 'forensics', 'heavy_machiner', 'navigate', 'search']
+    },
+    {
+        label: 'Gangster or Deep Cover',
+        desc: 'Alertness · Criminology · Dodge · Drive · Persuade · Stealth · choose 2 freely',
+        skills: ['alertness', 'criminology', 'dodge', 'drive', 'persuade', 'stealth', '', '']
+    },
+    {
+        label: 'Interrogator',
+        desc: 'Criminology · Foreign Language (choose) ×2 · HUMINT · Law · Persuade · Pharmacy · Search',
+        skills: ['criminology', '_custom_ForeignLanguage', '_custom_ForeignLanguage', 'humint', 'law', 'persuade', 'pharmacy', 'search']
+    },
+    {
+        label: 'Liberal Arts Degree',
+        desc: 'Anthropology · Art (choose) · Foreign Language (choose) · History · Persuade · personal specialties ×3',
+        skills: ['anthropology', '_custom_Art', '_custom_ForeignLanguage', 'history', 'persuade', '', '', '']
+    },
+    {
+        label: 'Military Officer',
+        desc: 'Bureaucracy · Firearms · History · Military Science (choose) · Navigate · Persuade · Unarmed Combat · choose 1 freely',
+        skills: ['bureaucracy', 'firearms', 'history', '_custom_MilitaryScience', 'navigate', 'persuade', 'unarmed_combat', '']
+    },
+    {
+        label: 'MBA',
+        desc: 'Accounting · Bureaucracy · HUMINT · Law · Persuade · personal specialties ×3 (choose freely)',
+        skills: ['accounting', 'bureaucracy', 'humint', 'law', 'persuade', '', '', '']
+    },
+    {
+        label: 'Nurse, Paramedic, or Pre-Med',
+        desc: 'Alertness · First Aid · Medicine · Persuade · Pharmacy · Psychotherapy · Science (Biology) · Search',
+        skills: ['alertness', 'first_aid', 'medicine', 'persuade', 'pharmacy', 'psychotherapy', 'science_biology', 'search']
+    },
+    {
+        label: 'Occult Investigator or Conspiracy Theorist',
+        desc: 'Anthropology · Archeology · Computer Science · Criminology · History · Occult · Persuade · Search',
+        skills: ['anthropology', 'archeology', 'computer_science', 'criminology', 'history', 'occult', 'persuade', 'search']
+    },
+    {
+        label: 'Outdoorsman',
+        desc: 'Alertness · Athletics · Firearms · Navigate · Ride · Search · Stealth · Survival',
+        skills: ['alertness', 'athletics', 'firearms', 'navigate', 'ride', 'search', 'stealth', 'survival']
+    },
+    {
+        label: 'Photographer',
+        desc: 'Alertness · Art (Photography) · Computer Science · Persuade · Search · Stealth · personal specialties ×2',
+        skills: ['alertness', 'art_photography', 'computer_science', 'persuade', 'search', 'stealth', '', '']
+    },
 ];
 
 const STAT_LABELS = { str: 'STR', con: 'CON', dex: 'DEX', int: 'INT', pow: 'POW', cha: 'CHA' };
@@ -351,6 +393,24 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
     constructor(actor, options = {}) {
         super(options);
         this.#actor = actor;
+        this.#loadState();
+    }
+
+    // -----------------------------------------------------------------------
+    // Persist wizard progress to actor flags so it survives disconnects
+    // -----------------------------------------------------------------------
+    #saveState() {
+        this.#actor.setFlag('delta-green-agent-wizard', 'wizardState', {
+            step: this.#step,
+            data: this.#data,
+        }).catch(() => {});
+    }
+
+    #loadState() {
+        const saved = this.#actor.getFlag('delta-green-agent-wizard', 'wizardState');
+        if (!saved) return;
+        if (typeof saved.step === 'number') this.#step = saved.step;
+        if (saved.data) this.#data = foundry.utils.mergeObject(this.#data, saved.data, { inplace: false });
     }
 
     static DEFAULT_OPTIONS = {
@@ -683,12 +743,12 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
     #buildPdfState() {
         // Wizard group name → pdf-export.js skill key
         const GROUP_TO_KEY = {
-            Art:            'art',
-            Craft:          'craft',
-            ForeignLanguage:'foreign_language',
-            Science:        'science',
-            Pilot:          'pilot',
-            MilitaryScience:'military_science',
+            Art: 'art',
+            Craft: 'craft',
+            ForeignLanguage: 'foreign_language',
+            Science: 'science',
+            Pilot: 'pilot',
+            MilitaryScience: 'military_science',
         };
 
         // Stats in uppercase-key format (matches csStats in collectState)
@@ -701,10 +761,10 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
             CHA: this.#data.stats.cha,
         };
 
-        const hp  = Math.ceil((this.#data.stats.con + this.#data.stats.str) / 2);
-        const wp  = this.#data.stats.pow;
+        const hp = Math.ceil((this.#data.stats.con + this.#data.stats.str) / 2);
+        const wp = this.#data.stats.pow;
         const san = this.#data.stats.pow * 5;
-        const bp  = san - wp;
+        const bp = san - wp;
         const derived = { hp, wp, san, bp };
 
         // Compute effective plain-skill values (base + standard bonus boosts)
@@ -743,10 +803,10 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
 
             if (key.startsWith('profslot__')) {
                 // profslot__{group}__{label} — boost or create matching specialty instance
-                const parts   = key.split('__');
-                const group   = parts[1];  // e.g. 'ForeignLanguage'
-                const label   = parts[2];  // e.g. 'Spanish'
-                const pdfKey  = GROUP_TO_KEY[group];
+                const parts = key.split('__');
+                const group = parts[1];  // e.g. 'ForeignLanguage'
+                const label = parts[2];  // e.g. 'Spanish'
+                const pdfKey = GROUP_TO_KEY[group];
                 if (!pdfKey || !label) continue;
                 const mapKey = `${pdfKey}||${label}`;
                 if (specMap.has(mapKey)) {
@@ -757,8 +817,8 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
 
             } else if (key.startsWith('_custom_')) {
                 // _custom_{Group} — user typed a custom specialty label
-                const group  = key.slice('_custom_'.length);  // e.g. 'Art'
-                const label  = (this.#data.bonusCustom?.[i] ?? '').trim();
+                const group = key.slice('_custom_'.length);  // e.g. 'Art'
+                const label = (this.#data.bonusCustom?.[i] ?? '').trim();
                 if (!label) continue;
                 const pdfKey = GROUP_TO_KEY[group];
                 if (!pdfKey) continue;
@@ -774,15 +834,15 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
         const specialtyInstances = [...specMap.values()];
 
         const bio = {
-            name:            this.#data.biography.name,
-            profession:      this.#data.biography.profession,
-            employer:        this.#data.biography.employer,
-            nationality:     this.#data.biography.nationality,
-            sex:             this.#data.biography.sex,
-            age:             this.#data.biography.age,
-            education:       this.#data.biography.education,
-            physicalDesc:    this.#data.biography.physicalDescription,
-            motivations:     this.#data.motivations.filter(m => m.trim()).join('\n'),
+            name: this.#data.biography.name,
+            profession: this.#data.biography.profession,
+            employer: this.#data.biography.employer,
+            nationality: this.#data.biography.nationality,
+            sex: this.#data.biography.sex,
+            age: this.#data.biography.age,
+            education: this.#data.biography.education,
+            physicalDesc: this.#data.biography.physicalDescription,
+            motivations: this.#data.motivations.filter(m => m.trim()).join('\n'),
             personalDetails: this.#data.biography.notes,
         };
 
@@ -794,15 +854,15 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
 
         return {
             csStats, derived, bio, skills,
-            skillSpecs:          {},
-            customSkills:        [],
+            skillSpecs: {},
+            customSkills: [],
             specialtyInstances,
-            bonds:               this.#data.bonds,
-            sanity:              { violence: [false, false, false], helplessness: [false, false, false] },
-            lpNotes:             { wounds: '', gear: '', remarks: '' },
+            bonds: this.#data.bonds,
+            sanity: { violence: [false, false, false], helplessness: [false, false, false] },
+            lpNotes: { wounds: '', gear: '', remarks: '' },
             lpFeat,
-            lpWeapons:           [],
-            equipment:           this.#data.equipment,
+            lpWeapons: [],
+            equipment: this.#data.equipment,
         };
     }
 
@@ -1009,13 +1069,16 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
         if (!this.#collectCurrentStep()) return;
         if (this.#step < STEPS.length - 1) {
             this.#step++;
+            this.#saveState();
             this.render({ force: true });
         }
     }
 
     static async #onPrevStep(event, target) {
         if (this.#step > 0) {
+            this.#collectCurrentStep();
             this.#step--;
+            this.#saveState();
             this.render({ force: true });
         }
     }
@@ -1156,11 +1219,14 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
     static async #onFinish(event, target) {
         if (!this.#collectCurrentStep()) return;
         await this.#applyToActor();
+        // Clear saved wizard state now that it's been applied
+        await this.#actor.unsetFlag('delta-green-agent-wizard', 'wizardState').catch(() => {});
         this.close();
         ui.notifications.info(`${this.#actor.name} is ready for fieldwork.`);
     }
 
     static async #onExportPdf(event, target) {
+        this.#collectCurrentStep();
         exportToPDF(this.#buildPdfState());
     }
 
@@ -1451,8 +1517,10 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
                 .map(name => {
                     const catalogItem = EQUIPMENT_CATALOG.find(i => i.name === name);
                     if (catalogItem) return catalogItem;
-                    return { name, type: 'gear', img: 'icons/svg/item-bag.svg', flags: {}, effects: [],
-                        system: { name: '', description: '', equipped: true, expense: '' } };
+                    return {
+                        name, type: 'gear', img: 'icons/svg/item-bag.svg', flags: {}, effects: [],
+                        system: { name: '', description: '', equipped: true, expense: '' }
+                    };
                 });
             if (eqItems.length > 0) {
                 await this.#actor.createEmbeddedDocuments('Item', eqItems);
