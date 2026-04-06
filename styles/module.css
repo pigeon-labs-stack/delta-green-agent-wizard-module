@@ -860,11 +860,97 @@
     line-height: 1.5;
 }
 
+/* --------------------------------------------------------------------------
+   Skills step — optional pick chooser section
+   -------------------------------------------------------------------------- */
+.dg-optional-picks-section {
+    background: #141a0f;
+    border: 1px solid #3a5020;
+    border-radius: 4px;
+    padding: 0.75rem 1rem;
+    margin-bottom: 1rem;
+}
+
+.dg-opt-section-header {
+    display: flex;
+    align-items: baseline;
+    gap: 1rem;
+    margin-bottom: 0.6rem;
+}
+
+.dg-opt-heading {
+    font-size: 0.95rem;
+    color: #b0d060;
+    margin: 0;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.dg-opt-skill-row {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.25rem 0.3rem;
+    border-radius: 3px;
+    margin-bottom: 0.15rem;
+}
+
+.dg-opt-skill-row:hover {
+    background: rgba(160, 210, 60, 0.06);
+}
+
+.dg-opt-spec-row {
+    flex-wrap: wrap;
+}
+
+.dg-opt-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    flex: 1;
+    min-width: 200px;
+}
+
+.dg-opt-label input[type="checkbox"] {
+    accent-color: #8db84f;
+    width: 14px;
+    height: 14px;
+    cursor: pointer;
+}
+
+.dg-opt-skill-name {
+    font-size: 0.9rem;
+    color: #ddd;
+}
+
+.dg-opt-skill-value {
+    font-size: 0.85rem;
+    color: #8db84f;
+    font-weight: 600;
+    min-width: 38px;
+    text-align: right;
+}
+
+.dg-opt-spec-input {
+    flex: 1;
+    min-width: 180px;
+    margin-left: 1.8rem;
+    background: #1a1a1a;
+    color: #ddd;
+    border: 1px solid #444;
+    border-radius: 3px;
+    padding: 0.2rem 0.4rem;
+    font-size: 0.85rem;
+    font-family: inherit;
+}
+
 /* optional-picks counter in skills step */
 .dg-opt-picks-counter {
     font-size: 0.82rem;
     color: #8db84f;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0;
 }
 
 .dg-opt-picks-counter.at-limit {

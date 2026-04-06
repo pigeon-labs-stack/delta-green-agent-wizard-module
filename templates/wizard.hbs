@@ -137,10 +137,9 @@
 
             <details class="dg-tips">
                 <summary>Tips</summary>
-                <p>Most Agents won't need to change much here. Your main task is to check for any highlighted specialty
-                    skills — such as <strong>Foreign Language</strong>, <strong>Craft</strong>, and
-                    <strong>Science</strong> — that require you to choose a specialty from the dropdown or type one in
-                    the text field.</p>
+                <p>Choose your optional profession skills at the top, then fill in any required specialty names
+                    (Foreign Language, Science, Craft, etc.). The full list of automatically assigned skills is
+                    shown in the table below for reference.</p>
                 <p><strong>Skill Ratings:</strong><br>
                     1–19%: Dabbler &nbsp;|&nbsp; 20–29%: Hobbyist &nbsp;|&nbsp; 30–39%: Basic training or a college minor<br>
                     40–59%: Years of experience or a college major &nbsp;|&nbsp; 60–79%: Decades of experience or a grad degree &nbsp;|&nbsp; 80–99%: A lifetime's mastery
@@ -151,50 +150,51 @@
                         <li><strong>Craft</strong> — Mastery of a difficult trade such as electronics, carpentry, or plumbing.</li>
                         <li><strong>HUMINT</strong> — Human intelligence: the study and deciphering of behavior and motivations.</li>
                         <li><strong>SIGINT</strong> — Encryption, decryption, and signals intelligence.</li>
-                        <li><strong>Unnatural</strong> — Knowledge of Things Man Was Not Meant to Know. This skill cannot be raised during character creation — it only grows through terrible experience.</li>
+                        <li><strong>Unnatural</strong> — Knowledge of Things Man Was Not Meant to Know. This skill cannot be raised during character creation.</li>
                     </ul>
                 </details>
             </details>
 
             {{#if profession}}
-            <p class="dg-hint">
-                Professional skills — required and optional — are all included below.
-            </p>
-            <table class="dg-skills-table">
-                <thead>
-                    <tr>
-                        <th>Skill</th>
-                        <th>Base</th>
-                        <th>Current</th>
-                        <th></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {{#each skills}}
-                    <tr class="{{#if required}}dg-skill-required{{/if}}{{#if optional}}dg-skill-optional{{/if}}">
-                        <td>{{label}}</td>
-                        <td class="dg-num">{{base}}</td>
-                        <td class="dg-num dg-skill-current">{{current}}</td>
-                        <td class="dg-center">
-                            <span class="dg-required-badge">✓</span>
-                        </td>
-                    </tr>
-                    {{/each}}
-                </tbody>
-            </table>
 
-            {{!-- Specialty skills section (Foreign Language, Science, Craft, Pilot, Military Science) --}}
+            {{!-- Datalists for specialty autocomplete (one per group) --}}
             {{#if specialtyContext}}
-            <div class="dg-specialty-section">
+            {{#each specialtyContext.dataLists}}
+            <datalist id="{{id}}">
+                {{#each options}}<option value="{{this}}">{{/each}}
+            </datalist>
+            {{/each}}
+            {{/if}}
 
-                {{!-- Datalists (one per group, for autocomplete) --}}
-                {{#each specialtyContext.dataLists}}
-                <datalist id="{{id}}">
-                    {{#each options}}<option value="{{this}}">{{/each}}
-                </datalist>
+            {{!-- SECTION 1: Optional skill picks --}}
+            {{#if hasOptionalSkills}}
+            <div class="dg-optional-picks-section">
+                <div class="dg-opt-section-header">
+                    <h3 class="dg-opt-heading">Choose any {{optLimit}} of these:</h3>
+                    <span class="dg-opt-picks-counter" data-limit="{{optLimit}}">Optional picks: <strong>{{optPicksUsed}} / {{optLimit}}</strong></span>
+                </div>
+                {{#each optionalSkillItems}}
+                <div class="dg-opt-skill-row{{#if isSpecialty}} dg-opt-spec-row{{/if}}">
+                    <label class="dg-opt-label">
+                        <input type="checkbox" name="optPick" value="{{optIndex}}" {{#if picked}}checked{{/if}} />
+                        <span class="dg-opt-skill-name">{{label}}</span>
+                        <span class="dg-opt-skill-value">{{profValue}}%</span>
+                    </label>
+                    {{#if isSpecialty}}
+                    <input type="text" name="specialty.opt.{{optIndex}}" value="{{specialtyLabel}}"
+                        list="dg-sp-{{group}}"
+                        placeholder="Choose or type subspecialty"
+                        class="dg-specialty-input dg-opt-spec-input"
+                        {{#unless picked}}disabled{{/unless}} />
+                    {{/if}}
+                </div>
                 {{/each}}
+            </div>
+            {{/if}}
 
-                {{#if specialtyContext.required}}
+            {{!-- SECTION 2: Required specialty inputs --}}
+            {{#if specialtyContext.required}}
+            <div class="dg-specialty-section">
                 <h4 class="dg-specialty-heading">Specialty Skills (Required — type or choose)</h4>
                 {{#each specialtyContext.required}}
                 <div class="dg-specialty-row{{#unless label}} dg-specialty-empty{{/unless}}">
@@ -205,23 +205,27 @@
                     <span class="dg-specialty-value">{{proficiency}}%</span>
                 </div>
                 {{/each}}
-                {{/if}}
-
-                {{#if specialtyContext.optional}}
-                <h4 class="dg-specialty-heading">Optional Specialty Skills</h4>
-                {{#each specialtyContext.optional}}
-                <div class="dg-specialty-opt-row">
-                    <span class="dg-specialty-group">{{groupDisplay}}</span>
-                    <input type="text" name="specialty.opt.{{optIndex}}" value="{{label}}"
-                        list="dg-sp-{{group}}" placeholder="e.g. {{groupDisplay}} (Spanish) — choose from list or type your own"
-                        class="dg-specialty-input" />
-                    <span class="dg-specialty-value">{{proficiency}}%</span>
-                </div>
-                {{/each}}
-                {{/if}}
-
             </div>
             {{/if}}
+
+            {{!-- SECTION 3: Required skills table --}}
+            <p class="dg-hint">Required skills automatically assigned by this profession:</p>
+            <table class="dg-skills-table">
+                <thead>
+                    <tr>
+                        <th>Skill</th>
+                        <th>Value</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{#each skills}}
+                    <tr class="dg-skill-required">
+                        <td>{{label}}</td>
+                        <td class="dg-num dg-skill-current">{{current}}</td>
+                    </tr>
+                    {{/each}}
+                </tbody>
+            </table>
 
             {{else}}
             <p class="dg-warn">Please go back and select a profession first.</p>

@@ -100,8 +100,32 @@ function buildActorPdfState(actor) {
         bonds,
         sanity:               { violence: [false, false, false], helplessness: [false, false, false] },
         lpNotes:              { wounds: '', gear: '', remarks: '' },
-        lpFeat:               {},
-        lpWeapons:            [],
+        lpFeat:               {
+            STR: st.str?.distinguishing_feature ?? '',
+            CON: st.con?.distinguishing_feature ?? '',
+            DEX: st.dex?.distinguishing_feature ?? '',
+            INT: st.int?.distinguishing_feature ?? '',
+            POW: st.pow?.distinguishing_feature ?? '',
+            CHA: st.cha?.distinguishing_feature ?? '',
+        },
+        lpWeapons: actor.items
+            .filter(i => i.type === 'weapon')
+            .slice(0, 7)
+            .map(item => {
+                const wsys = item.system ?? {};
+                const skillKey = wsys.skill ?? '';
+                const skillVal = skills[skillKey] ?? 0;
+                const rawPct   = skillVal + (wsys.skillModifier ?? 0);
+                return {
+                    name:       item.name,
+                    skillPct:   rawPct || '',
+                    range:      wsys.range      ?? '',
+                    damage:     wsys.damage     ?? '',
+                    lethality:  wsys.lethality  ? wsys.lethality + '%' : '',
+                    killRadius: (wsys.killRadius && wsys.killRadius !== 'N/A') ? wsys.killRadius : '',
+                    ammo:       wsys.ammo       ?? '',
+                };
+            }),
         equipment:            actor.items.filter(i => i.type === 'gear').map(i => i.name),
     };
 }

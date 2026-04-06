@@ -400,9 +400,11 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
         );
 
         const bonusSkills = step === 'bonus_skills' ? this.#buildBonusSkillContext() : null;
-        const optLimit = prof ? (prof.optionalSkills?.[0]?.limit ?? 2) : 0;
+        const optLimit = prof ? (prof.optionalSkills?.[0]?.limit ?? 0) : 0;
         const optPicksUsed = this.#data.optionalPicks.length;
         const specialtyContext = step === 'skills' ? this.#buildSpecialtyContext(prof) : null;
+        const optionalSkillItems = step === 'skills' ? this.#buildOptionalSkillItems(prof) : [];
+        const hasOptionalSkills = optionalSkillItems.length > 0;
 
         // Pre-fill all bond slots when entering the bonds step
         if (step === 'bonds' && prof) {
@@ -432,6 +434,8 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
             optLimit,
             optPicksUsed,
             specialtyContext,
+            optionalSkillItems,
+            hasOptionalSkills,
             bonds: this.#data.bonds,
             bondLimit,
             bondsAtLimit: this.#data.bonds.length >= bondLimit,
@@ -445,7 +449,7 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
     }
 
     // -----------------------------------------------------------------------
-    // Build sorted skill list for the skills step (specialty skills excluded)
+    // Build sorted skill list for the skills step (REQUIRED only)
     // -----------------------------------------------------------------------
     #buildSkillContext(prof) {
         if (!prof) return [];
@@ -465,27 +469,43 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
                 optional: false,
             });
         }
-
-        // Optional skills — skip specialty types (shown in specialty section)
-        const optLimit = prof.optionalSkills?.[0]?.limit ?? 2;
-        for (let i = 0; i < (prof.optionalSkills?.length ?? 0); i++) {
-            const s = prof.optionalSkills[i];
-            if (parseSpecialtyFromName(s.name)) continue;
-            const key = this.#findSkillKey(s.name);
-            result.push({
-                key,
-                label: s.name,
-                base: SKILL_DEFAULTS[key] ?? 0,
-                profValue: s.value,
-                current: this.#data.skills[key] ?? SKILL_DEFAULTS[key] ?? 0,
-                required: false,
-                optional: true,
-                optIndex: i,
-                picked: this.#data.optionalPicks.includes(i),
-                optLimit,
-            });
-        }
         return result;
+    }
+
+    // -----------------------------------------------------------------------
+    // Build optional skill items for the skills step chooser section
+    // -----------------------------------------------------------------------
+    #buildOptionalSkillItems(prof) {
+        if (!prof || !prof.optionalSkills?.length) return [];
+        const items = [];
+        for (let i = 0; i < prof.optionalSkills.length; i++) {
+            const s = prof.optionalSkills[i];
+            const sp = parseSpecialtyFromName(s.name);
+            const picked = this.#data.optionalPicks.includes(i);
+            if (sp) {
+                const existingSlot = this.#data.specialtySlots.find(sl => sl.optIndex === i);
+                items.push({
+                    optIndex: i,
+                    label: s.name,
+                    profValue: s.value,
+                    picked,
+                    isSpecialty: true,
+                    group: sp.group,
+                    specialtyLabel: existingSlot?.label ?? this.#data.optSpecialtyLabels[i] ?? '',
+                });
+            } else {
+                items.push({
+                    optIndex: i,
+                    label: s.name,
+                    profValue: s.value,
+                    picked,
+                    isSpecialty: false,
+                    group: '',
+                    specialtyLabel: '',
+                });
+            }
+        }
+        return items;
     }
 
     // -----------------------------------------------------------------------
@@ -766,6 +786,12 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
             personalDetails: this.#data.biography.notes,
         };
 
+        // Distinguishing features from stat descriptors
+        const lpFeat = {};
+        for (const k of ['str', 'con', 'dex', 'int', 'pow', 'cha']) {
+            lpFeat[k.toUpperCase()] = getStatDescriptor(k, this.#data.stats[k]);
+        }
+
         return {
             csStats, derived, bio, skills,
             skillSpecs:          {},
@@ -774,7 +800,7 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
             bonds:               this.#data.bonds,
             sanity:              { violence: [false, false, false], helplessness: [false, false, false] },
             lpNotes:             { wounds: '', gear: '', remarks: '' },
-            lpFeat:              {},
+            lpFeat,
             lpWeapons:           [],
             equipment:           this.#data.equipment,
         };
@@ -824,7 +850,7 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
             el.querySelectorAll('input[name="optPick"]:not(:checked)').forEach(cb => { cb.disabled = checked >= optLimit; });
             el.querySelectorAll('input[name="optPick"]:checked').forEach(cb => { cb.disabled = false; });
             // Enable specialty text inputs only when their checkbox is checked
-            el.querySelectorAll('.dg-specialty-opt-row').forEach(row => {
+            el.querySelectorAll('.dg-opt-spec-row').forEach(row => {
                 const cb = row.querySelector('input[name="optPick"]');
                 const inp = row.querySelector('.dg-specialty-input');
                 if (cb && inp) inp.disabled = !cb.checked;
@@ -1190,9 +1216,19 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
 
         if (step === 'skills') {
             const prof = PROFESSIONS[this.#data.professionKey];
-            // Auto-pick ALL optional skills — no checkbox interaction required
+            // Read optional picks from checked checkboxes
             const picks = [];
-            for (let i = 0; i < (prof?.optionalSkills?.length ?? 0); i++) picks.push(i);
+            const checkboxes = this.element?.querySelectorAll('input[name="optPick"]:checked') ?? [];
+            for (const cb of checkboxes) {
+                const idx = parseInt(cb.value, 10);
+                if (!isNaN(idx)) picks.push(idx);
+            }
+            const optLimit = prof?.optionalSkills?.[0]?.limit ?? 0;
+            if (optLimit > 0 && picks.length < optLimit) {
+                const remaining = optLimit - picks.length;
+                ui.notifications.warn(`Choose ${remaining} more optional skill${remaining > 1 ? 's' : ''} before continuing.`);
+                return false;
+            }
             this.#data.optionalPicks = picks;
 
             // Update required specialty slot labels
