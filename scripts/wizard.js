@@ -884,8 +884,40 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
         await super._onRender?.(context, options);
         if (STEPS[this.#step] === 'profession') this.#setupProfessionUI();
         if (STEPS[this.#step] === 'equipment') this.#buildEquipmentUI();
-        if (STEPS[this.#step] === 'skills') this.#setupSkillsUI();
+        if (STEPS[this.#step] === 'skills') { this.#setupSkillsUI(); this.#setupSpecialtyUI(); }
         if (STEPS[this.#step] === 'bonus_skills') this.#setupBonusSkillsUI();
+    }
+
+    // -----------------------------------------------------------------------
+    // Skills step: mark duplicate specialty inputs within the same group
+    // -----------------------------------------------------------------------
+    #setupSpecialtyUI() {
+        const el = this.element;
+        if (!el) return;
+        const inputs = [...el.querySelectorAll('.dg-specialty-section .dg-specialty-input[data-group]')];
+        if (inputs.length === 0) return;
+
+        const checkDupes = () => {
+            const byGroup = {};
+            inputs.forEach(inp => {
+                const g = inp.dataset.group;
+                (byGroup[g] ??= []).push(inp);
+            });
+            Object.values(byGroup).forEach(group => {
+                const vals = group.map(i => i.value.trim().toLowerCase());
+                group.forEach((inp, idx) => {
+                    const val = vals[idx];
+                    const isDupe = val !== '' && vals.some((v, j) => j !== idx && v === val);
+                    inp.classList.toggle('dg-specialty-dupe', isDupe);
+                });
+            });
+        };
+
+        inputs.forEach(inp => {
+            inp.addEventListener('input', checkDupes);
+            inp.addEventListener('change', checkDupes);
+        });
+        checkDupes();
     }
 
     // -----------------------------------------------------------------------
@@ -1129,6 +1161,10 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
     // -----------------------------------------------------------------------
     static async #onNextStep(event, target) {
         if (!this.#collectCurrentStep()) return;
+        if (this.element?.querySelector('.dg-specialty-dupe')) {
+            ui.notifications.warn('Each specialty skill must be unique within its group.');
+            return;
+        }
         if (this.#step < STEPS.length - 1) {
             this.#step++;
             this.#saveState();

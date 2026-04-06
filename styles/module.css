@@ -1079,6 +1079,12 @@
     cursor: not-allowed;
 }
 
+.dg-specialty-input.dg-specialty-dupe {
+    border-color: #c0392b;
+    background: rgba(192, 57, 43, 0.15);
+    outline: 1px solid #c0392b;
+}
+
 .dg-specialty-value {
     flex: 0 0 38px;
     text-align: right;
