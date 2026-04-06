@@ -24,7 +24,8 @@
             </p>
             <p>
                 This wizard will guide you through:<br>
-                <strong>Statistics → Profession → Skills → Bonus Skills → Bonds → Biography → Equipment → Review</strong>
+                <strong>Statistics → Profession → Skills → Bonus Skills → Bonds → Biography → Equipment →
+                    Review</strong>
             </p>
         </div>
         {{/if}}
@@ -38,22 +39,30 @@
 
             <details class="dg-tips">
                 <summary>Tips</summary>
-                <p>Distribute <strong>72 points</strong> across your six statistics (min 3, max 18). You can also roll 4d6 drop-lowest, or randomize a balanced spread.</p>
+                <p>Distribute <strong>72 points</strong> across your six statistics (min 3, max 18). You can also roll
+                    4d6 drop-lowest, or randomize a balanced spread.</p>
                 <ul class="dg-tips-list">
-                    <li><strong>STR</strong> — Physical strength. Affects melee damage, climb, lift, and some physical skill checks.</li>
+                    <li><strong>STR</strong> — Physical strength. Affects melee damage, climb, lift, and some physical
+                        skill checks.</li>
                     <li><strong>CON</strong> — Endurance and resilience. Combined with STR to set your Hit Points.</li>
-                    <li><strong>DEX</strong> — Agility and coordination. Affects initiative, Dodge, and physical dexterity tasks.</li>
-                    <li><strong>INT</strong> — Reason and perception. Many investigative and technical skills derive from INT.</li>
-                    <li><strong>POW</strong> — Willpower and psychic force. Sets your Willpower Points and starting Sanity (POW × 5).</li>
+                    <li><strong>DEX</strong> — Agility and coordination. Affects initiative, Dodge, and physical
+                        dexterity tasks.</li>
+                    <li><strong>INT</strong> — Reason and perception. Many investigative and technical skills derive
+                        from INT.</li>
+                    <li><strong>POW</strong> — Willpower and psychic force. Sets your Willpower Points and starting
+                        Sanity (POW × 5).</li>
                     <li><strong>CHA</strong> — Personality and presence. Your Bond score starts equal to CHA.</li>
                 </ul>
                 <p><em>HP = ⌈(STR+CON)÷2⌉ &nbsp;|&nbsp; WP = POW &nbsp;|&nbsp; SAN = POW×5</em></p>
             </details>
 
-            <p class="dg-hint">Distribute 72 points across your six statistics (3–18). HP = ⌈(STR+CON)÷2⌉ · WP = POW · SAN = POW×5</p>
+            <p class="dg-hint">Distribute 72 points across your six statistics (3–18). HP = ⌈(STR+CON)÷2⌉ · WP = POW ·
+                SAN = POW×5</p>
 
             <div class="dg-points-bar">
-                Points remaining: <span class="dg-points-remaining{{#if (eq pointsRemaining 0)}} depleted{{/if}}">{{pointsRemaining}}</span> / 72
+                Points remaining: <span
+                    class="dg-points-remaining{{#if (eq pointsRemaining 0)}} depleted{{/if}}">{{pointsRemaining}}</span>
+                / 72
             </div>
 
             <div class="dg-stats-grid">
@@ -61,9 +70,12 @@
                 <div class="dg-stat-block">
                     <label class="dg-stat-label">{{lookup ../statLabels @key}}</label>
                     <div class="dg-stat-controls">
-                        <button type="button" data-action="adjustStat" data-stat="{{@key}}" data-delta="-1" class="dg-adjust-btn">−</button>
-                        <input type="number" name="stats.{{@key}}" value="{{this}}" min="3" max="18" class="dg-stat-input" />
-                        <button type="button" data-action="adjustStat" data-stat="{{@key}}" data-delta="1" class="dg-adjust-btn">+</button>
+                        <button type="button" data-action="adjustStat" data-stat="{{@key}}" data-delta="-1"
+                            class="dg-adjust-btn">−</button>
+                        <input type="number" name="stats.{{@key}}" value="{{this}}" min="3" max="18"
+                            class="dg-stat-input" />
+                        <button type="button" data-action="adjustStat" data-stat="{{@key}}" data-delta="1"
+                            class="dg-adjust-btn">+</button>
                     </div>
                     <span class="dg-x5">×5 = {{multiply this 5}}</span>
                     <span class="dg-descriptor">{{lookup ../statDescriptors @key}}</span>
@@ -72,8 +84,10 @@
             </div>
 
             <div class="dg-stats-actions">
-                <button type="button" data-action="rollStats" class="dg-btn-secondary">🎲 Roll All (4d6 drop lowest)</button>
-                <button type="button" data-action="randomizeStats" class="dg-btn-secondary">🔀 Randomize (72 pts)</button>
+                <button type="button" data-action="rollStats" class="dg-btn-secondary">🎲 Roll All (4d6 drop
+                    lowest)</button>
+                <button type="button" data-action="randomizeStats" class="dg-btn-secondary">🔀 Randomize (72
+                    pts)</button>
                 <button type="button" data-action="resetStats" class="dg-btn-secondary">↺ Reset</button>
             </div>
         </div>
@@ -88,8 +102,11 @@
 
             <details class="dg-tips">
                 <summary>Tips</summary>
-                <p>Your profession is your biggest decision. It determines your skill set, starting resources, number of bonds, and role in the Program.</p>
-                <p>Each profession provides <em>required skills</em> at fixed values and <em>optional skills</em> you may choose from. After you pick your skills, you'll get <strong>8 background bonus skill picks</strong> (+20 each) to customize further.</p>
+                <p>Your profession is your biggest decision. It determines your skill set, starting resources, number of
+                    bonds, and role in the Program.</p>
+                <p>Each profession provides <em>required skills</em> at fixed values and <em>optional skills</em> you
+                    may choose from. After you pick your skills, you'll get <strong>8 background bonus skill
+                        picks</strong> (+20 each) to customize further.</p>
             </details>
 
             <p class="dg-hint">Choose the profession that best fits your agent's background.</p>
@@ -123,12 +140,15 @@
                     <li><strong>1–19%</strong> — Dabbler: you know the basics but are unreliable.</li>
                     <li><strong>20–39%</strong> — Trained: basic competence; you usually get simple tasks right.</li>
                     <li><strong>40–59%</strong> — Experienced: solid and dependable under normal conditions.</li>
-                    <li><strong>60–79%</strong> — Expert: you rarely fail; pressure and opposition are your main threats.</li>
+                    <li><strong>60–79%</strong> — Expert: you rarely fail; pressure and opposition are your main
+                        threats.</li>
                     <li><strong>80–99%</strong> — Master: a lifetime of dedication. Failure is a genuine surprise.</li>
                 </ul>
-                <p>Required skills are pre-filled by your profession. Check optional skills (up to the listed limit) to add them at their listed value. In the next step you'll distribute 8 bonus picks of +20 each.</p>
+                <p>Required skills are pre-filled by your profession. Check optional skills (up to the listed limit) to
+                    add them at their listed value. In the next step you'll distribute 8 bonus picks of +20 each.</p>
             </details>
 
+            {{#if profession}}
             <p class="dg-hint">
                 Professional skills are pre-filled. Choose up to <strong>{{skills.0.optLimit}}</strong> optional skills.
             </p>
@@ -176,8 +196,10 @@
 
             <details class="dg-tips">
                 <summary>Tips</summary>
-                <p>You get <strong>8 background skill picks</strong> representing past experience — hobbies, side gigs, a previous career, or extra training.</p>
-                <p>Each pick adds <strong>+20%</strong> to a skill. You can stack multiple picks on the same skill, but no skill can exceed <strong>80%</strong> during character creation.</p>
+                <p>You get <strong>8 background skill picks</strong> representing past experience — hobbies, side gigs,
+                    a previous career, or extra training.</p>
+                <p>Each pick adds <strong>+20%</strong> to a skill. You can stack multiple picks on the same skill, but
+                    no skill can exceed <strong>80%</strong> during character creation.</p>
                 <p>Use + and − to allocate and take back picks. All unused picks are simply lost.</p>
             </details>
 
@@ -195,10 +217,10 @@
                     <span class="dg-bonus-skill-val">{{current}}%</span>
                     {{#if boosts}}<span class="dg-bonus-boost-badge">+{{multiply boosts 20}}</span>{{/if}}
                     <div class="dg-bonus-skill-btns">
-                        <button type="button" data-action="unboostSkill" data-skill="{{key}}"
-                            class="dg-adjust-btn" {{#unless canUnboost}}disabled{{/unless}}>−</button>
-                        <button type="button" data-action="boostSkill" data-skill="{{key}}"
-                            class="dg-adjust-btn" {{#unless canBoost}}disabled{{/unless}}>+</button>
+                        <button type="button" data-action="unboostSkill" data-skill="{{key}}" class="dg-adjust-btn"
+                            {{#unless canUnboost}}disabled{{/unless}}>−</button>
+                        <button type="button" data-action="boostSkill" data-skill="{{key}}" class="dg-adjust-btn"
+                            {{#unless canBoost}}disabled{{/unless}}>+</button>
                     </div>
                 </div>
                 {{/each}}
@@ -216,9 +238,12 @@
 
             <details class="dg-tips">
                 <summary>Tips</summary>
-                <p>Bonds are the personal relationships that keep your agent sane — family members, close friends, romantic partners, trusted colleagues.</p>
-                <p>Each Bond starts at your <strong>CHA</strong> value ({{stats.cha}}). Bonds can be damaged when you lose Sanity, and losing a Bond entirely costs additional Sanity. Protect them.</p>
-                <p>Your profession allows <strong>{{bondLimit}} bond(s)</strong>. Click 💡 next to any bond for a random suggestion of what kind of relationship this could be.</p>
+                <p>Bonds are the personal relationships that keep your agent sane — family members, close friends,
+                    romantic partners, trusted colleagues.</p>
+                <p>Each Bond starts at your <strong>CHA</strong> value ({{stats.cha}}). Bonds can be damaged when you
+                    lose Sanity, and losing a Bond entirely costs additional Sanity. Protect them.</p>
+                <p>Your profession allows <strong>{{bondLimit}} bond(s)</strong>. Click 💡 next to any bond for a random
+                    suggestion of what kind of relationship this could be.</p>
             </details>
 
             <p class="dg-hint">
@@ -257,8 +282,10 @@
 
             <details class="dg-tips">
                 <summary>Tips</summary>
-                <p>Fill in who your agent is — their name, background, and physical appearance. All fields are optional but bring your character to life on the sheet.</p>
-                <p>Click <strong>Random Bio</strong> to auto-generate a name and physical description based on your stats and profession. You can always edit the result afterward.</p>
+                <p>Fill in who your agent is — their name, background, and physical appearance. All fields are optional
+                    but bring your character to life on the sheet.</p>
+                <p>Click <strong>Random Bio</strong> to auto-generate a name and physical description based on your
+                    stats and profession. You can always edit the result afterward.</p>
             </details>
 
             <div class="dg-bio-actions">
@@ -294,7 +321,8 @@
                         placeholder="e.g. BA Criminology, Quantico" />
                 </label>
                 <label class="dg-bio-full-row">Physical Description
-                    <textarea name="biography.notes" rows="3" placeholder="Build, height, hair, eyes, notable features…">{{biography.notes}}</textarea>
+                    <textarea name="biography.notes" rows="3"
+                        placeholder="Build, height, hair, eyes, notable features…">{{biography.notes}}</textarea>
                 </label>
             </div>
         </div>
@@ -309,14 +337,19 @@
 
             <details class="dg-tips">
                 <summary>Tips</summary>
-                <p>Select gear for your agent. Operational mission equipment is issued and returned; personal gear belongs to the agent.</p>
+                <p>Select gear for your agent. Operational mission equipment is issued and returned; personal gear
+                    belongs to the agent.</p>
                 <p>Expense levels:</p>
                 <ul class="dg-tips-list">
-                    <li><span class="dg-exp-badge dg-exp-incidental">Incidental</span> — Freely available; negligible cost.</li>
+                    <li><span class="dg-exp-badge dg-exp-incidental">Incidental</span> — Freely available; negligible
+                        cost.</li>
                     <li><span class="dg-exp-badge dg-exp-standard">Standard</span> — Normal consumer purchase.</li>
-                    <li><span class="dg-exp-badge dg-exp-unusual">Unusual</span> — Difficult to source legally; requires effort.</li>
-                    <li><span class="dg-exp-badge dg-exp-major">Major</span> — Significant expense or official channels required.</li>
-                    <li><span class="dg-exp-badge dg-exp-extreme">Extreme</span> — Rare, heavy, or highly restricted.</li>
+                    <li><span class="dg-exp-badge dg-exp-unusual">Unusual</span> — Difficult to source legally; requires
+                        effort.</li>
+                    <li><span class="dg-exp-badge dg-exp-major">Major</span> — Significant expense or official channels
+                        required.</li>
+                    <li><span class="dg-exp-badge dg-exp-extreme">Extreme</span> — Rare, heavy, or highly restricted.
+                    </li>
                 </ul>
                 <p>Items marked <strong>RESTRICTED</strong> require Program authorization or special legal access.</p>
             </details>
@@ -336,7 +369,8 @@
                         {{#if equipmentCount}}<span class="dg-eq-loadout-badge">{{equipmentCount}}</span>{{/if}}
                     </div>
                     <div id="dg-eq-loadout" class="dg-eq-loadout"></div>
-                    <button type="button" data-action="clearEquipment" class="dg-btn-secondary dg-eq-clear-btn">✕ Clear Loadout</button>
+                    <button type="button" data-action="clearEquipment" class="dg-btn-secondary dg-eq-clear-btn">✕ Clear
+                        Loadout</button>
                 </div>
             </div>
         </div>
