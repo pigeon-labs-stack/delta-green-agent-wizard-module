@@ -99,18 +99,18 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
         },
         position: { width: 760, height: 680 },
         actions: {
-            nextStep:       DeltaGreenChargenWizard.#onNextStep,
-            prevStep:       DeltaGreenChargenWizard.#onPrevStep,
-            rollStats:      DeltaGreenChargenWizard.#onRollStats,
-            addBond:        DeltaGreenChargenWizard.#onAddBond,
-            removeBond:     DeltaGreenChargenWizard.#onRemoveBond,
-            suggestBond:    DeltaGreenChargenWizard.#onSuggestBond,
-            finish:         DeltaGreenChargenWizard.#onFinish,
+            nextStep: DeltaGreenChargenWizard.#onNextStep,
+            prevStep: DeltaGreenChargenWizard.#onPrevStep,
+            rollStats: DeltaGreenChargenWizard.#onRollStats,
+            addBond: DeltaGreenChargenWizard.#onAddBond,
+            removeBond: DeltaGreenChargenWizard.#onRemoveBond,
+            suggestBond: DeltaGreenChargenWizard.#onSuggestBond,
+            finish: DeltaGreenChargenWizard.#onFinish,
         },
     };
 
     static PARTS = {
-        main: { template: 'modules/delta-green-chargen/templates/wizard.hbs' },
+        main: { template: 'modules/delta-green-agent-wizard/templates/wizard.hbs' },
     };
 
     // -----------------------------------------------------------------------
@@ -242,7 +242,7 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
 
     static async #onRollStats(event, target) {
         const rollStat = async () => {
-            const results = await Promise.all([1,2,3,4].map(() => new Roll('1d6').evaluate()));
+            const results = await Promise.all([1, 2, 3, 4].map(() => new Roll('1d6').evaluate()));
             const sorted = results.map(r => r.total).sort((a, b) => b - a);
             return sorted[0] + sorted[1] + sorted[2];  // keep highest 3
         };
