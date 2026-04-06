@@ -137,6 +137,14 @@ function injectWizardButton(app, element) {
             <span class="dg-wizard-bar-toggle-label">Collapse</span>
         </button>`;
 
+    // Apply initial collapsed state directly via style so it works regardless of CSS specificity
+    const buttonsEl = bar.querySelector('.dg-wizard-bar-buttons');
+    const labelEl   = bar.querySelector('.dg-wizard-bar-toggle-label');
+    if (collapsed) {
+        buttonsEl.style.display = 'none';
+        labelEl.textContent = 'Expand';
+    }
+
     bar.querySelector('.dg-agent-wizard-launch').addEventListener('click', () => {
         new DeltaGreenChargenWizard(actor).render({ force: true });
     });
@@ -148,6 +156,8 @@ function injectWizardButton(app, element) {
     bar.querySelector('.dg-wizard-bar-toggle').addEventListener('click', () => {
         const isNowCollapsed = bar.classList.toggle('dg-wizard-bar-collapsed');
         localStorage.setItem(WIZARD_BAR_COLLAPSED_KEY, isNowCollapsed ? '1' : '0');
+        buttonsEl.style.display = isNowCollapsed ? 'none' : 'flex';
+        labelEl.textContent     = isNowCollapsed ? 'Expand' : 'Collapse';
     });
 
     content.prepend(bar);

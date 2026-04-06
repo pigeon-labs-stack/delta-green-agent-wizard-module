@@ -19,18 +19,11 @@
 
 /* Buttons container — wraps all action buttons; collapse hides the whole group */
 .dg-wizard-bar-buttons {
-    display: flex;
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap;
     align-items: center;
     gap: 6px;
-    overflow: hidden;
-    max-width: 600px;
-    transition: max-width 0.2s ease, opacity 0.2s ease;
-}
-
-.dg-wizard-bar-collapsed .dg-wizard-bar-buttons {
-    max-width: 0;
-    opacity: 0;
-    pointer-events: none;
 }
 
 .dg-agent-wizard-launch {
@@ -100,15 +93,16 @@
     opacity: 1;
 }
 
-/* Label text — visible when expanded, hidden when collapsed */
+/* Label text — visible when expanded, hidden when collapsed (JS also sets textContent) */
 .dg-wizard-bar-toggle-label {
     font-size: 0.78rem;
     letter-spacing: 0.04em;
     text-transform: uppercase;
     color: #7aaa40;
-    transition: opacity 0.2s ease, max-width 0.2s ease;
-    max-width: 80px;
     overflow: hidden;
+    white-space: nowrap;
+    max-width: 80px;
+    transition: max-width 0.2s ease, opacity 0.2s ease;
 }
 
 .dg-wizard-bar-collapsed .dg-wizard-bar-toggle-label {
