@@ -4,8 +4,14 @@ import { DeltaGreenChargenWizard } from './wizard.js';
 // Handlebars helpers
 // ---------------------------------------------------------------------------
 Handlebars.registerHelper('eq', (a, b) => a === b);
+Handlebars.registerHelper('lt', (a, b) => a < b);
 Handlebars.registerHelper('multiply', (a, b) => Number(a) * Number(b));
 Handlebars.registerHelper('inc', (n) => n + 1);
+Handlebars.registerHelper('range', (start, end) => {
+    const result = [];
+    for (let i = start; i < end; i++) result.push(i);
+    return result;
+});
 
 // ---------------------------------------------------------------------------
 // Inject wizard button into the DG agent sheet header (Foundry v13 / AppV2)
@@ -19,41 +25,23 @@ function injectWizardButton(app, element) {
     const root = element instanceof HTMLElement ? element : element[0];
     if (!root) return;
 
-    // Prevent duplicate buttons on re-render
-    if (root.querySelector('.dg-agent-wizard-btn')) return;
+    if (root.querySelector('.dg-agent-wizard-bar')) return;
 
-    // The Foundry AppV2 window chrome header
-    const header = root.querySelector('.window-header');
-    if (!header) {
-        console.warn('delta-green-agent-wizard | .window-header not found. Root classes:', root.className);
-        return;
-    }
+    // Inject into window-content so it's always visible regardless of header CSS
+    const content = root.querySelector('.window-content');
+    if (!content) return;
 
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.dataset.action = 'dg-agent-wizard';
-    btn.className = 'dg-agent-wizard-btn header-control';
-    btn.setAttribute('data-tooltip', 'Agent Wizard');
-    btn.innerHTML = '<i class="fa-solid fa-scroll"></i> Wizard';
+    const bar = document.createElement('div');
+    bar.className = 'dg-agent-wizard-bar';
+    bar.innerHTML = `<button type="button" class="dg-agent-wizard-launch">
+        <i class="fa-solid fa-scroll"></i> Agent Wizard
+    </button>`;
 
-    btn.addEventListener('click', (event) => {
-        event.preventDefault();
-        event.stopPropagation();
+    bar.querySelector('button').addEventListener('click', () => {
         new DeltaGreenChargenWizard(actor).render({ force: true });
     });
 
-    // In AppV2 the close button lives inside .window-controls or directly in header
-    const closeBtn = header.querySelector('[data-action="close"]') 
-                  ?? header.querySelector('.close');
-    if (closeBtn) {
-        closeBtn.before(btn);
-    } else {
-        // Fallback: append to header
-        header.appendChild(btn);
-        console.log('delta-green-agent-wizard | Appended wizard button to header (no close btn found).');
-    }
-
-    console.log('delta-green-agent-wizard | Wizard button injected for actor:', actor.name);
+    content.prepend(bar);
 }
 
 // Cover both the default sheet and the opt-in V2 sheet via render hooks
