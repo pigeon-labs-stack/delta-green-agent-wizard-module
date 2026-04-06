@@ -18,6 +18,8 @@ Handlebars.registerHelper('range', (start, end) => {
 // DGAgentSheet and DGAgentSheetV2 are AppV2-based, so Foundry fires
 // render{ClassName} — not the old generic renderActorSheet hook.
 // ---------------------------------------------------------------------------
+const WIZARD_BAR_COLLAPSED_KEY = 'dg-wizard-bar-collapsed';
+
 function injectWizardButton(app, element) {
     const actor = app.document ?? app.actor;
     if (!actor || actor.type !== 'agent') return;
@@ -31,14 +33,25 @@ function injectWizardButton(app, element) {
     const content = root.querySelector('.window-content');
     if (!content) return;
 
-    const bar = document.createElement('div');
-    bar.className = 'dg-agent-wizard-bar';
-    bar.innerHTML = `<button type="button" class="dg-agent-wizard-launch">
-        <i class="fa-solid fa-scroll"></i> Agent Wizard
-    </button>`;
+    const collapsed = localStorage.getItem(WIZARD_BAR_COLLAPSED_KEY) === '1';
 
-    bar.querySelector('button').addEventListener('click', () => {
+    const bar = document.createElement('div');
+    bar.className = 'dg-agent-wizard-bar' + (collapsed ? ' dg-wizard-bar-collapsed' : '');
+    bar.innerHTML = `
+        <button type="button" class="dg-agent-wizard-launch">
+            <i class="fa-solid fa-scroll"></i> Agent Wizard
+        </button>
+        <button type="button" class="dg-wizard-bar-toggle" title="Collapse wizard bar">
+            <span class="dg-wizard-bar-triangle"></span>
+        </button>`;
+
+    bar.querySelector('.dg-agent-wizard-launch').addEventListener('click', () => {
         new DeltaGreenChargenWizard(actor).render({ force: true });
+    });
+
+    bar.querySelector('.dg-wizard-bar-toggle').addEventListener('click', () => {
+        const isNowCollapsed = bar.classList.toggle('dg-wizard-bar-collapsed');
+        localStorage.setItem(WIZARD_BAR_COLLAPSED_KEY, isNowCollapsed ? '1' : '0');
     });
 
     content.prepend(bar);
