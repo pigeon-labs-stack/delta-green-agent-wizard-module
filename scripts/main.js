@@ -137,13 +137,11 @@ function injectWizardButton(app, element) {
             <span class="dg-wizard-bar-toggle-label">Collapse</span>
         </button>`;
 
-    // Apply initial collapsed state directly via style so it works regardless of CSS specificity
+    // Always set display via inline style — Foundry CSS can override class-based flex/block rules
     const buttonsEl = bar.querySelector('.dg-wizard-bar-buttons');
     const labelEl   = bar.querySelector('.dg-wizard-bar-toggle-label');
-    if (collapsed) {
-        buttonsEl.style.display = 'none';
-        labelEl.style.display   = 'none';
-    }
+    buttonsEl.style.display = collapsed ? 'none' : 'flex';
+    labelEl.style.display   = collapsed ? 'none' : '';
 
     bar.querySelector('.dg-agent-wizard-launch').addEventListener('click', () => {
         new DeltaGreenChargenWizard(actor).render({ force: true });
