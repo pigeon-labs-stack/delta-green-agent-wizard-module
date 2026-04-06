@@ -9,12 +9,12 @@ A step-by-step character creation wizard for the **Delta Green** RPG system in F
 
 ## Installation
 
-1. Copy the `delta-green-chargen` folder into your Foundry `Data/modules/` directory.
+1. Copy the `delta-green-agent-wizard` folder into your Foundry `Data/modules/` directory.
 2. Launch Foundry and enable the module in your world's Module Management screen.
 
 ## Usage
 
-Open any **Agent** actor sheet. A **Chargen** button appears in the sheet header. Click it to launch the six-step wizard:
+Open any **Agent** actor sheet. An **Agent Wizard** button appears in the sheet header. Click it to launch the six-step wizard:
 
 1. **Statistics** — Set STR / CON / DEX / INT / POW / CHA (roll or type manually)
 2. **Profession** — Choose from all official professions; description and bonds limit displayed
@@ -28,7 +28,7 @@ Open any **Agent** actor sheet. A **Chargen** button appears in the sheet header
 File layout:
 
 ```
-delta-green-chargen/
+delta-green-agent-wizard/
   module.json
   scripts/
     main.js         ← Foundry hooks, header button injection
