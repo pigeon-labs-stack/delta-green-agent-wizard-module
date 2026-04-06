@@ -1,4 +1,5 @@
 import { DeltaGreenChargenWizard } from './wizard.js';
+import { exportToPDF } from './pdf-export.js';
 
 // ---------------------------------------------------------------------------
 // Handlebars helpers
@@ -20,6 +21,91 @@ Handlebars.registerHelper('range', (start, end) => {
 // ---------------------------------------------------------------------------
 const WIZARD_BAR_COLLAPSED_KEY = 'dg-wizard-bar-collapsed';
 
+/**
+ * Build a collectState()-compatible state object from a Foundry Actor document.
+ * Used by the bar's "Export PDF" button for already-created agents.
+ */
+function buildActorPdfState(actor) {
+    const sys  = actor.system ?? {};
+    const st   = sys.statistics ?? {};
+
+    const csStats = {
+        STR: st.str?.value ?? 10,
+        CON: st.con?.value ?? 10,
+        DEX: st.dex?.value ?? 10,
+        INT: st.int?.value ?? 10,
+        POW: st.pow?.value ?? 10,
+        CHA: st.cha?.value ?? 10,
+    };
+
+    const hp  = sys.health?.max   ?? sys.health?.value  ?? 0;
+    const wp  = sys.wp?.max       ?? sys.wp?.value       ?? 0;
+    const san = sys.sanity?.value ?? 0;
+    const bp  = sys.sanity?.currentBreakingPoint ?? 0;
+    const derived = { hp, wp, san, bp };
+
+    // Plain skills
+    const skills = {};
+    const sysSkills = sys.skills ?? {};
+    for (const [key, sk] of Object.entries(sysSkills)) {
+        const val = sk?.proficiency ?? sk?.value;
+        if (val) skills[key] = val;
+    }
+
+    // Typed skills (specialty instances)
+    const GROUP_KEY_MAP = {
+        Art:            'art',
+        Craft:          'craft',
+        ForeignLanguage:'foreign_language',
+        Science:        'science',
+        Pilot:          'pilot',
+        MilitaryScience:'military_science',
+    };
+    const specialtyInstances = [];
+    for (const ts of Object.values(sys.typedSkills ?? {})) {
+        const pdfKey = GROUP_KEY_MAP[ts.group];
+        if (!pdfKey) continue;
+        specialtyInstances.push({ key: pdfKey, specialty: ts.label, value: ts.proficiency ?? 0 });
+    }
+
+    // Bonds (items of type 'bond')
+    const bonds = actor.items
+        .filter(i => i.type === 'bond')
+        .map(i => ({ name: i.name, score: i.system?.score ?? 0, relationship: i.system?.relationship ?? '' }));
+
+    // Motivations (items of type 'motivation') → personalDetails
+    const motivationStrings = actor.items
+        .filter(i => i.type === 'motivation')
+        .map(i => i.name).join('\n');
+
+    const bioSys = sys.biography ?? {};
+    const bio = {
+        name:            actor.name,
+        profession:      bioSys.profession    ?? '',
+        employer:        bioSys.employer      ?? '',
+        nationality:     bioSys.nationality   ?? '',
+        sex:             bioSys.sex           ?? '',
+        age:             bioSys.age           ?? '',
+        education:       bioSys.education     ?? '',
+        physicalDesc:    sys.physicalDescription ?? '',
+        motivations:     motivationStrings,
+        personalDetails: bioSys.notes         ?? '',
+    };
+
+    return {
+        csStats, derived, bio, skills,
+        skillSpecs:           {},
+        customSkills:         [],
+        specialtyInstances,
+        bonds,
+        sanity:               { violence: [false, false, false], helplessness: [false, false, false] },
+        lpNotes:              { wounds: '', gear: '', remarks: '' },
+        lpFeat:               {},
+        lpWeapons:            [],
+        equipment:            actor.items.filter(i => i.type === 'gear').map(i => i.name),
+    };
+}
+
 function injectWizardButton(app, element) {
     const actor = app.document ?? app.actor;
     if (!actor || actor.type !== 'agent') return;
@@ -39,7 +125,10 @@ function injectWizardButton(app, element) {
     bar.className = 'dg-agent-wizard-bar' + (collapsed ? ' dg-wizard-bar-collapsed' : '');
     bar.innerHTML = `
         <button type="button" class="dg-agent-wizard-launch">
-            <i class="fa-solid fa-scroll"></i> Agent Wizard
+            <i class="fa-solid fa-user-secret"></i> Agent Wizard
+        </button>
+        <button type="button" class="dg-agent-pdf-export" title="Export to DD Form 315 PDF">
+            <i class="fa-solid fa-file-pdf"></i> Export PDF
         </button>
         <button type="button" class="dg-wizard-bar-toggle" title="Collapse wizard bar">
             <span class="dg-wizard-bar-triangle"></span>
@@ -47,6 +136,10 @@ function injectWizardButton(app, element) {
 
     bar.querySelector('.dg-agent-wizard-launch').addEventListener('click', () => {
         new DeltaGreenChargenWizard(actor).render({ force: true });
+    });
+
+    bar.querySelector('.dg-agent-pdf-export').addEventListener('click', () => {
+        exportToPDF(buildActorPdfState(actor));
     });
 
     bar.querySelector('.dg-wizard-bar-toggle').addEventListener('click', () => {

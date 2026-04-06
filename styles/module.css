@@ -38,6 +38,37 @@
     color: #c8e88a;
 }
 
+/* PDF export button — same style as wizard launch */
+.dg-agent-pdf-export {
+    background: #1a2a3a;
+    border: 1px solid #2a5a8a;
+    color: #60aadf;
+    padding: 3px 10px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: opacity 0.2s ease, max-width 0.2s ease;
+    overflow: hidden;
+    max-width: 200px;
+    white-space: nowrap;
+}
+
+.dg-agent-pdf-export:hover {
+    background: #22405a;
+    color: #8acae8;
+}
+
+.dg-wizard-bar-collapsed .dg-agent-pdf-export {
+    opacity: 0;
+    max-width: 0;
+    padding: 0;
+    border-width: 0;
+    pointer-events: none;
+}
+
 /* Toggle button — always visible, sits right of the launch button */
 .dg-wizard-bar-toggle {
     background: none;
@@ -65,7 +96,8 @@
     border-bottom: 7px solid transparent;
     border-left: 11px solid #5a8a30;
     transition: transform 0.2s ease;
-    transform: rotate(90deg); /* pointing down when expanded */
+    transform: rotate(90deg);
+    /* pointing down when expanded */
 }
 
 /* Collapsed state */
@@ -83,7 +115,8 @@
 }
 
 .dg-wizard-bar-collapsed .dg-wizard-bar-triangle {
-    transform: rotate(0deg); /* pointing right when collapsed */
+    transform: rotate(0deg);
+    /* pointing right when collapsed */
 }
 
 
@@ -628,6 +661,19 @@
 
 .dg-btn-finish:hover {
     background: #3a6fa0;
+}
+
+.dg-btn-export-pdf {
+    font-size: 0.95rem;
+    padding: 0.4rem 1.2rem;
+    background: #1a2a3a;
+    border-color: #2a5a8a;
+    color: #60aadf;
+}
+
+.dg-btn-export-pdf:hover {
+    background: #22405a;
+    color: #8acae8;
 }
 
 /* --------------------------------------------------------------------------

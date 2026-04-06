@@ -594,6 +594,9 @@
         {{/unless}}
         <span class="dg-nav-spacer"></span>
         {{#if isLast}}
+        <button type="button" data-action="exportPdf" class="dg-btn-secondary dg-btn-export-pdf" title="Export to DD Form 315 PDF">
+            <i class="fa-solid fa-file-pdf"></i> Export PDF
+        </button>
         <button type="button" data-action="finish" class="dg-btn-primary dg-btn-finish">✔ Apply to Sheet</button>
         {{else}}
         <button type="button" data-action="nextStep" class="dg-btn-primary">Next →</button>

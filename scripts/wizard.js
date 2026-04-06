@@ -2,6 +2,7 @@ import { PROFESSIONS } from './professions.js';
 import { BONDS } from './bonds.js';
 import { EQUIPMENT_CATALOG, EQUIPMENT_CATEGORIES } from './equipment.js';
 import { generateBio } from './bio-data.js';
+import { exportToPDF } from './pdf-export.js';
 
 // ---------------------------------------------------------------------------
 // Skill key → Foundry system.skills path mapping
@@ -375,6 +376,7 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
             finish: DeltaGreenChargenWizard.#onFinish,
             loadLoadout: DeltaGreenChargenWizard.#onLoadLoadout,
             fillPack: DeltaGreenChargenWizard.#onFillPack,
+            exportPdf: DeltaGreenChargenWizard.#onExportPdf,
         },
     };
 
@@ -652,6 +654,129 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
             motivations: this.#data.motivations.filter(m => m.trim()),
             equipment: this.#data.equipment,
             bonusAllocations,
+        };
+    }
+
+    // -----------------------------------------------------------------------
+    // Build state object in collectState() shape for exportToPDF
+    // -----------------------------------------------------------------------
+    #buildPdfState() {
+        // Wizard group name → pdf-export.js skill key
+        const GROUP_TO_KEY = {
+            Art:            'art',
+            Craft:          'craft',
+            ForeignLanguage:'foreign_language',
+            Science:        'science',
+            Pilot:          'pilot',
+            MilitaryScience:'military_science',
+        };
+
+        // Stats in uppercase-key format (matches csStats in collectState)
+        const csStats = {
+            STR: this.#data.stats.str,
+            CON: this.#data.stats.con,
+            DEX: this.#data.stats.dex,
+            INT: this.#data.stats.int,
+            POW: this.#data.stats.pow,
+            CHA: this.#data.stats.cha,
+        };
+
+        const hp  = Math.ceil((this.#data.stats.con + this.#data.stats.str) / 2);
+        const wp  = this.#data.stats.pow;
+        const san = this.#data.stats.pow * 5;
+        const bp  = san - wp;
+        const derived = { hp, wp, san, bp };
+
+        // Compute effective plain-skill values (base + standard bonus boosts)
+        const skills = { ...this.#data.skills };
+        const boostCounts = {};
+        for (let i = 0; i < this.#data.bonusBoosts.length; i++) {
+            const key = this.#data.bonusBoosts[i];
+            if (!key || key.startsWith('_custom_') || key.startsWith('profslot__')) continue;
+            boostCounts[key] = (boostCounts[key] ?? 0) + 1;
+        }
+        for (const [key, count] of Object.entries(boostCounts)) {
+            // Only boost plain skills here; specialty keys handled via specialtyInstances below
+            if (!(key in skills) && !(key in SKILL_DEFAULTS)) continue;
+            skills[key] = Math.min(80, (skills[key] ?? SKILL_DEFAULTS[key] ?? 0) + count * 20);
+        }
+
+        // Build specialtyInstances from profession specialty slots
+        const specMap = new Map(); // `${key}||${specialty}` → instance object (for dedup/boost merging)
+        for (const sl of this.#data.specialtySlots) {
+            const label = sl.label.trim();
+            if (!label) continue;
+            const pdfKey = GROUP_TO_KEY[sl.group];
+            if (!pdfKey) continue;
+            const mapKey = `${pdfKey}||${label}`;
+            if (specMap.has(mapKey)) {
+                specMap.get(mapKey).value = Math.min(80, specMap.get(mapKey).value + sl.proficiency);
+            } else {
+                specMap.set(mapKey, { key: pdfKey, specialty: label, value: sl.proficiency });
+            }
+        }
+
+        // Apply bonus boosts that target specialty slots (profslot__) or add new ones (_custom_)
+        for (let i = 0; i < this.#data.bonusBoosts.length; i++) {
+            const key = this.#data.bonusBoosts[i];
+            if (!key) continue;
+
+            if (key.startsWith('profslot__')) {
+                // profslot__{group}__{label} — boost or create matching specialty instance
+                const parts   = key.split('__');
+                const group   = parts[1];  // e.g. 'ForeignLanguage'
+                const label   = parts[2];  // e.g. 'Spanish'
+                const pdfKey  = GROUP_TO_KEY[group];
+                if (!pdfKey || !label) continue;
+                const mapKey = `${pdfKey}||${label}`;
+                if (specMap.has(mapKey)) {
+                    specMap.get(mapKey).value = Math.min(80, specMap.get(mapKey).value + 20);
+                } else {
+                    specMap.set(mapKey, { key: pdfKey, specialty: label, value: 20 });
+                }
+
+            } else if (key.startsWith('_custom_')) {
+                // _custom_{Group} — user typed a custom specialty label
+                const group  = key.slice('_custom_'.length);  // e.g. 'Art'
+                const label  = (this.#data.bonusCustom?.[i] ?? '').trim();
+                if (!label) continue;
+                const pdfKey = GROUP_TO_KEY[group];
+                if (!pdfKey) continue;
+                const mapKey = `${pdfKey}||${label}`;
+                if (specMap.has(mapKey)) {
+                    specMap.get(mapKey).value = Math.min(80, specMap.get(mapKey).value + 20);
+                } else {
+                    specMap.set(mapKey, { key: pdfKey, specialty: label, value: 20 });
+                }
+            }
+        }
+
+        const specialtyInstances = [...specMap.values()];
+
+        const bio = {
+            name:            this.#data.biography.name,
+            profession:      this.#data.biography.profession,
+            employer:        this.#data.biography.employer,
+            nationality:     this.#data.biography.nationality,
+            sex:             this.#data.biography.sex,
+            age:             this.#data.biography.age,
+            education:       this.#data.biography.education,
+            physicalDesc:    this.#data.biography.physicalDescription,
+            motivations:     this.#data.motivations.filter(m => m.trim()).join('\n'),
+            personalDetails: this.#data.biography.notes,
+        };
+
+        return {
+            csStats, derived, bio, skills,
+            skillSpecs:          {},
+            customSkills:        [],
+            specialtyInstances,
+            bonds:               this.#data.bonds,
+            sanity:              { violence: [false, false, false], helplessness: [false, false, false] },
+            lpNotes:             { wounds: '', gear: '', remarks: '' },
+            lpFeat:              {},
+            lpWeapons:           [],
+            equipment:           this.#data.equipment,
         };
     }
 
@@ -1007,6 +1132,10 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
         await this.#applyToActor();
         this.close();
         ui.notifications.info(`${this.#actor.name} is ready for fieldwork.`);
+    }
+
+    static async #onExportPdf(event, target) {
+        exportToPDF(this.#buildPdfState());
     }
 
     // -----------------------------------------------------------------------
