@@ -182,6 +182,49 @@
                     {{/each}}
                 </tbody>
             </table>
+
+            {{!-- Specialty skills section (Foreign Language, Science, Craft, Pilot, Military Science) --}}
+            {{#if specialtyContext}}
+            <div class="dg-specialty-section">
+
+                {{!-- Datalists (one per group, for autocomplete) --}}
+                {{#each specialtyContext.dataLists}}
+                <datalist id="{{id}}">
+                    {{#each options}}<option value="{{this}}">{{/each}}
+                </datalist>
+                {{/each}}
+
+                {{#if specialtyContext.required}}
+                <h4 class="dg-specialty-heading">Specialty Skills (Required — type or choose)</h4>
+                {{#each specialtyContext.required}}
+                <div class="dg-specialty-row{{#unless label}} dg-specialty-empty{{/unless}}">
+                    <span class="dg-specialty-group">{{groupDisplay}}</span>
+                    <input type="text" name="specialty.req.{{id}}" value="{{label}}"
+                        list="dg-sp-{{group}}" placeholder="Choose {{groupDisplay}} type…"
+                        class="dg-specialty-input" />
+                    <span class="dg-specialty-value">{{proficiency}}%</span>
+                </div>
+                {{/each}}
+                {{/if}}
+
+                {{#if specialtyContext.optional}}
+                <h4 class="dg-specialty-heading">Optional Specialty Skills</h4>
+                {{#each specialtyContext.optional}}
+                <div class="dg-specialty-opt-row">
+                    <input type="checkbox" name="optPick" data-index="{{optIndex}}"
+                        {{#if picked}}checked{{/if}} class="dg-opt-check" />
+                    <span class="dg-specialty-group">{{groupDisplay}}</span>
+                    <input type="text" name="specialty.opt.{{optIndex}}" value="{{label}}"
+                        list="dg-sp-{{group}}" placeholder="Choose {{groupDisplay}} type…"
+                        class="dg-specialty-input" {{#unless picked}}disabled{{/unless}} />
+                    <span class="dg-specialty-value">{{proficiency}}%</span>
+                </div>
+                {{/each}}
+                {{/if}}
+
+            </div>
+            {{/if}}
+
             {{else}}
             <p class="dg-warn">Please go back and select a profession first.</p>
             {{/if}}
@@ -421,6 +464,9 @@
                 <div class="dg-review-skills">
                     {{#each review.skills}}
                     <span class="dg-review-skill">{{label}}: <strong>{{value}}%</strong></span>
+                    {{/each}}
+                    {{#each review.specialtySkills}}
+                    <span class="dg-review-skill dg-review-skill-specialty">{{label}}: <strong>{{value}}%</strong></span>
                     {{/each}}
                 </div>
             </section>

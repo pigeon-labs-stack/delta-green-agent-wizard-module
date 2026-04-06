@@ -117,26 +117,64 @@ const BONUS_SKILL_OPTIONS = [
     { key: 'unnatural',               label: 'Unnatural' },
 ];
 
-// Map from wizard skill key → DG Foundry typed skill {group, label}.
-// group must be the localization key suffix used by DG.TypeSkills.{group}.
-const TYPED_SKILL_MAP = {
-    art_painting:             { group: 'Art',             label: 'Painting' },
-    art_photography:          { group: 'Art',             label: 'Photography' },
-    art_writing:              { group: 'Art',             label: 'Writing' },
-    craft_electrician:        { group: 'Craft',           label: 'Electrician' },
-    craft_locksmithing:       { group: 'Craft',           label: 'Locksmithing' },
-    craft_mechanic:           { group: 'Craft',           label: 'Mechanic' },
-    craft_microelectronics:   { group: 'Craft',           label: 'Microelectronics' },
-    foreign_language_arabic:  { group: 'ForeignLanguage', label: 'Arabic' },
-    foreign_language_chinese: { group: 'ForeignLanguage', label: 'Chinese (Mandarin)' },
-    foreign_language_french:  { group: 'ForeignLanguage', label: 'French' },
-    foreign_language_russian: { group: 'ForeignLanguage', label: 'Russian' },
-    foreign_language_spanish: { group: 'ForeignLanguage', label: 'Spanish' },
-    science_biology:          { group: 'Science',         label: 'Biology' },
-    science_chemistry:        { group: 'Science',         label: 'Chemistry' },
-    science_mathematics:      { group: 'Science',         label: 'Mathematics' },
-    science_physics:          { group: 'Science',         label: 'Physics' },
+// Specialty skill bases and their Foundry DG.TypeSkills group key suffix.
+const SPECIALTY_PREFIXES = {
+    'Art':              'Art',
+    'Craft':            'Craft',
+    'Foreign Language': 'ForeignLanguage',
+    'Science':          'Science',
+    'Pilot':            'Pilot',
+    'Military Science': 'MilitaryScience',
 };
+
+// Suggested subspecialties shown as datalist in the skills step.
+const SPECIALTY_OPTIONS = {
+    Art:             ['Acting', 'Drawing', 'Fine Art', 'Music', 'Painting', 'Photography', 'Sculpture', 'Writing'],
+    Craft:           ['Carpentry', 'Electrician', 'Locksmithing', 'Mechanic', 'Microelectronics', 'Plumbing', 'Welding'],
+    ForeignLanguage: ['Arabic', 'Chinese (Mandarin)', 'Farsi/Persian', 'French', 'German', 'Hebrew', 'Hindi', 'Italian', 'Japanese', 'Korean', 'Portuguese', 'Russian', 'Spanish', 'Swahili', 'Turkish'],
+    Science:         ['Astronomy', 'Biology', 'Chemistry', 'Geology', 'Mathematics', 'Meteorology', 'Oceanography', 'Pharmacology', 'Physics'],
+    Pilot:           ['Airplane', 'Drone', 'Helicopter', 'Jet Aircraft', 'Ship', 'Small Boat'],
+    MilitaryScience: ['Air', 'Land', 'Sea', 'Special Operations'],
+};
+
+/**
+ * Parse a skill display name like "Foreign Language (Spanish)" or bare "Science".
+ * Returns {group, label} if it’s a specialty skill, otherwise null.
+ * `label` is '' when bare (subspecialty not yet chosen).
+ */
+function parseSpecialtyFromName(name) {
+    for (const [base, group] of Object.entries(SPECIALTY_PREFIXES)) {
+        if (name === base) return { group, label: '' };
+        if (name.startsWith(base + ' (') && name.endsWith(')')) {
+            return { group, label: name.slice(base.length + 2, -1) };
+        }
+    }
+    return null;
+}
+
+/**
+ * Parse a normalised key like "craft_electrician" or "military_science_land".
+ * Returns {group, label} for specialty bonus-pick keys, otherwise null.
+ */
+function parseSpecialtyFromKey(key) {
+    // Order matters — check longer prefixes first to avoid false matches.
+    const prefixMap = [
+        ['military_science_', 'MilitaryScience'],
+        ['foreign_language_', 'ForeignLanguage'],
+        ['science_',          'Science'],
+        ['craft_',            'Craft'],
+        ['pilot_',            'Pilot'],
+        ['art_',              'Art'],
+    ];
+    for (const [prefix, group] of prefixMap) {
+        if (key.startsWith(prefix)) {
+            const rawLabel = key.slice(prefix.length);
+            const label = rawLabel.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+            return { group, label };
+        }
+    }
+    return null;
+}
 
 const STAT_LABELS = { str: 'STR', con: 'CON', dex: 'DEX', int: 'INT', pow: 'POW', cha: 'CHA' };
 
@@ -186,6 +224,8 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
         optionalPicks: [],   // indices of chosen optional skills
         bonusBoosts: ['', '', '', '', '', '', '', ''],  // 8 bonus-pick slots (each holds a skill key)
         bonds: [],           // array of { name, score, relationship, description }
+        specialtySlots: [],  // [{id, group, label, proficiency, required, optIndex}] typed/specialty skills
+        optSpecialtyLabels: {},  // optIndex → label string for checked optional specialty picks
         biography: { name: '', profession: '', employer: '', nationality: '', sex: '', age: '', education: '', physicalDescription: '' },
         motivations: ['', '', '', '', ''],               // up to 5 motivation strings
         equipment: [],       // array of item names from catalog
@@ -242,6 +282,7 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
         const bonusSkills = step === 'bonus_skills' ? this.#buildBonusSkillContext() : null;
         const optLimit = prof ? (prof.optionalSkills?.[0]?.limit ?? 2) : 0;
         const optPicksUsed = this.#data.optionalPicks.length;
+        const specialtyContext = step === 'skills' ? this.#buildSpecialtyContext(prof) : null;
 
         // Pre-fill all bond slots when entering the bonds step
         if (step === 'bonds' && prof) {
@@ -270,6 +311,7 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
             bonusSkills,
             optLimit,
             optPicksUsed,
+            specialtyContext,
             bonds: this.#data.bonds,
             bondLimit,
             bondsAtLimit: this.#data.bonds.length >= bondLimit,
@@ -281,14 +323,15 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
     }
 
     // -----------------------------------------------------------------------
-    // Build sorted skill list for the skills step
+    // Build sorted skill list for the skills step (specialty skills excluded)
     // -----------------------------------------------------------------------
     #buildSkillContext(prof) {
         if (!prof) return [];
         const result = [];
 
-        // Required skills
+        // Required skills — skip specialty types (shown in specialty section)
         for (const s of prof.requiredSkills ?? []) {
+            if (parseSpecialtyFromName(s.name)) continue;
             const key = this.#findSkillKey(s.name);
             result.push({
                 key,
@@ -301,10 +344,11 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
             });
         }
 
-        // Optional skills with pick limit
+        // Optional skills — skip specialty types (shown in specialty section)
         const optLimit = prof.optionalSkills?.[0]?.limit ?? 2;
         for (let i = 0; i < (prof.optionalSkills?.length ?? 0); i++) {
             const s = prof.optionalSkills[i];
+            if (parseSpecialtyFromName(s.name)) continue;
             const key = this.#findSkillKey(s.name);
             result.push({
                 key,
@@ -323,6 +367,57 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
     }
 
     // -----------------------------------------------------------------------
+    // Build specialty skill context for the skills step
+    // -----------------------------------------------------------------------
+    #buildSpecialtyContext(prof) {
+        if (!prof) return null;
+        const optLimit = prof.optionalSkills?.[0]?.limit ?? 2;
+
+        // Required specialty slots (populated during profession step)
+        const required = this.#data.specialtySlots
+            .filter(sl => sl.required)
+            .map(sl => ({
+                ...sl,
+                groupDisplay: Object.entries(SPECIALTY_PREFIXES).find(([, g]) => g === sl.group)?.[0] ?? sl.group,
+                options: SPECIALTY_OPTIONS[sl.group] ?? [],
+            }));
+
+        // Optional specialty picks from this profession
+        const optional = [];
+        for (let i = 0; i < (prof.optionalSkills?.length ?? 0); i++) {
+            const s = prof.optionalSkills[i];
+            const sp = parseSpecialtyFromName(s.name);
+            if (!sp) continue;
+            const existingSlot = this.#data.specialtySlots.find(sl => sl.optIndex === i);
+            optional.push({
+                optIndex: i,
+                group: sp.group,
+                groupDisplay: s.name,
+                proficiency: s.value,
+                picked: this.#data.optionalPicks.includes(i),
+                label: existingSlot?.label ?? this.#data.optSpecialtyLabels[i] ?? '',
+                options: SPECIALTY_OPTIONS[sp.group] ?? [],
+                optLimit,
+            });
+        }
+
+        if (required.length === 0 && optional.length === 0) return null;
+
+        // Deduplicated datalists (one per group used)
+        const usedGroups = new Set([...required, ...optional].map(sl => sl.group));
+        const dataLists = [...usedGroups].map(group => ({
+            id: `dg-sp-${group}`,
+            options: SPECIALTY_OPTIONS[group] ?? [],
+        }));
+
+        return {
+            required: required.length > 0 ? required : null,
+            optional: optional.length > 0 ? optional : null,
+            dataLists,
+        };
+    }
+
+    // -----------------------------------------------------------------------
     // Map a display name like "Computer Science" → system key "computer_science"
     // -----------------------------------------------------------------------
     #findSkillKey(name) {
@@ -331,7 +426,6 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
             .replace(/__+/g, '_')
             .replace(/^_+|_+$/g, '');  // strip leading/trailing underscores
         if (SKILL_KEY_MAP[normalized]) return normalized;
-        if (TYPED_SKILL_MAP[normalized]) return normalized;
         // fuzzy: find first key that appears in the normalized name
         return Object.keys(SKILL_KEY_MAP).find(k => normalized.includes(k)) ?? normalized;
     }
@@ -383,6 +477,12 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
                 const label = k.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
                 return { key: k, label, value: effective };
             }),
+            specialtySkills: this.#data.specialtySlots
+                .filter(sl => sl.label.trim())
+                .map(sl => {
+                    const groupDisplay = Object.entries(SPECIALTY_PREFIXES).find(([, g]) => g === sl.group)?.[0] ?? sl.group;
+                    return { label: `${groupDisplay} (${sl.label})`, value: sl.proficiency };
+                }),
             bonds: this.#data.bonds,
             biography: Object.entries(this.#data.biography)
                 .filter(([, v]) => v)
@@ -423,6 +523,12 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
             counterEl.classList.toggle('at-limit', checked >= optLimit);
             el.querySelectorAll('input[name="optPick"]:not(:checked)').forEach(cb => { cb.disabled = checked >= optLimit; });
             el.querySelectorAll('input[name="optPick"]:checked').forEach(cb => { cb.disabled = false; });
+            // Enable specialty text inputs only when their checkbox is checked
+            el.querySelectorAll('.dg-specialty-opt-row').forEach(row => {
+                const cb = row.querySelector('input[name="optPick"]');
+                const inp = row.querySelector('.dg-specialty-input');
+                if (cb && inp) inp.disabled = !cb.checked;
+            });
         };
 
         el.querySelectorAll('input[name="optPick"]').forEach(cb => cb.addEventListener('change', updateCounter));
@@ -692,17 +798,30 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
             if (!this.#data.biography.profession) {
                 this.#data.biography.profession = prof.title;
             }
-            // Pre-fill required skill values
+            // Reset skills + specialty slots for the new profession
+            this.#data.skills = {};
+            this.#data.specialtySlots = [];
+            this.#data.optSpecialtyLabels = {};
+            let slotId = 0;
+            // Required skills: specialty types → specialtySlots; plain skills → skills dict
             for (const s of prof.requiredSkills ?? []) {
-                const sk = this.#findSkillKey(s.name);
-                this.#data.skills[sk] = Math.max(SKILL_DEFAULTS[sk] ?? 0, s.value);
+                const sp = parseSpecialtyFromName(s.name);
+                if (sp) {
+                    this.#data.specialtySlots.push({
+                        id: slotId++, group: sp.group, label: sp.label,
+                        proficiency: s.value, required: true, optIndex: null,
+                    });
+                } else {
+                    const sk = this.#findSkillKey(s.name);
+                    this.#data.skills[sk] = Math.max(SKILL_DEFAULTS[sk] ?? 0, s.value);
+                }
             }
         }
 
         if (step === 'skills') {
             const prof = PROFESSIONS[this.#data.professionKey];
             const optLimit = prof?.optionalSkills?.[0]?.limit ?? 2;
-            // Collect optional picks from checkboxes
+            // Collect optional picks from checkboxes (covers both plain and specialty optionals)
             const picks = [];
             form.querySelectorAll('input[name="optPick"]:checked').forEach(cb => {
                 picks.push(Number(cb.dataset.index));
@@ -712,10 +831,29 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
                 return false;
             }
             this.#data.optionalPicks = picks;
+
+            // Update required specialty slot labels
+            for (const slot of this.#data.specialtySlots.filter(sl => sl.required)) {
+                slot.label = (raw[`specialty.req.${slot.id}`] ?? slot.label).toString().trim();
+            }
+
+            // Re-derive optional picks: specialty → specialty slots; plain → skills dict
+            this.#data.specialtySlots = this.#data.specialtySlots.filter(sl => sl.required);
+            this.#data.optSpecialtyLabels = {};
             for (const idx of picks) {
                 const s = prof.optionalSkills[idx];
-                const sk = this.#findSkillKey(s.name);
-                this.#data.skills[sk] = Math.max(this.#data.skills[sk] ?? 0, s.value);
+                const sp = parseSpecialtyFromName(s.name);
+                if (sp) {
+                    const label = (raw[`specialty.opt.${idx}`] ?? '').toString().trim();
+                    this.#data.optSpecialtyLabels[idx] = label;
+                    this.#data.specialtySlots.push({
+                        id: `opt_${idx}`, group: sp.group, label,
+                        proficiency: s.value, required: false, optIndex: idx,
+                    });
+                } else {
+                    const sk = this.#findSkillKey(s.name);
+                    this.#data.skills[sk] = Math.max(this.#data.skills[sk] ?? 0, s.value);
+                }
             }
         }
 
@@ -777,13 +915,10 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
         updates['system.sanity.value'] = this.#data.stats.pow * 5;
         updates['system.sanity.currentBreakingPoint'] = this.#data.stats.pow * 5 - this.#data.stats.pow;
 
-        // Skills — base profession values; typed skills collected separately
-        const typedSkillUpdates = {};  // key → {label, group, proficiency}
+        // Skills — base profession values (plain skills only; specialty handled via specialtySlots)
         for (const [key, value] of Object.entries(this.#data.skills)) {
             if (SKILL_KEY_MAP[key]) {
                 updates[`system.skills.${key}.proficiency`] = value;
-            } else if (TYPED_SKILL_MAP[key]) {
-                typedSkillUpdates[key] = { ...TYPED_SKILL_MAP[key], proficiency: value };
             }
         }
 
@@ -792,25 +927,48 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
         for (const key of this.#data.bonusBoosts) {
             if (key) boostCounts[key] = (boostCounts[key] ?? 0) + 1;
         }
+        // Separate bonus boosts into plain skills and typed specialty skills
+        const bonusTypedMap = {};  // tsKey → {group, label, proficiency}
         for (const [key, boosts] of Object.entries(boostCounts)) {
             if (boosts <= 0) continue;
             if (SKILL_KEY_MAP[key]) {
                 const base = this.#data.skills[key] ?? SKILL_DEFAULTS[key] ?? 0;
                 updates[`system.skills.${key}.proficiency`] = Math.min(80, base + boosts * 20);
-            } else if (TYPED_SKILL_MAP[key]) {
-                const existing = typedSkillUpdates[key];
-                const base = existing?.proficiency ?? 0;
-                typedSkillUpdates[key] = { ...TYPED_SKILL_MAP[key], proficiency: Math.min(80, base + boosts * 20) };
+            } else {
+                const sp = parseSpecialtyFromKey(key);
+                if (sp) {
+                    const tsKey = `tskill_wiz_${key}`;
+                    bonusTypedMap[tsKey] = { group: sp.group, label: sp.label, proficiency: Math.min(80, boosts * 20) };
+                }
             }
         }
 
-        // Apply typed/specialty skills as system.typedSkills entries
-        for (const [key, tsData] of Object.entries(typedSkillUpdates)) {
-            const tsKey = `tskill_wiz_${key}`;
-            updates[`system.typedSkills.${tsKey}.label`] = tsData.label;
-            updates[`system.typedSkills.${tsKey}.group`] = tsData.group;
-            updates[`system.typedSkills.${tsKey}.proficiency`] = tsData.proficiency;
-            updates[`system.typedSkills.${tsKey}.failure`] = false;
+        // Build the typed skills object, merging with any already on the actor
+        const typedSkillsToWrite = foundry.utils.deepClone(this.#actor.system.typedSkills ?? {});
+
+        // Specialty slots from the profession (required) and optional picks
+        for (const slot of this.#data.specialtySlots) {
+            const label = slot.label.trim();
+            if (!label) continue;  // skip slots where the user left the subspecialty blank
+            const tsKey = ('tskill_wiz_' + slot.group + '_' + label)
+                .toLowerCase().replace(/[^a-z0-9_]/g, '_').replace(/_+/g, '_').replace(/_$/g, '');
+            const boost = bonusTypedMap[tsKey];
+            typedSkillsToWrite[tsKey] = {
+                label: slot.label,
+                group: slot.group,
+                proficiency: boost ? Math.min(80, slot.proficiency + boost.proficiency) : slot.proficiency,
+                failure: false,
+            };
+            if (boost) delete bonusTypedMap[tsKey];
+        }
+
+        // Remaining bonus typed skills (no matching specialty slot — e.g. bonus-only picks)
+        for (const [tsKey, tsData] of Object.entries(bonusTypedMap)) {
+            typedSkillsToWrite[tsKey] = { label: tsData.label, group: tsData.group, proficiency: tsData.proficiency, failure: false };
+        }
+
+        if (Object.keys(typedSkillsToWrite).length > 0) {
+            updates['system.typedSkills'] = typedSkillsToWrite;
         }
 
         // Biography — actor name is top-level; physicalDescription is system.physicalDescription
