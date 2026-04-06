@@ -389,6 +389,31 @@
     font-style: italic;
 }
 
+/* Bond dataset picker row */
+.dg-bond-dataset-row {
+    margin-bottom: 0.6rem;
+    display: flex;
+    align-items: center;
+}
+
+.dg-bond-dataset-row label {
+    font-size: 0.82rem;
+    color: #aaa;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.dg-bond-dataset-select {
+    background: #1a1a1a;
+    color: #ddd;
+    border: 1px solid #444;
+    border-radius: 3px;
+    padding: 0.2rem 0.4rem;
+    font-size: 0.8rem;
+    font-family: inherit;
+}
+
 /* --------------------------------------------------------------------------
    Biography step
    -------------------------------------------------------------------------- */
@@ -592,6 +617,30 @@
     line-height: 1.6;
 }
 
+/* Nested tips accordion inside .dg-tips */
+.dg-tips-inner {
+    margin-top: 0.5rem;
+    border-top: 1px solid #2e2e2e;
+    padding-top: 0.4rem;
+}
+
+.dg-tips-inner > summary {
+    font-size: 0.8rem;
+    color: #aaa;
+    cursor: pointer;
+    list-style: none;
+    user-select: none;
+}
+
+.dg-tips-inner > summary::before {
+    content: '▶ ';
+    font-size: 0.65rem;
+}
+
+.dg-tips-inner[open] > summary::before {
+    content: '▼ ';
+}
+
 /* --------------------------------------------------------------------------
    Bonus skills step — 8 dropdown slots
    -------------------------------------------------------------------------- */
@@ -639,6 +688,20 @@
     background: #1a1a1a;
     color: #ddd;
     border: 1px solid #444;
+    border-radius: 3px;
+    padding: 0.2rem 0.3rem;
+    font-size: 0.8rem;
+    font-family: inherit;
+}
+
+/* Custom specialty input — hidden by default, shown by JS when '_custom_*' selected */
+.dg-bonus-custom-input {
+    display: none;
+    width: 150px;
+    flex-shrink: 0;
+    background: #1a1a1a;
+    color: #ddd;
+    border: 1px solid #666;
     border-radius: 3px;
     padding: 0.2rem 0.3rem;
     font-size: 0.8rem;
@@ -1005,6 +1068,42 @@
     font-size: 0.78rem;
     padding: 0.2rem 0.6rem;
     margin-top: 0.2rem;
+}
+
+/* Quick loadout buttons row */
+.dg-eq-loadout-btns {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem;
+    margin-bottom: 0.6rem;
+    padding: 0.4rem 0;
+    border-bottom: 1px solid #2e2e2e;
+}
+
+.dg-eq-loadout-btns-label {
+    font-size: 0.78rem;
+    color: #888;
+    flex-shrink: 0;
+}
+
+/* Custom item add row */
+.dg-eq-custom-row {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin: 0.3rem 0;
+}
+
+.dg-eq-custom-input {
+    flex: 1;
+    background: #1a1a1a;
+    color: #ddd;
+    border: 1px solid #444;
+    border-radius: 3px;
+    padding: 0.2rem 0.4rem;
+    font-size: 0.8rem;
+    font-family: inherit;
 }
 
 /* --------------------------------------------------------------------------

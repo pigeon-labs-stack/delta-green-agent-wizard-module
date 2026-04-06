@@ -69,6 +69,7 @@ const BONUS_SKILL_OPTIONS = [
     { key: 'art_painting',            label: 'Art (Painting)' },
     { key: 'art_photography',         label: 'Art (Photography)' },
     { key: 'art_writing',             label: 'Art (Writing)' },
+    { key: '_custom_Art',             label: 'Art (Other…)' },
     { key: 'artillery',               label: 'Artillery' },
     { key: 'athletics',               label: 'Athletics' },
     { key: 'bureaucracy',             label: 'Bureaucracy' },
@@ -77,6 +78,7 @@ const BONUS_SKILL_OPTIONS = [
     { key: 'craft_locksmithing',      label: 'Craft (Locksmithing)' },
     { key: 'craft_mechanic',          label: 'Craft (Mechanic)' },
     { key: 'craft_microelectronics',  label: 'Craft (Microelectronics)' },
+    { key: '_custom_Craft',           label: 'Craft (Other…)' },
     { key: 'criminology',             label: 'Criminology' },
     { key: 'demolitions',             label: 'Demolitions' },
     { key: 'disguise',                label: 'Disguise' },
@@ -89,6 +91,7 @@ const BONUS_SKILL_OPTIONS = [
     { key: 'foreign_language_french', label: 'Foreign Language (French)' },
     { key: 'foreign_language_russian',label: 'Foreign Language (Russian)' },
     { key: 'foreign_language_spanish',label: 'Foreign Language (Spanish)' },
+    { key: '_custom_ForeignLanguage', label: 'Foreign Language (Other…)' },
     { key: 'forensics',               label: 'Forensics' },
     { key: 'heavy_machiner',          label: 'Heavy Machinery' },
     { key: 'heavy_weapons',           label: 'Heavy Weapons' },
@@ -97,16 +100,22 @@ const BONUS_SKILL_OPTIONS = [
     { key: 'law',                     label: 'Law' },
     { key: 'medicine',                label: 'Medicine' },
     { key: 'melee_weapons',           label: 'Melee Weapons' },
+    { key: 'military_science_land',   label: 'Military Science (Land)' },
+    { key: '_custom_MilitaryScience', label: 'Military Science (Other…)' },
     { key: 'navigate',                label: 'Navigate' },
     { key: 'occult',                  label: 'Occult' },
     { key: 'persuade',                label: 'Persuade' },
     { key: 'pharmacy',                label: 'Pharmacy' },
+    { key: 'pilot_airplane',          label: 'Pilot (Airplane)' },
+    { key: 'pilot_helicopter',        label: 'Pilot (Helicopter)' },
+    { key: '_custom_Pilot',           label: 'Pilot (Other…)' },
     { key: 'psychotherapy',           label: 'Psychotherapy' },
     { key: 'ride',                    label: 'Ride' },
     { key: 'science_biology',         label: 'Science (Biology)' },
     { key: 'science_chemistry',       label: 'Science (Chemistry)' },
     { key: 'science_mathematics',     label: 'Science (Mathematics)' },
     { key: 'science_physics',         label: 'Science (Physics)' },
+    { key: '_custom_Science',         label: 'Science (Other…)' },
     { key: 'search',                  label: 'Search' },
     { key: 'sigint',                  label: 'SIGINT' },
     { key: 'stealth',                 label: 'Stealth' },
@@ -176,6 +185,39 @@ function parseSpecialtyFromKey(key) {
     return null;
 }
 
+// Pre-built equipment loadouts — item names must match EQUIPMENT_CATALOG exactly.
+const LOADOUTS = {
+    federal_agent: [
+        'Medium pistol', 'Tactical light or weapon light', 'Handcuffs', 'Kevlar vest',
+        'Tablet computer or smartphone', 'Earpiece communication set',
+        'Light rifle or carbine', 'Individual first aid kit',
+    ],
+    swat: [
+        'Light rifle or carbine', 'Medium pistol', 'Tactical body armor', 'Kevlar helmet',
+        'CED pistol', 'Pepper spray can', 'Halligan forcible-entry tool',
+        'Flash-bang grenade, thrown', 'Tear gas grenade', 'Earpiece communication set',
+    ],
+    special_operator: [
+        'Light rifle or carbine', 'Medium pistol', 'Hand grenade', 'Flash-bang grenade, thrown',
+        'Long knife or combat dagger', 'Flexible cuffs', 'Tactical body armor', 'Kevlar helmet',
+        'Military-grade night vision goggles', 'Short-range walkie talkie',
+        'Holographic sight', 'Targeting laser', 'Sound suppressor',
+    ],
+    police_officer: [
+        'Medium pistol', 'Kevlar vest', 'CED pistol', 'Pepper spray can',
+        'Club, nightstick, or collapsible baton', 'Knife', 'Handcuffs',
+        'Tactical light or weapon light', 'Short-range walkie talkie', 'Earpiece communication set',
+    ],
+};
+
+const BOND_DATASETS = [
+    { key: 'FRIENDS_FAMILY', label: 'Friends & Family' },
+    { key: 'DELTA_GREEN',    label: 'Delta Green' },
+    { key: 'UNDERWORLD',     label: 'Underworld / Criminal' },
+    { key: 'LGBTQ',          label: 'LGBTQ+' },
+    { key: 'PISCES_UK',      label: 'PISCES (British Intel)' },
+];
+
 const STAT_LABELS = { str: 'STR', con: 'CON', dex: 'DEX', int: 'INT', pow: 'POW', cha: 'CHA' };
 
 const STAT_DESCRIPTOR_TIERS = {
@@ -223,10 +265,12 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
         skills: {},          // key → value
         optionalPicks: [],   // indices of chosen optional skills
         bonusBoosts: ['', '', '', '', '', '', '', ''],  // 8 bonus-pick slots (each holds a skill key)
+        bonusCustom: ['', '', '', '', '', '', '', ''],  // custom label text for '_custom_*' bonus slots
+        bondDataset: 'FRIENDS_FAMILY',                  // active bond suggestion dataset
         bonds: [],           // array of { name, score, relationship, description }
         specialtySlots: [],  // [{id, group, label, proficiency, required, optIndex}] typed/specialty skills
         optSpecialtyLabels: {},  // optIndex → label string for checked optional specialty picks
-        biography: { name: '', profession: '', employer: '', nationality: '', sex: '', age: '', education: '', physicalDescription: '' },
+        biography: { name: '', profession: '', employer: '', nationality: '', sex: '', age: '', education: '', physicalDescription: '', notes: '' },
         motivations: ['', '', '', '', ''],               // up to 5 motivation strings
         equipment: [],       // array of item names from catalog
     };
@@ -257,6 +301,7 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
             randomBio: DeltaGreenChargenWizard.#onRandomBio,
             clearEquipment: DeltaGreenChargenWizard.#onClearEquipment,
             finish: DeltaGreenChargenWizard.#onFinish,
+            loadLoadout: DeltaGreenChargenWizard.#onLoadLoadout,
         },
     };
 
@@ -315,6 +360,8 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
             bonds: this.#data.bonds,
             bondLimit,
             bondsAtLimit: this.#data.bonds.length >= bondLimit,
+            bondDataset: this.#data.bondDataset,
+            bondDatasets: BOND_DATASETS,
             biography: this.#data.biography,
             motivations: this.#data.motivations,
             equipmentCount: this.#data.equipment.length,
@@ -443,7 +490,13 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
     // -----------------------------------------------------------------------
     #buildBonusSkillContext() {
         const rawSlots = this.#data.bonusBoosts;
-        const slots = rawSlots.map((key, i) => ({ index: i, key }));
+        const customLabels = this.#data.bonusCustom ?? [];
+        const slots = rawSlots.map((key, i) => ({
+            index: i,
+            key,
+            isCustom: key.startsWith('_custom_'),
+            customLabel: customLabels[i] ?? '',
+        }));
         const picksUsed = rawSlots.filter(k => k !== '').length;
         return { options: BONUS_SKILL_OPTIONS, slots, picksUsed };
     }
@@ -453,16 +506,28 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
     // -----------------------------------------------------------------------
     #buildReviewContext() {
         const boostCounts = {};
-        for (const key of this.#data.bonusBoosts) {  // eslint-disable-line no-unused-vars
-            if (key) boostCounts[key] = (boostCounts[key] ?? 0) + 1;
+        const customLabels = {};
+        for (let i = 0; i < this.#data.bonusBoosts.length; i++) {
+            const key = this.#data.bonusBoosts[i];
+            if (!key) continue;
+            if (key.startsWith('_custom_')) {
+                const group = key.slice('_custom_'.length);
+                const label = (this.#data.bonusCustom?.[i] ?? '').trim();
+                if (!label) continue;
+                const displayKey = `${group} (${label})`;
+                customLabels[displayKey] = (customLabels[displayKey] ?? 0) + 1;
+            } else {
+                boostCounts[key] = (boostCounts[key] ?? 0) + 1;
+            }
         }
-        const bonusAllocations = Object.entries(boostCounts)
-            .map(([key, count]) => {
+        const bonusAllocations = [
+            ...Object.entries(boostCounts).map(([key, count]) => {
                 const label = BONUS_SKILL_OPTIONS.find(s => s.key === key)?.label
                     ?? key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
                 return { label, count, total: count * 20 };
-            })
-            .sort((a, b) => a.label.localeCompare(b.label));
+            }),
+            ...Object.entries(customLabels).map(([label, count]) => ({ label, count, total: count * 20 })),
+        ].sort((a, b) => a.label.localeCompare(b.label));
 
         return {
             stats: Object.entries(this.#data.stats).map(([k, v]) => ({
@@ -505,6 +570,24 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
         await super._onRender?.(context, options);
         if (STEPS[this.#step] === 'equipment') this.#buildEquipmentUI();
         if (STEPS[this.#step] === 'skills') this.#setupSkillsUI();
+        if (STEPS[this.#step] === 'bonus_skills') this.#setupBonusSkillsUI();
+    }
+
+    // -----------------------------------------------------------------------
+    // Bonus skills step: show/hide custom specialty input per slot
+    // -----------------------------------------------------------------------
+    #setupBonusSkillsUI() {
+        const el = this.element;
+        if (!el) return;
+        const updateRow = (select) => {
+            const row = select.closest('.dg-bonus-slot-row');
+            const input = row?.querySelector('.dg-bonus-custom-input');
+            if (input) input.style.display = select.value.startsWith('_custom_') ? 'inline-block' : 'none';
+        };
+        el.querySelectorAll('.dg-bonus-slot-select').forEach(select => {
+            updateRow(select);
+            select.addEventListener('change', () => updateRow(select));
+        });
     }
 
     // -----------------------------------------------------------------------
@@ -580,6 +663,25 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
                 this.#updateEquipCountBadge(el);
             }
         });
+
+        // Custom item add
+        const customInput = el.querySelector('#dg-eq-custom-input');
+        const customAddBtn = el.querySelector('#dg-eq-custom-add');
+        if (customInput && customAddBtn) {
+            customAddBtn.addEventListener('click', () => {
+                const name = customInput.value.trim();
+                if (name && !this.#data.equipment.includes(name)) {
+                    this.#data.equipment.push(name);
+                    customInput.value = '';
+                    this.#renderEquipmentLoadout(loadoutEl);
+                    this.#renderEquipmentCatalog(catalogEl);
+                    this.#updateEquipCountBadge(el);
+                }
+            });
+            customInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') { e.preventDefault(); customAddBtn.click(); }
+            });
+        }
 
         this.#renderEquipmentTabs(catTabsEl, catalogEl);
         this.#renderEquipmentCatalog(catalogEl);
@@ -739,7 +841,14 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
     }
 
     static async #onSuggestBond(event, target) {
-        const pool = Object.values(BONDS).flat();
+        // Read the currently selected dataset from the live form before using stored value
+        const form = this.element?.querySelector('form.dg-wizard-form');
+        if (form) {
+            const fd = new foundry.applications.ux.FormDataExtended(form);
+            const dataset = (fd.object['bondDataset'] ?? '').toString().trim();
+            if (dataset && BONDS[dataset]) this.#data.bondDataset = dataset;
+        }
+        const pool = BONDS[this.#data.bondDataset] ?? Object.values(BONDS).flat();
         const suggestion = pool[Math.floor(Math.random() * pool.length)];
         const idx = Number(target.dataset.index);
         if (this.#data.bonds[idx]) {
@@ -759,6 +868,22 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
     static async #onClearEquipment(event, target) {
         this.#data.equipment = [];
         this.render({ force: true });
+    }
+
+    static async #onLoadLoadout(event, target) {
+        const key = target.dataset.loadout;
+        const items = LOADOUTS[key] ?? [];
+        for (const name of items) {
+            if (!this.#data.equipment.includes(name)) this.#data.equipment.push(name);
+        }
+        const el = this.element;
+        if (el) {
+            const loadoutEl = el.querySelector('#dg-eq-loadout');
+            const catalogEl = el.querySelector('#dg-eq-catalog');
+            if (loadoutEl) this.#renderEquipmentLoadout(loadoutEl);
+            if (catalogEl) this.#renderEquipmentCatalog(catalogEl);
+            this.#updateEquipCountBadge(el);
+        }
     }
 
     static async #onFinish(event, target) {
@@ -859,14 +984,17 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
 
         if (step === 'bonus_skills') {
             const slots = [];
+            if (!this.#data.bonusCustom) this.#data.bonusCustom = ['', '', '', '', '', '', '', ''];
             for (let i = 0; i < 8; i++) {
                 slots.push((raw[`bonusSlot.${i}`] ?? '').toString());
+                this.#data.bonusCustom[i] = (raw[`bonusCustom.${i}`] ?? '').toString().trim();
             }
             this.#data.bonusBoosts = slots;
             return true;
         }
 
         if (step === 'bonds') {
+            this.#data.bondDataset = (raw['bondDataset'] ?? 'FRIENDS_FAMILY').toString().trim();
             this.#data.bonds = this.#data.bonds.map((bond, i) => ({
                 name: (raw[`bonds.${i}.name`] ?? bond.name).toString().trim(),
                 score: parseInt(raw[`bonds.${i}.score`], 10) || bond.score,
@@ -922,12 +1050,24 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
             }
         }
 
-        // Bonus skill boosts — count occurrences in the 8-slot array, capped at 80
+        // Bonus skill boosts — separate standard keys from custom specialty picks
         const boostCounts = {};
-        for (const key of this.#data.bonusBoosts) {
-            if (key) boostCounts[key] = (boostCounts[key] ?? 0) + 1;
+        const customBoostMap = {};  // '{group}__{label}' → {group, label, proficiency}
+        for (let i = 0; i < this.#data.bonusBoosts.length; i++) {
+            const key = this.#data.bonusBoosts[i];
+            if (!key) continue;
+            if (key.startsWith('_custom_')) {
+                const group = key.slice('_custom_'.length);
+                const label = (this.#data.bonusCustom?.[i] ?? '').trim();
+                if (!label) continue;
+                const mapKey = `${group}__${label}`;
+                if (!customBoostMap[mapKey]) customBoostMap[mapKey] = { group, label, proficiency: 0 };
+                customBoostMap[mapKey].proficiency = Math.min(80, customBoostMap[mapKey].proficiency + 20);
+            } else {
+                boostCounts[key] = (boostCounts[key] ?? 0) + 1;
+            }
         }
-        // Separate bonus boosts into plain skills and typed specialty skills
+        // Separate standard bonus boosts into plain skills and typed specialty skills
         const bonusTypedMap = {};  // tsKey → {group, label, proficiency}
         for (const [key, boosts] of Object.entries(boostCounts)) {
             if (boosts <= 0) continue;
@@ -962,9 +1102,16 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
             if (boost) delete bonusTypedMap[tsKey];
         }
 
-        // Remaining bonus typed skills (no matching specialty slot — e.g. bonus-only picks)
+        // Remaining standard bonus typed skills (bonus-only picks not matching a specialty slot)
         for (const [tsKey, tsData] of Object.entries(bonusTypedMap)) {
             typedSkillsToWrite[tsKey] = { label: tsData.label, group: tsData.group, proficiency: tsData.proficiency, failure: false };
+        }
+
+        // Custom specialty picks from bonus slots
+        for (const [, { group, label, proficiency }] of Object.entries(customBoostMap)) {
+            const tsKey = ('tskill_wiz_c_' + group + '_' + label)
+                .toLowerCase().replace(/[^a-z0-9_]/g, '_').replace(/_+/g, '_').replace(/_$/g, '');
+            typedSkillsToWrite[tsKey] = { label, group, proficiency, failure: false };
         }
 
         if (Object.keys(typedSkillsToWrite).length > 0) {
@@ -1014,11 +1161,16 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
             await this.#actor.createEmbeddedDocuments('Item', motivationItems);
         }
 
-        // Equipment — create as Items on the actor
+        // Equipment — create as Items on the actor (catalog items get full data; custom names get generic gear)
         if (this.#data.equipment.length > 0) {
             const eqItems = this.#data.equipment
-                .map(name => EQUIPMENT_CATALOG.find(i => i.name === name))
-                .filter(Boolean);
+                .filter(name => name && name.trim())
+                .map(name => {
+                    const catalogItem = EQUIPMENT_CATALOG.find(i => i.name === name);
+                    if (catalogItem) return catalogItem;
+                    return { name, type: 'gear', img: 'icons/svg/item-bag.svg', flags: {}, effects: [],
+                        system: { name: '', description: '', equipped: true, expense: '' } };
+                });
             if (eqItems.length > 0) {
                 await this.#actor.createEmbeddedDocuments('Item', eqItems);
             }

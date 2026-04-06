@@ -39,19 +39,19 @@
 
             <details class="dg-tips">
                 <summary>Tips</summary>
-                <p>Distribute <strong>72 points</strong> across your six statistics (min 3, max 18). You can also roll
-                    4d6 drop-lowest, or randomize a balanced spread.</p>
+                <p>Your Agent's six core abilities. You have three ways to set them:</p>
                 <ul class="dg-tips-list">
-                    <li><strong>STR</strong> — Physical strength. Affects melee damage, climb, lift, and some physical
-                        skill checks.</li>
-                    <li><strong>CON</strong> — Endurance and resilience. Combined with STR to set your Hit Points.</li>
-                    <li><strong>DEX</strong> — Agility and coordination. Affects initiative, Dodge, and physical
-                        dexterity tasks.</li>
-                    <li><strong>INT</strong> — Reason and perception. Many investigative and technical skills derive
-                        from INT.</li>
-                    <li><strong>POW</strong> — Willpower and psychic force. Sets your Willpower Points and starting
-                        Sanity (POW × 5).</li>
-                    <li><strong>CHA</strong> — Personality and presence. Your Bond score starts equal to CHA.</li>
+                    <li><strong>🔀 Randomize (72 pts)</strong> — Spreads 72 points across all six stats randomly within the point-buy rules.</li>
+                    <li><strong>🎲 Roll All (4d6 drop lowest)</strong> — Old-school: rolls 4d6 drop-lowest for each stat.</li>
+                    <li><strong>+ / −</strong> — Manual point-buy: use the + and − buttons on each stat card to spend your 72 points exactly as you want.</li>
+                </ul>
+                <ul class="dg-tips-list">
+                    <li><strong>STR</strong> (Strength) — Physical power and size. Break down doors, drag a witness to safety.</li>
+                    <li><strong>DEX</strong> (Dexterity) — Agility and coordination. React quickly, keep balance.</li>
+                    <li><strong>CON</strong> (Constitution) — Health and resilience. Resist illness, exhaustion, and pain.</li>
+                    <li><strong>INT</strong> (Intelligence) — How well your Agent notices, remembers, and connects things.</li>
+                    <li><strong>POW</strong> (Power) — Force of personality and psychic resilience. Keep your head in a crisis.</li>
+                    <li><strong>CHA</strong> (Charisma) — Charm and personal appeal. Make impressions, talk your way in.</li>
                 </ul>
                 <p><em>HP = ⌈(STR+CON)÷2⌉ &nbsp;|&nbsp; WP = POW &nbsp;|&nbsp; SAN = POW×5</em></p>
             </details>
@@ -137,17 +137,23 @@
 
             <details class="dg-tips">
                 <summary>Tips</summary>
-                <p>Skills are rated as a percentage. Rolling at or below your skill value is a success.</p>
-                <ul class="dg-tips-list">
-                    <li><strong>1–19%</strong> — Dabbler: you know the basics but are unreliable.</li>
-                    <li><strong>20–39%</strong> — Trained: basic competence; you usually get simple tasks right.</li>
-                    <li><strong>40–59%</strong> — Experienced: solid and dependable under normal conditions.</li>
-                    <li><strong>60–79%</strong> — Expert: you rarely fail; pressure and opposition are your main
-                        threats.</li>
-                    <li><strong>80–99%</strong> — Master: a lifetime of dedication. Failure is a genuine surprise.</li>
-                </ul>
-                <p>Required skills are pre-filled by your profession. Check optional skills (up to the listed limit) to
-                    add them at their listed value. In the next step you'll distribute 8 bonus picks of +20 each.</p>
+                <p>Most Agents won't need to change much here. Your main task is to check for any highlighted specialty
+                    skills — such as <strong>Foreign Language</strong>, <strong>Craft</strong>, and
+                    <strong>Science</strong> — that require you to choose a specialty from the dropdown or type one in
+                    the text field.</p>
+                <p><strong>Skill Ratings:</strong><br>
+                    1–19%: Dabbler &nbsp;|&nbsp; 20–29%: Hobbyist &nbsp;|&nbsp; 30–39%: Basic training or a college minor<br>
+                    40–59%: Years of experience or a college major &nbsp;|&nbsp; 60–79%: Decades of experience or a grad degree &nbsp;|&nbsp; 80–99%: A lifetime's mastery
+                </p>
+                <details class="dg-tips-inner">
+                    <summary>Notable Skills</summary>
+                    <ul class="dg-tips-list">
+                        <li><strong>Craft</strong> — Mastery of a difficult trade such as electronics, carpentry, or plumbing.</li>
+                        <li><strong>HUMINT</strong> — Human intelligence: the study and deciphering of behavior and motivations.</li>
+                        <li><strong>SIGINT</strong> — Encryption, decryption, and signals intelligence.</li>
+                        <li><strong>Unnatural</strong> — Knowledge of Things Man Was Not Meant to Know. This skill cannot be raised during character creation — it only grows through terrible experience.</li>
+                    </ul>
+                </details>
             </details>
 
             {{#if profession}}
@@ -240,11 +246,13 @@
 
             <details class="dg-tips">
                 <summary>Tips</summary>
-                <p>You get <strong>8 background skill picks</strong> representing past experience — hobbies, side gigs,
-                    a previous career, or extra training.</p>
-                <p>Each pick adds <strong>+20%</strong> to a skill. You can assign multiple picks to the same skill
-                    but no skill can exceed <strong>80%</strong> during character creation.</p>
-                <p>Select a skill for each slot, or leave it empty to skip that pick.</p>
+                <p>What did your Agent do before his or her current profession?</p>
+                <p>These 8 bonus skill picks represent that history — hobbies, side training, a past life. Use them to
+                    round out your Agent as a person: a Federal Agent who rock-climbs on weekends, a Physician who
+                    speaks three languages, a Soldier who paints.</p>
+                <p>No skill can go above <strong>80%</strong> during character creation.</p>
+                <p>For specialty skills (Art, Craft, Foreign Language, Pilot, Science, Military Science) choose the
+                    <em>Other…</em> option at the bottom of each group to type in a custom specialty.</p>
             </details>
 
             {{#if bonusSkills}}
@@ -261,6 +269,8 @@
                         <option value="{{key}}" {{#if (eq key ../key)}}selected{{/if}}>{{label}}</option>
                         {{/each}}
                     </select>
+                    <input type="text" name="bonusCustom.{{index}}" value="{{customLabel}}"
+                        placeholder="Specialty name…" class="dg-bonus-custom-input" />
                 </div>
                 {{/each}}
             </div>
@@ -277,18 +287,36 @@
 
             <details class="dg-tips">
                 <summary>Tips</summary>
-                <p>Bonds are the personal relationships that keep your agent sane — family members, close friends,
-                    romantic partners, trusted colleagues.</p>
-                <p>Each Bond starts at your <strong>CHA</strong> value ({{stats.cha}}). Bonds can be damaged when you
-                    lose Sanity, and losing a Bond entirely costs additional Sanity. Protect them.</p>
-                <p>Your profession allows <strong>{{bondLimit}} bond(s)</strong>. Click 💡 next to any bond for a random
-                    suggestion of what kind of relationship this could be.</p>
+                <p>Profession determines how many Bonds your Agent gets. Each Bond should have a name and specify the
+                    relationship — <em>"Ex-husband, Taylor"</em> or <em>"Special Agent Waite, frequent FBI partner."</em>
+                    Each Bond starts with a score equal to your Agent's CHA.</p>
+                <ul class="dg-tips-list">
+                    <li>» Spouse or ex-spouse</li>
+                    <li>» Son or daughter</li>
+                    <li>» Favored parent or grandparent</li>
+                    <li>» Best friend</li>
+                    <li>» Long-time coworker or partner</li>
+                    <li>» Psychologist or therapist</li>
+                    <li>» Fellow survivors of a shared trauma</li>
+                </ul>
+                <p>Use the <strong>💡 suggestion pool</strong> dropdown to filter the random suggestion by relationship
+                    type — Friends &amp; Family, Delta Green operatives, Underworld contacts, LGBTQ+ community, or
+                    PISCES (British Intelligence).</p>
             </details>
 
             <p class="dg-hint">
                 Your profession permits <strong>{{bondLimit}}</strong> bond(s).
                 Bonds start at your CHA score ({{stats.cha}}).
             </p>
+            <div class="dg-bond-dataset-row">
+                <label>💡 Suggestion pool:
+                    <select name="bondDataset" class="dg-bond-dataset-select">
+                        {{#each bondDatasets}}
+                        <option value="{{key}}" {{#if (eq key ../bondDataset)}}selected{{/if}}>{{label}}</option>
+                        {{/each}}
+                    </select>
+                </label>
+            </div>
             {{#each bonds}}
             <div class="dg-bond-block">
                 <div class="dg-bond-row">
@@ -331,10 +359,9 @@
 
             <details class="dg-tips">
                 <summary>Tips</summary>
-                <p>Fill in who your agent is — their name, background, and physical appearance. All fields are optional
-                    but bring your character to life on the sheet.</p>
-                <p>Click <strong>Random Bio</strong> to auto-generate a name and physical description based on your
-                    stats and profession. You can always edit the result afterward.</p>
+                <p>Fill in your Agent's personal details. Hit the <strong>🎲 Random Bio</strong> button to
+                    auto-generate a name, employer, education, and description matched to the profession you chose.
+                    You can always edit the result afterward.</p>
             </details>
 
             <div class="dg-bio-actions">
@@ -374,6 +401,11 @@
                         placeholder="Build, height, hair, eyes, notable features…">{{biography.physicalDescription}}</textarea>
                 </label>
 
+                <label class="dg-bio-full-row">Personal Details &amp; Notes
+                    <textarea name="biography.notes" rows="3"
+                        placeholder="Scars, mannerisms, contacts, background notes…">{{biography.notes}}</textarea>
+                </label>
+
                 <fieldset class="dg-bio-full-row dg-motivations-block">
                     <legend>Motivations (up to 5)</legend>
                     {{#each motivations}}
@@ -394,22 +426,29 @@
 
             <details class="dg-tips">
                 <summary>Tips</summary>
-                <p>Select gear for your agent. Operational mission equipment is issued and returned; personal gear
-                    belongs to the agent.</p>
-                <p>Expense levels:</p>
-                <ul class="dg-tips-list">
-                    <li><span class="dg-exp-badge dg-exp-incidental">Incidental</span> — Freely available; negligible
-                        cost.</li>
-                    <li><span class="dg-exp-badge dg-exp-standard">Standard</span> — Normal consumer purchase.</li>
-                    <li><span class="dg-exp-badge dg-exp-unusual">Unusual</span> — Difficult to source legally; requires
-                        effort.</li>
-                    <li><span class="dg-exp-badge dg-exp-major">Major</span> — Significant expense or official channels
-                        required.</li>
-                    <li><span class="dg-exp-badge dg-exp-extreme">Extreme</span> — Rare, heavy, or highly restricted.
-                    </li>
-                </ul>
-                <p>Items marked <strong>RESTRICTED</strong> require Program authorization or special legal access.</p>
+                <p>Browse and add items by category. Click <strong>+</strong> to include gear, or remove it with the
+                    <strong>✕</strong> on each item card.</p>
+                <p><strong>Operational Gear:</strong> Agents usually start an operation with duffel bags and footlockers
+                    of equipment. No need to list everything in advance — assume the basics are covered.</p>
+                <details class="dg-tips-inner">
+                    <summary>Expense Categories</summary>
+                    <ul class="dg-tips-list">
+                        <li><span class="dg-exp-badge dg-exp-incidental">Incidental</span> (up to $150) — No tracking needed. Meals, ammo, burner phones, shovels.</li>
+                        <li><span class="dg-exp-badge dg-exp-standard">Standard</span> ($200–$800) — A pistol, same-day plane ticket, or a week at a modest hotel.</li>
+                        <li><span class="dg-exp-badge dg-exp-unusual">Unusual</span> ($1,000–$5,000) — A scoped rifle, forged passport, powerful computer.</li>
+                        <li><span class="dg-exp-badge dg-exp-major">Major</span> ($6,000–$30,000) — Heavy weapons, professional forgery, a new vehicle.</li>
+                        <li><span class="dg-exp-badge dg-exp-extreme">Extreme</span> ($36,000+) — Black-budget territory. Handler's call entirely.</li>
+                    </ul>
+                </details>
             </details>
+
+            <div class="dg-eq-loadout-btns">
+                <span class="dg-eq-loadout-btns-label">Quick Loadouts:</span>
+                <button type="button" data-action="loadLoadout" data-loadout="federal_agent" class="dg-btn-secondary dg-eq-loadout-btn">🕵 Federal Agent</button>
+                <button type="button" data-action="loadLoadout" data-loadout="police_officer" class="dg-btn-secondary dg-eq-loadout-btn">🚓 Police Officer</button>
+                <button type="button" data-action="loadLoadout" data-loadout="swat" class="dg-btn-secondary dg-eq-loadout-btn">🛡 SWAT</button>
+                <button type="button" data-action="loadLoadout" data-loadout="special_operator" class="dg-btn-secondary dg-eq-loadout-btn">⚔ Special Operator</button>
+            </div>
 
             <div class="dg-eq-layout">
                 <div class="dg-eq-left">
@@ -426,6 +465,11 @@
                         {{#if equipmentCount}}<span class="dg-eq-loadout-badge">{{equipmentCount}}</span>{{/if}}
                     </div>
                     <div id="dg-eq-loadout" class="dg-eq-loadout"></div>
+                    <div class="dg-eq-custom-row">
+                        <input type="text" id="dg-eq-custom-input" class="dg-eq-custom-input"
+                            placeholder="Custom item…" />
+                        <button type="button" id="dg-eq-custom-add" class="dg-btn-secondary">+ Add</button>
+                    </div>
                     <button type="button" data-action="clearEquipment" class="dg-btn-secondary dg-eq-clear-btn">✕ Clear
                         Loadout</button>
                 </div>

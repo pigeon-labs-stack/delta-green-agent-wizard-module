@@ -73,15 +73,15 @@ const BIO_DATA = {
         'olive', 'warm brown', 'brown', 'dark brown', 'deep brown',
     ],
     buildDescriptors: {
-        high:     ['powerfully built', 'solidly muscular', 'stocky and strong', 'broad-shouldered', 'thickly built', 'imposingly large', 'heavily muscled'],
+        high: ['powerfully built', 'solidly muscular', 'stocky and strong', 'broad-shouldered', 'thickly built', 'imposingly large', 'heavily muscled'],
         athletic: ['athletically built', 'lean and muscular', 'fit and toned', 'wiry and strong', 'well-conditioned', 'physically capable-looking'],
-        average:  ['average build', 'unremarkable build', 'ordinary physique', 'neither muscular nor slight', 'middling build', 'serviceable frame'],
-        low:      ['slight of frame', 'lean', 'wiry', 'rangy', 'slender', 'thin', 'scrawny'],
+        average: ['average build', 'unremarkable build', 'ordinary physique', 'neither muscular nor slight', 'middling build', 'serviceable frame'],
+        low: ['slight of frame', 'lean', 'wiry', 'rangy', 'slender', 'thin', 'scrawny'],
     },
     heightDescriptors: {
-        tall:    ['tall', 'noticeably tall', 'above average height', 'on the taller side', 'a tall individual'],
+        tall: ['tall', 'noticeably tall', 'above average height', 'on the taller side', 'a tall individual'],
         average: ['average height', 'medium height', 'unremarkable height', 'middling height', 'of average stature'],
-        short:   ['short', 'below average height', 'on the shorter side', 'compact in stature', 'noticeably short'],
+        short: ['short', 'below average height', 'on the shorter side', 'compact in stature', 'noticeably short'],
     },
     notableFeatures: {
         high_str_con: [
@@ -219,8 +219,8 @@ const BIO_DATA = {
 // Maps module profession keys to bio data profile keys where they differ
 const PROFESSION_KEY_MAP = {
     computer_scientist: 'engineer',
-    soldier_marine:     'soldier',
-    police_officer:     'police_officer',
+    soldier_marine: 'soldier',
+    police_officer: 'police_officer',
     // all others: use key as-is
 };
 
@@ -260,25 +260,25 @@ export function generateBio(stats = {}, professionKey = '') {
     // — Build & Height descriptors from stats —
     const combined = str + con;
     let buildTier;
-    if (combined >= 36)      buildTier = 'high';
+    if (combined >= 36) buildTier = 'high';
     else if (combined >= 28) buildTier = 'athletic';
     else if (combined >= 20) buildTier = 'average';
-    else                     buildTier = 'low';
+    else buildTier = 'low';
 
     const heightTier = str >= 16 ? 'tall' : str >= 11 ? 'average' : 'short';
 
     // — Feature pool based on strength/con combo —
     let featurePool;
-    if (combined >= 32)      featurePool = BIO_DATA.notableFeatures.high_str_con;
+    if (combined >= 32) featurePool = BIO_DATA.notableFeatures.high_str_con;
     else if (combined <= 18) featurePool = BIO_DATA.notableFeatures.low_str_con;
-    else                     featurePool = BIO_DATA.notableFeatures.neutral;
+    else featurePool = BIO_DATA.notableFeatures.neutral;
 
-    const build       = rand(BIO_DATA.buildDescriptors[buildTier]);
-    const height      = rand(BIO_DATA.heightDescriptors[heightTier]);
-    const hairColor   = rand(BIO_DATA.hairColors);
-    const hairStyle   = rand(BIO_DATA.hairStyles);
-    const eyes        = rand(BIO_DATA.eyeColors);
-    const feature     = rand(featurePool);
+    const build = rand(BIO_DATA.buildDescriptors[buildTier]);
+    const height = rand(BIO_DATA.heightDescriptors[heightTier]);
+    const hairColor = rand(BIO_DATA.hairColors);
+    const hairStyle = rand(BIO_DATA.hairStyles);
+    const eyes = rand(BIO_DATA.eyeColors);
+    const feature = rand(featurePool);
 
     const hairDesc = `${hairColor} ${hairStyle} hair`;
     const descTemplate = rand([
@@ -291,8 +291,8 @@ export function generateBio(stats = {}, professionKey = '') {
     // — Profession-linked employer & education —
     const profileKey = PROFESSION_KEY_MAP[professionKey] || professionKey || 'default';
     const profile = BIO_DATA.professionProfiles[profileKey] || BIO_DATA.professionProfiles.default;
-    const employer   = rand(profile.employers);
-    const education  = rand(profile.educations);
+    const employer = rand(profile.employers);
+    const education = rand(profile.educations);
 
-    return { name: `${firstName} ${lastName}`, sex, age, nationality, employer, education, notes };
+    return { name: `${firstName} ${lastName}`, sex, age, nationality, employer, education, physicalDescription: notes };
 }
