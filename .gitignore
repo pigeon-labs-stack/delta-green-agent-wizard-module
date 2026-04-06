@@ -1,0 +1,9 @@
+# Foundry VTT generated/cache files
+.fvtt-dev-mode
+node_modules/
+dist/
+*.zip
+
+# OS
+.DS_Store
+Thumbs.db

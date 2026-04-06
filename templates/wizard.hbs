@@ -1,0 +1,242 @@
+<div class="dg-wizard-wrapper">
+
+  {{!-- Progress bar --}}
+  <div class="dg-wizard-progress">
+    {{#each (range 0 totalSteps)}}
+      <div class="dg-step-dot {{#if (eq this ../stepIndex)}}active{{/if}} {{#if (lt this ../stepIndex)}}done{{/if}}"></div>
+    {{/each}}
+    <span class="dg-step-label">Step {{inc stepIndex}} of {{totalSteps}}</span>
+  </div>
+
+  <form class="dg-wizard-form" autocomplete="off">
+
+    {{!-- ================================================================
+         STEP: welcome
+    ================================================================ --}}
+    {{#if (eq step "welcome")}}
+    <div class="dg-step dg-step-welcome">
+      <h2>Welcome, Agent</h2>
+      <p class="dg-flavour">
+        You've been read in. The Program needs another agent — someone with the skills,
+        the bonds, and the will to face what lies beyond. Follow these steps to build
+        your character. Nothing you learn here can be unlearned.
+      </p>
+      <p>
+        This wizard will guide you through:<br>
+        <strong>Statistics → Profession → Skills → Bonds → Biography → Review</strong>
+      </p>
+    </div>
+    {{/if}}
+
+    {{!-- ================================================================
+         STEP: stats
+    ================================================================ --}}
+    {{#if (eq step "stats")}}
+    <div class="dg-step dg-step-stats">
+      <h2>Statistics</h2>
+      <p class="dg-hint">Assign or roll your six statistics (3–18). HP = (STR+CON)÷2. WP = POW. Sanity = POW×5.</p>
+      <div class="dg-stats-grid">
+        {{#each stats}}
+        <div class="dg-stat-block">
+          <label>{{lookup ../statLabels @key}}</label>
+          <input type="number" name="stats.{{@key}}" value="{{this}}" min="3" max="18" />
+          <span class="dg-x5">×5 = {{multiply this 5}}</span>
+        </div>
+        {{/each}}
+      </div>
+      <button type="button" data-action="rollStats" class="dg-btn-secondary">🎲 Roll All (4d6 drop lowest)</button>
+    </div>
+    {{/if}}
+
+    {{!-- ================================================================
+         STEP: profession
+    ================================================================ --}}
+    {{#if (eq step "profession")}}
+    <div class="dg-step dg-step-profession">
+      <h2>Profession</h2>
+      <p class="dg-hint">Choose the profession that best fits your agent's background.</p>
+      <div class="dg-profession-picker">
+        <select name="professionKey" class="dg-select-profession">
+          <option value="">— Select a Profession —</option>
+          {{#each professions}}
+          <option value="{{key}}" {{#if (eq key ../professionKey)}}selected{{/if}}>{{title}}</option>
+          {{/each}}
+        </select>
+      </div>
+      {{#if profession}}
+      <div class="dg-profession-desc">
+        <pre class="dg-desc-text">{{profession.description}}</pre>
+      </div>
+      {{/if}}
+    </div>
+    {{/if}}
+
+    {{!-- ================================================================
+         STEP: skills
+    ================================================================ --}}
+    {{#if (eq step "skills")}}
+    <div class="dg-step dg-step-skills">
+      <h2>Skills</h2>
+      {{#if profession}}
+      <p class="dg-hint">
+        Professional skills are pre-filled. Choose up to <strong>{{skills.0.optLimit}}</strong> optional skills.
+      </p>
+      <table class="dg-skills-table">
+        <thead>
+          <tr><th>Skill</th><th>Base</th><th>Prof.</th><th>Current</th><th>Optional?</th></tr>
+        </thead>
+        <tbody>
+          {{#each skills}}
+          <tr class="{{#if required}}dg-skill-required{{/if}}{{#if optional}}dg-skill-optional{{/if}}">
+            <td>{{label}}</td>
+            <td class="dg-num">{{base}}</td>
+            <td class="dg-num">{{profValue}}</td>
+            <td class="dg-num dg-skill-current">{{current}}</td>
+            <td class="dg-center">
+              {{#if optional}}
+              <input type="checkbox" name="optPick" data-index="{{optIndex}}" {{#if picked}}checked{{/if}} />
+              {{else}}
+              <span class="dg-required-badge">✓</span>
+              {{/if}}
+            </td>
+          </tr>
+          {{/each}}
+        </tbody>
+      </table>
+      {{else}}
+      <p class="dg-warn">Please go back and select a profession first.</p>
+      {{/if}}
+    </div>
+    {{/if}}
+
+    {{!-- ================================================================
+         STEP: bonds
+    ================================================================ --}}
+    {{#if (eq step "bonds")}}
+    <div class="dg-step dg-step-bonds">
+      <h2>Bonds</h2>
+      <p class="dg-hint">
+        Your profession permits <strong>{{bondLimit}}</strong> bond(s).
+        Bonds start at your CHA score ({{stats.cha}}).
+      </p>
+      {{#each bonds}}
+      <div class="dg-bond-row">
+        <span class="dg-bond-num">{{inc @index}}.</span>
+        <input type="text" name="bonds.{{@index}}.name" value="{{name}}" placeholder="Bond name…" class="dg-bond-name" />
+        <label>Score</label>
+        <input type="number" name="bonds.{{@index}}.score" value="{{score}}" min="1" max="99" class="dg-bond-score" />
+        <button type="button" data-action="suggestBond" data-index="{{@index}}" class="dg-btn-small" title="Suggest a bond">💡</button>
+        <button type="button" data-action="removeBond" data-index="{{@index}}" class="dg-btn-small dg-btn-danger" title="Remove">✕</button>
+      </div>
+      {{/each}}
+      {{#unless bondsAtLimit}}
+      <button type="button" data-action="addBond" class="dg-btn-secondary">+ Add Bond</button>
+      {{/unless}}
+      {{#if bondsAtLimit}}
+      <p class="dg-warn">Maximum bonds reached for this profession.</p>
+      {{/if}}
+    </div>
+    {{/if}}
+
+    {{!-- ================================================================
+         STEP: biography
+    ================================================================ --}}
+    {{#if (eq step "biography")}}
+    <div class="dg-step dg-step-biography">
+      <h2>Biography</h2>
+      <p class="dg-hint">Fill in your agent's personal details. All fields are optional.</p>
+      <div class="dg-bio-grid">
+        <label>Profession / Job Title
+          <input type="text" name="biography.profession" value="{{biography.profession}}" placeholder="e.g. FBI Special Agent" />
+        </label>
+        <label>Employer
+          <input type="text" name="biography.employer" value="{{biography.employer}}" placeholder="e.g. Federal Bureau of Investigation" />
+        </label>
+        <label>Nationality
+          <input type="text" name="biography.nationality" value="{{biography.nationality}}" placeholder="e.g. American" />
+        </label>
+        <label>Sex
+          <input type="text" name="biography.sex" value="{{biography.sex}}" placeholder="e.g. Male / Female / Non-binary" />
+        </label>
+        <label>Age
+          <input type="text" name="biography.age" value="{{biography.age}}" placeholder="e.g. 34" />
+        </label>
+        <label>Education
+          <input type="text" name="biography.education" value="{{biography.education}}" placeholder="e.g. BA Criminology, Quantico" />
+        </label>
+      </div>
+    </div>
+    {{/if}}
+
+    {{!-- ================================================================
+         STEP: review
+    ================================================================ --}}
+    {{#if (eq step "review")}}
+    <div class="dg-step dg-step-review">
+      <h2>Review & Confirm</h2>
+      <p class="dg-hint">Verify your agent before committing changes to the actor sheet.</p>
+
+      <section class="dg-review-section">
+        <h3>Statistics</h3>
+        <div class="dg-stats-grid dg-stats-readonly">
+          {{#each review.stats}}
+          <div class="dg-stat-block">
+            <span class="dg-stat-label">{{label}}</span>
+            <span class="dg-stat-value">{{value}}</span>
+            <span class="dg-x5">×5 = {{x5}}</span>
+          </div>
+          {{/each}}
+        </div>
+      </section>
+
+      <section class="dg-review-section">
+        <h3>Profession</h3>
+        <p>{{review.profession}}</p>
+      </section>
+
+      <section class="dg-review-section">
+        <h3>Key Skills</h3>
+        <div class="dg-review-skills">
+          {{#each review.skills}}
+          <span class="dg-review-skill">{{key}}: <strong>{{value}}</strong></span>
+          {{/each}}
+        </div>
+      </section>
+
+      <section class="dg-review-section">
+        <h3>Bonds</h3>
+        {{#each review.bonds}}
+        <div class="dg-review-bond">{{name}} ({{score}})</div>
+        {{/each}}
+        {{#unless review.bonds}}
+        <p class="dg-warn">No bonds defined.</p>
+        {{/unless}}
+      </section>
+
+      <section class="dg-review-section">
+        <h3>Biography</h3>
+        <dl class="dg-review-bio">
+          {{#each review.biography}}
+          {{#if this}}<dt>{{@key}}</dt><dd>{{this}}</dd>{{/if}}
+          {{/each}}
+        </dl>
+      </section>
+    </div>
+    {{/if}}
+
+  </form>{{!-- .dg-wizard-form --}}
+
+  {{!-- Navigation --}}
+  <div class="dg-wizard-nav">
+    {{#unless isFirst}}
+    <button type="button" data-action="prevStep" class="dg-btn-secondary">← Back</button>
+    {{/unless}}
+    <span class="dg-nav-spacer"></span>
+    {{#if isLast}}
+    <button type="button" data-action="finish" class="dg-btn-primary dg-btn-finish">✔ Apply to Sheet</button>
+    {{else}}
+    <button type="button" data-action="nextStep" class="dg-btn-primary">Next →</button>
+    {{/if}}
+  </div>
+
+</div>{{!-- .dg-wizard-wrapper --}}
