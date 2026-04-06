@@ -44,10 +44,24 @@ function injectWizardButton(app, element) {
     else header.appendChild(btn);
 }
 
-// Cover both the default sheet and the opt-in V2 sheet
+// Cover both the default sheet and the opt-in V2 sheet via render hooks
 Hooks.on('renderDGAgentSheet', injectWizardButton);
 Hooks.on('renderDGAgentSheetV2', injectWizardButton);
 
+// Belt-and-suspenders: patch _onRender directly on every registered agent
+// sheet class. This works even if the render hook name ever changes.
 Hooks.once('ready', () => {
-    console.log('delta-green-agent-wizard | Module loaded.');
+    const agentSheets = Object.values(CONFIG.Actor.sheetClasses?.agent ?? {});
+    let patched = 0;
+    for (const entry of agentSheets) {
+        const SheetClass = entry?.cls;
+        if (!SheetClass?.prototype?._onRender) continue;
+        const orig = SheetClass.prototype._onRender;
+        SheetClass.prototype._onRender = async function (context, options) {
+            await orig.call(this, context, options);
+            injectWizardButton(this, this.element);
+        };
+        patched++;
+    }
+    console.log(`delta-green-agent-wizard | Module loaded. Patched ${patched} agent sheet class(es).`);
 });
