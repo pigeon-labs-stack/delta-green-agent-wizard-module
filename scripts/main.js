@@ -8,14 +8,14 @@ Handlebars.registerHelper('multiply', (a, b) => Number(a) * Number(b));
 Handlebars.registerHelper('inc', (n) => n + 1);
 
 // ---------------------------------------------------------------------------
-// Inject wizard button into the DG actor sheet header (ApplicationV2 / v13)
-// renderActorSheet fires for both ApplicationV1 and ApplicationV2 sheets.
+// Inject wizard button into the DG agent sheet header (Foundry v13 / AppV2)
+// DGAgentSheet and DGAgentSheetV2 are AppV2-based, so Foundry fires
+// render{ClassName} — not the old generic renderActorSheet hook.
 // ---------------------------------------------------------------------------
-Hooks.on('renderActorSheet', (app, element) => {
+function injectWizardButton(app, element) {
     const actor = app.document ?? app.actor;
     if (!actor || actor.type !== 'agent') return;
 
-    // element is an HTMLElement in AppV2 (or jQuery in AppV1 — handle both)
     const root = element instanceof HTMLElement ? element : element[0];
     if (!root) return;
 
@@ -42,7 +42,11 @@ Hooks.on('renderActorSheet', (app, element) => {
     const closeBtn = header.querySelector('[data-action="close"]');
     if (closeBtn) closeBtn.before(btn);
     else header.appendChild(btn);
-});
+}
+
+// Cover both the default sheet and the opt-in V2 sheet
+Hooks.on('renderDGAgentSheet', injectWizardButton);
+Hooks.on('renderDGAgentSheetV2', injectWizardButton);
 
 Hooks.once('ready', () => {
     console.log('delta-green-agent-wizard | Module loaded.');
