@@ -142,7 +142,7 @@ function injectWizardButton(app, element) {
     const labelEl   = bar.querySelector('.dg-wizard-bar-toggle-label');
     if (collapsed) {
         buttonsEl.style.display = 'none';
-        labelEl.textContent = 'Expand';
+        labelEl.style.display   = 'none';
     }
 
     bar.querySelector('.dg-agent-wizard-launch').addEventListener('click', () => {
@@ -157,7 +157,7 @@ function injectWizardButton(app, element) {
         const isNowCollapsed = bar.classList.toggle('dg-wizard-bar-collapsed');
         localStorage.setItem(WIZARD_BAR_COLLAPSED_KEY, isNowCollapsed ? '1' : '0');
         buttonsEl.style.display = isNowCollapsed ? 'none' : 'flex';
-        labelEl.textContent     = isNowCollapsed ? 'Expand' : 'Collapse';
+        labelEl.style.display   = isNowCollapsed ? 'none' : '';
     });
 
     content.prepend(bar);
