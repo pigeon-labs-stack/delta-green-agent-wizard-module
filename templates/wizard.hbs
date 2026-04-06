@@ -150,14 +150,14 @@
 
             {{#if profession}}
             <p class="dg-hint">
-                Professional skills are pre-filled. Choose up to <strong>{{skills.0.optLimit}}</strong> optional skills.
+                Professional skills are pre-filled. Choose up to <strong>{{optLimit}}</strong> optional skills.
             </p>
+            <p class="dg-opt-picks-counter" data-limit="{{optLimit}}"></p>
             <table class="dg-skills-table">
                 <thead>
                     <tr>
                         <th>Skill</th>
                         <th>Base</th>
-                        <th>Prof.</th>
                         <th>Current</th>
                         <th>Optional?</th>
                     </tr>
@@ -167,7 +167,6 @@
                     <tr class="{{#if required}}dg-skill-required{{/if}}{{#if optional}}dg-skill-optional{{/if}}">
                         <td>{{label}}</td>
                         <td class="dg-num">{{base}}</td>
-                        <td class="dg-num">{{profValue}}</td>
                         <td class="dg-num dg-skill-current">{{current}}</td>
                         <td class="dg-center">
                             {{#if optional}}
@@ -198,30 +197,25 @@
                 <summary>Tips</summary>
                 <p>You get <strong>8 background skill picks</strong> representing past experience — hobbies, side gigs,
                     a previous career, or extra training.</p>
-                <p>Each pick adds <strong>+20%</strong> to a skill. You can stack multiple picks on the same skill, but
-                    no skill can exceed <strong>80%</strong> during character creation.</p>
-                <p>Use + and − to allocate and take back picks. All unused picks are simply lost.</p>
+                <p>Each pick adds <strong>+20%</strong> to a skill. You can assign multiple picks to the same skill
+                    but no skill can exceed <strong>80%</strong> during character creation.</p>
+                <p>Select a skill for each slot, or leave it empty to skip that pick.</p>
             </details>
 
             {{#if bonusSkills}}
             <div class="dg-bonus-skills-header">
                 <span class="dg-picks-counter">Picks used: <strong>{{bonusSkills.picksUsed}}</strong> / 8</span>
-                <span class="dg-picks-remaining {{#if (eq bonusSkills.picksRemaining 0)}}depleted{{/if}}">
-                    {{bonusSkills.picksRemaining}} remaining
-                </span>
             </div>
-            <div class="dg-bonus-skills-grid">
-                {{#each bonusSkills.skills}}
-                <div class="dg-bonus-skill-row {{#if boosts}}boosted{{/if}}">
-                    <span class="dg-bonus-skill-label">{{label}}</span>
-                    <span class="dg-bonus-skill-val">{{current}}%</span>
-                    {{#if boosts}}<span class="dg-bonus-boost-badge">+{{multiply boosts 20}}</span>{{/if}}
-                    <div class="dg-bonus-skill-btns">
-                        <button type="button" data-action="unboostSkill" data-skill="{{key}}" class="dg-adjust-btn"
-                            {{#unless canUnboost}}disabled{{/unless}}>−</button>
-                        <button type="button" data-action="boostSkill" data-skill="{{key}}" class="dg-adjust-btn"
-                            {{#unless canBoost}}disabled{{/unless}}>+</button>
-                    </div>
+            <div class="dg-bonus-slots">
+                {{#each bonusSkills.slots}}
+                <div class="dg-bonus-slot-row">
+                    <label class="dg-bonus-slot-label">Pick {{inc index}}</label>
+                    <select name="bonusSlot.{{index}}" class="dg-bonus-slot-select">
+                        <option value="">— None —</option>
+                        {{#each ../bonusSkills.options}}
+                        <option value="{{key}}" {{#if (eq key ../key)}}selected{{/if}}>{{label}}</option>
+                        {{/each}}
+                    </select>
                 </div>
                 {{/each}}
             </div>
@@ -251,17 +245,27 @@
                 Bonds start at your CHA score ({{stats.cha}}).
             </p>
             {{#each bonds}}
-            <div class="dg-bond-row">
-                <span class="dg-bond-num">{{inc @index}}.</span>
-                <input type="text" name="bonds.{{@index}}.name" value="{{name}}" placeholder="Bond name…"
-                    class="dg-bond-name" />
-                <label>Score</label>
-                <input type="number" name="bonds.{{@index}}.score" value="{{score}}" min="1" max="99"
-                    class="dg-bond-score" />
-                <button type="button" data-action="suggestBond" data-index="{{@index}}" class="dg-btn-small"
-                    title="Suggest a bond">💡</button>
-                <button type="button" data-action="removeBond" data-index="{{@index}}"
-                    class="dg-btn-small dg-btn-danger" title="Remove">✕</button>
+            <div class="dg-bond-block">
+                <div class="dg-bond-row">
+                    <span class="dg-bond-num">{{inc @index}}.</span>
+                    <input type="text" name="bonds.{{@index}}.name" value="{{name}}" placeholder="Bond name…"
+                        class="dg-bond-name" />
+                    <label>Score</label>
+                    <input type="number" name="bonds.{{@index}}.score" value="{{score}}" min="1" max="99"
+                        class="dg-bond-score" />
+                    <button type="button" data-action="suggestBond" data-index="{{@index}}" class="dg-btn-small"
+                        title="Suggest a bond">💡</button>
+                    <button type="button" data-action="removeBond" data-index="{{@index}}"
+                        class="dg-btn-small dg-btn-danger" title="Remove">✕</button>
+                </div>
+                {{#if relationship}}
+                <div class="dg-bond-details">
+                    <span class="dg-bond-relationship">{{relationship}}</span>
+                    {{#if description}}
+                    <p class="dg-bond-description">{{description}}</p>
+                    {{/if}}
+                </div>
+                {{/if}}
             </div>
             {{/each}}
             {{#unless bondsAtLimit}}
@@ -423,13 +427,26 @@
 
             <section class="dg-review-section">
                 <h3>Biography</h3>
-                <dl class="dg-review-bio">
+                <div class="dg-review-bio-grid">
                     {{#each review.biography}}
-                    {{#if this}}<dt>{{@key}}</dt>
-                    <dd>{{this}}</dd>{{/if}}
+                    <span class="dg-review-bio-key">{{label}}</span>
+                    <span class="dg-review-bio-val">{{value}}</span>
                     {{/each}}
-                </dl>
+                </div>
             </section>
+
+            {{#each review.bonusAllocations}}
+            {{#if @first}}
+            <section class="dg-review-section">
+                <h3>Bonus Skill Picks</h3>
+                <div class="dg-review-skills">
+            {{/if}}
+                    <span class="dg-review-skill">{{label}}: <strong>+{{total}}%</strong></span>
+            {{#if @last}}
+                </div>
+            </section>
+            {{/if}}
+            {{/each}}
 
             {{#if review.equipment.length}}
             <section class="dg-review-section">

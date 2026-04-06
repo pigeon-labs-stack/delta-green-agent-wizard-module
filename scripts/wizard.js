@@ -60,6 +60,63 @@ const SKILL_DEFAULTS = {
     unnatural: 0,
 };
 
+// All skill options for bonus picks: base skills + common subspecialties, sorted alphabetically.
+const BONUS_SKILL_OPTIONS = [
+    { key: 'accounting',              label: 'Accounting' },
+    { key: 'alertness',               label: 'Alertness' },
+    { key: 'anthropology',            label: 'Anthropology' },
+    { key: 'archeology',              label: 'Archeology' },
+    { key: 'art_painting',            label: 'Art (Painting)' },
+    { key: 'art_photography',         label: 'Art (Photography)' },
+    { key: 'art_writing',             label: 'Art (Writing)' },
+    { key: 'artillery',               label: 'Artillery' },
+    { key: 'athletics',               label: 'Athletics' },
+    { key: 'bureaucracy',             label: 'Bureaucracy' },
+    { key: 'computer_science',        label: 'Computer Science' },
+    { key: 'craft_electrician',       label: 'Craft (Electrician)' },
+    { key: 'craft_locksmithing',      label: 'Craft (Locksmithing)' },
+    { key: 'craft_mechanic',          label: 'Craft (Mechanic)' },
+    { key: 'craft_microelectronics',  label: 'Craft (Microelectronics)' },
+    { key: 'criminology',             label: 'Criminology' },
+    { key: 'demolitions',             label: 'Demolitions' },
+    { key: 'disguise',                label: 'Disguise' },
+    { key: 'dodge',                   label: 'Dodge' },
+    { key: 'drive',                   label: 'Drive' },
+    { key: 'firearms',                label: 'Firearms' },
+    { key: 'first_aid',               label: 'First Aid' },
+    { key: 'foreign_language_arabic', label: 'Foreign Language (Arabic)' },
+    { key: 'foreign_language_chinese',label: 'Foreign Language (Chinese)' },
+    { key: 'foreign_language_french', label: 'Foreign Language (French)' },
+    { key: 'foreign_language_russian',label: 'Foreign Language (Russian)' },
+    { key: 'foreign_language_spanish',label: 'Foreign Language (Spanish)' },
+    { key: 'forensics',               label: 'Forensics' },
+    { key: 'heavy_machiner',          label: 'Heavy Machinery' },
+    { key: 'heavy_weapons',           label: 'Heavy Weapons' },
+    { key: 'history',                 label: 'History' },
+    { key: 'humint',                  label: 'HUMINT' },
+    { key: 'law',                     label: 'Law' },
+    { key: 'medicine',                label: 'Medicine' },
+    { key: 'melee_weapons',           label: 'Melee Weapons' },
+    { key: 'navigate',                label: 'Navigate' },
+    { key: 'occult',                  label: 'Occult' },
+    { key: 'persuade',                label: 'Persuade' },
+    { key: 'pharmacy',                label: 'Pharmacy' },
+    { key: 'psychotherapy',           label: 'Psychotherapy' },
+    { key: 'ride',                    label: 'Ride' },
+    { key: 'science_biology',         label: 'Science (Biology)' },
+    { key: 'science_chemistry',       label: 'Science (Chemistry)' },
+    { key: 'science_mathematics',     label: 'Science (Mathematics)' },
+    { key: 'science_physics',         label: 'Science (Physics)' },
+    { key: 'search',                  label: 'Search' },
+    { key: 'sigint',                  label: 'SIGINT' },
+    { key: 'stealth',                 label: 'Stealth' },
+    { key: 'surgery',                 label: 'Surgery' },
+    { key: 'survival',                label: 'Survival' },
+    { key: 'swim',                    label: 'Swim' },
+    { key: 'unarmed_combat',          label: 'Unarmed Combat' },
+    { key: 'unnatural',               label: 'Unnatural' },
+];
+
 const STAT_LABELS = { str: 'STR', con: 'CON', dex: 'DEX', int: 'INT', pow: 'POW', cha: 'CHA' };
 
 const STAT_DESCRIPTOR_TIERS = {
@@ -106,7 +163,7 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
         professionKey: '',
         skills: {},          // key → value
         optionalPicks: [],   // indices of chosen optional skills
-        bonusBoosts: {},     // key → number of +20 boosts applied
+        bonusBoosts: ['', '', '', '', '', '', '', ''],  // 8 bonus-pick slots (each holds a skill key)
         bonds: [],           // array of { name, score }
         biography: { name: '', profession: '', employer: '', nationality: '', sex: '', age: '', education: '', notes: '' },
         equipment: [],       // array of item names from catalog
@@ -132,8 +189,6 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
             adjustStat: DeltaGreenChargenWizard.#onAdjustStat,
             randomizeStats: DeltaGreenChargenWizard.#onRandomizeStats,
             resetStats: DeltaGreenChargenWizard.#onResetStats,
-            boostSkill: DeltaGreenChargenWizard.#onBoostSkill,
-            unboostSkill: DeltaGreenChargenWizard.#onUnboostSkill,
             addBond: DeltaGreenChargenWizard.#onAddBond,
             removeBond: DeltaGreenChargenWizard.#onRemoveBond,
             suggestBond: DeltaGreenChargenWizard.#onSuggestBond,
@@ -163,6 +218,8 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
         );
 
         const bonusSkills = step === 'bonus_skills' ? this.#buildBonusSkillContext() : null;
+        const optLimit = prof ? (prof.optionalSkills?.[0]?.limit ?? 2) : 0;
+        const optPicksUsed = this.#data.optionalPicks.length;
 
         return {
             step,
@@ -181,6 +238,8 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
             profession: prof,
             skills: this.#buildSkillContext(prof),
             bonusSkills,
+            optLimit,
+            optPicksUsed,
             bonds: this.#data.bonds,
             bondLimit,
             bondsAtLimit: this.#data.bonds.length >= bondLimit,
@@ -252,30 +311,31 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
     }
 
     // -----------------------------------------------------------------------
-    // Build bonus skill context for the bonus_skills step
+    // Build bonus skill context for the bonus_skills step (8 dropdown slots)
     // -----------------------------------------------------------------------
     #buildBonusSkillContext() {
-        const picksUsed = Object.values(this.#data.bonusBoosts).reduce((a, b) => a + b, 0);
-        const picksRemaining = 8 - picksUsed;
-
-        const skills = Object.entries(SKILL_DEFAULTS).map(([key, baseValue]) => {
-            const profValue = this.#data.skills[key] ?? baseValue;
-            const boosts = this.#data.bonusBoosts[key] ?? 0;
-            const current = Math.min(80, profValue + boosts * 20);
-            const label = key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-            return {
-                key, label, current, boosts,
-                canBoost: picksRemaining > 0 && current < 80,
-                canUnboost: boosts > 0,
-            };
-        });
-        return { skills, picksUsed, picksRemaining };
+        const rawSlots = this.#data.bonusBoosts;
+        const slots = rawSlots.map((key, i) => ({ index: i, key }));
+        const picksUsed = rawSlots.filter(k => k !== '').length;
+        return { options: BONUS_SKILL_OPTIONS, slots, picksUsed };
     }
 
     // -----------------------------------------------------------------------
     // Build summary for the review step
     // -----------------------------------------------------------------------
     #buildReviewContext() {
+        const boostCounts = {};
+        for (const key of this.#data.bonusBoosts) {
+            if (key) boostCounts[key] = (boostCounts[key] ?? 0) + 1;
+        }
+        const bonusAllocations = Object.entries(boostCounts)
+            .map(([key, count]) => {
+                const label = BONUS_SKILL_OPTIONS.find(s => s.key === key)?.label
+                    ?? key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+                return { label, count, total: count * 20 };
+            })
+            .sort((a, b) => a.label.localeCompare(b.label));
+
         return {
             stats: Object.entries(this.#data.stats).map(([k, v]) => ({
                 key: k, label: STAT_LABELS[k], value: v, x5: v * 5,
@@ -284,23 +344,53 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
                 ? PROFESSIONS[this.#data.professionKey]?.title ?? this.#data.professionKey
                 : '—',
             skills: Object.entries(this.#data.skills).map(([k, v]) => {
-                const boosts = this.#data.bonusBoosts[k] ?? 0;
+                const boosts = boostCounts[k] ?? 0;
                 const effective = Math.min(80, v + boosts * 20);
                 const label = k.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
                 return { key: k, label, value: effective };
             }),
             bonds: this.#data.bonds,
-            biography: this.#data.biography,
+            biography: Object.entries(this.#data.biography)
+                .filter(([, v]) => v)
+                .map(([k, v]) => ({
+                    key: k,
+                    label: k.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
+                    value: v,
+                })),
             equipment: this.#data.equipment,
+            bonusAllocations,
         };
     }
 
     // -----------------------------------------------------------------------
-    // _onRender — called after every Handlebars re-render; wire up equipment UI
+    // _onRender — called after every Handlebars re-render
     // -----------------------------------------------------------------------
     async _onRender(context, options) {
         await super._onRender?.(context, options);
         if (STEPS[this.#step] === 'equipment') this.#buildEquipmentUI();
+        if (STEPS[this.#step] === 'skills') this.#setupSkillsUI();
+    }
+
+    // -----------------------------------------------------------------------
+    // Skills step: live optional-pick counter + checkbox locking
+    // -----------------------------------------------------------------------
+    #setupSkillsUI() {
+        const el = this.element;
+        if (!el) return;
+        const counterEl = el.querySelector('.dg-opt-picks-counter');
+        if (!counterEl) return;
+        const optLimit = parseInt(counterEl.dataset.limit, 10) || 2;
+
+        const updateCounter = () => {
+            const checked = el.querySelectorAll('input[name="optPick"]:checked').length;
+            counterEl.innerHTML = `Optional picks: <strong>${checked} / ${optLimit}</strong>${checked >= optLimit ? ' 🔒' : ''}`;
+            counterEl.classList.toggle('at-limit', checked >= optLimit);
+            el.querySelectorAll('input[name="optPick"]:not(:checked)').forEach(cb => { cb.disabled = checked >= optLimit; });
+            el.querySelectorAll('input[name="optPick"]:checked').forEach(cb => { cb.disabled = false; });
+        };
+
+        el.querySelectorAll('input[name="optPick"]').forEach(cb => cb.addEventListener('change', updateCounter));
+        updateCounter();
     }
 
     // -----------------------------------------------------------------------
@@ -311,9 +401,9 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
         if (!el) return;
 
         const searchInput = el.querySelector('#dg-eq-search');
-        const catTabsEl   = el.querySelector('#dg-eq-cat-tabs');
-        const catalogEl   = el.querySelector('#dg-eq-catalog');
-        const loadoutEl   = el.querySelector('#dg-eq-loadout');
+        const catTabsEl = el.querySelector('#dg-eq-cat-tabs');
+        const catalogEl = el.querySelector('#dg-eq-catalog');
+        const loadoutEl = el.querySelector('#dg-eq-loadout');
         if (!searchInput || !catTabsEl || !catalogEl || !loadoutEl) return;
 
         // Sync search input to stored state
@@ -510,31 +600,11 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
         const pool = Object.values(BONDS).flat();
         const suggestion = pool[Math.floor(Math.random() * pool.length)];
         const idx = Number(target.dataset.index);
-        if (this.#data.bonds[idx]) this.#data.bonds[idx].name = suggestion.name;
-        this.render({ force: true });
-    }
-
-    static async #onBoostSkill(event, target) {
-        const key = target.dataset.skill;
-        if (!key) return;
-        const picksUsed = Object.values(this.#data.bonusBoosts).reduce((a, b) => a + b, 0);
-        if (picksUsed >= 8) { ui.notifications.warn('You have used all 8 bonus skill picks.'); return; }
-        const profValue = this.#data.skills[key] ?? SKILL_DEFAULTS[key] ?? 0;
-        const boosts = this.#data.bonusBoosts[key] ?? 0;
-        if (Math.min(80, profValue + boosts * 20) >= 80) {
-            ui.notifications.warn('Skills cannot exceed 80% during character creation.');
-            return;
+        if (this.#data.bonds[idx]) {
+            this.#data.bonds[idx].name = suggestion.name;
+            this.#data.bonds[idx].relationship = suggestion.relationship ?? '';
+            this.#data.bonds[idx].description = suggestion.description ?? '';
         }
-        this.#data.bonusBoosts[key] = boosts + 1;
-        this.render({ force: true });
-    }
-
-    static async #onUnboostSkill(event, target) {
-        const key = target.dataset.skill;
-        if (!key) return;
-        const boosts = this.#data.bonusBoosts[key] ?? 0;
-        if (boosts <= 0) return;
-        this.#data.bonusBoosts[key] = boosts - 1;
         this.render({ force: true });
     }
 
@@ -562,7 +632,7 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
     #collectCurrentStep() {
         const form = this.element?.querySelector('form.dg-wizard-form');
         if (!form) return true;
-        const fd = new FormDataExtended(form);
+        const fd = new foundry.applications.ux.FormDataExtended(form);
         const raw = fd.object;
         const step = STEPS[this.#step];
 
@@ -610,7 +680,11 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
         }
 
         if (step === 'bonus_skills') {
-            // Boosts are already applied via action buttons — nothing to collect from form
+            const slots = [];
+            for (let i = 0; i < 8; i++) {
+                slots.push((raw[`bonusSlot.${i}`] ?? '').toString());
+            }
+            this.#data.bonusBoosts = slots;
             return true;
         }
 
@@ -618,6 +692,8 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
             this.#data.bonds = this.#data.bonds.map((bond, i) => ({
                 name: (raw[`bonds.${i}.name`] ?? bond.name).toString().trim(),
                 score: parseInt(raw[`bonds.${i}.score`], 10) || bond.score,
+                relationship: bond.relationship ?? '',
+                description: bond.description ?? '',
             }));
         }
 
@@ -664,8 +740,12 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
             }
         }
 
-        // Bonus skill boosts — added on top of profession values, capped at 80
-        for (const [key, boosts] of Object.entries(this.#data.bonusBoosts)) {
+        // Bonus skill boosts — count occurrences in the 8-slot array, capped at 80
+        const boostCounts = {};
+        for (const key of this.#data.bonusBoosts) {
+            if (key) boostCounts[key] = (boostCounts[key] ?? 0) + 1;
+        }
+        for (const [key, boosts] of Object.entries(boostCounts)) {
             if (boosts > 0 && SKILL_KEY_MAP[key]) {
                 const base = this.#data.skills[key] ?? SKILL_DEFAULTS[key] ?? 0;
                 updates[`system.skills.${key}.proficiency`] = Math.min(80, base + boosts * 20);
@@ -698,14 +778,8 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
 
         // Equipment — create as Items on the actor
         if (this.#data.equipment.length > 0) {
-            // Map 'gear' type to 'item' for DG system compatibility
-            const typeMap = { gear: 'item' };
             const eqItems = this.#data.equipment
-                .map(name => {
-                    const item = EQUIPMENT_CATALOG.find(i => i.name === name);
-                    if (!item) return null;
-                    return { ...item, type: typeMap[item.type] ?? item.type };
-                })
+                .map(name => EQUIPMENT_CATALOG.find(i => i.name === name))
                 .filter(Boolean);
             if (eqItems.length > 0) {
                 await this.#actor.createEmbeddedDocuments('Item', eqItems);
