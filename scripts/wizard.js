@@ -919,15 +919,40 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
     #setupBonusSkillsUI() {
         const el = this.element;
         if (!el) return;
+        const selects = [...el.querySelectorAll('.dg-bonus-slot-select')];
+
         const updateRow = (select) => {
             const row = select.closest('.dg-bonus-slot-row');
             const input = row?.querySelector('.dg-bonus-custom-input');
             if (input) input.style.display = select.value.startsWith('_custom_') ? 'inline-block' : 'none';
         };
-        el.querySelectorAll('.dg-bonus-slot-select').forEach(select => {
+
+        // Disable any option that is already chosen in another slot.
+        // _custom_* options are exempt — different slots can pick different subspecialties.
+        const syncOptions = () => {
+            const chosen = new Set(
+                selects.map(s => s.value).filter(v => v !== '' && !v.startsWith('_custom_'))
+            );
+            selects.forEach(sel => {
+                sel.querySelectorAll('option').forEach(opt => {
+                    if (opt.value === '' || opt.value === sel.value || opt.value.startsWith('_custom_')) {
+                        opt.disabled = false;
+                    } else {
+                        opt.disabled = chosen.has(opt.value);
+                    }
+                });
+            });
+        };
+
+        selects.forEach(select => {
             updateRow(select);
-            select.addEventListener('change', () => updateRow(select));
+            select.addEventListener('change', () => {
+                updateRow(select);
+                syncOptions();
+            });
         });
+
+        syncOptions();
     }
 
     // -----------------------------------------------------------------------
