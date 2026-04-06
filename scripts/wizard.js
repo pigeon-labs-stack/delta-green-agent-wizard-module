@@ -575,6 +575,15 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
         if (!prof) return null;
         const optLimit = prof.optionalSkills?.[0]?.limit ?? 2;
 
+        const SPECIALTY_EXAMPLES = {
+            Art: 'Painting',
+            Craft: 'Electrician',
+            ForeignLanguage: 'Spanish',
+            Science: 'Biology',
+            Pilot: 'Airplane',
+            MilitaryScience: 'Land',
+        };
+
         // Required specialty slots (populated during profession step)
         const required = this.#data.specialtySlots
             .filter(sl => sl.required)
@@ -582,6 +591,7 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
                 ...sl,
                 groupDisplay: Object.entries(SPECIALTY_PREFIXES).find(([, g]) => g === sl.group)?.[0] ?? sl.group,
                 options: SPECIALTY_OPTIONS[sl.group] ?? [],
+                example: SPECIALTY_EXAMPLES[sl.group] ?? sl.group,
             }));
 
         // Optional specialty picks from this profession
@@ -600,6 +610,7 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
                 label: existingSlot?.label ?? this.#data.optSpecialtyLabels[i] ?? '',
                 options: SPECIALTY_OPTIONS[sp.group] ?? [],
                 optLimit,
+                example: SPECIALTY_EXAMPLES[sp.group] ?? sp.group,
             });
         }
 
