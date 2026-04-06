@@ -117,6 +117,27 @@ const BONUS_SKILL_OPTIONS = [
     { key: 'unnatural',               label: 'Unnatural' },
 ];
 
+// Map from wizard skill key → DG Foundry typed skill {group, label}.
+// group must be the localization key suffix used by DG.TypeSkills.{group}.
+const TYPED_SKILL_MAP = {
+    art_painting:             { group: 'Art',             label: 'Painting' },
+    art_photography:          { group: 'Art',             label: 'Photography' },
+    art_writing:              { group: 'Art',             label: 'Writing' },
+    craft_electrician:        { group: 'Craft',           label: 'Electrician' },
+    craft_locksmithing:       { group: 'Craft',           label: 'Locksmithing' },
+    craft_mechanic:           { group: 'Craft',           label: 'Mechanic' },
+    craft_microelectronics:   { group: 'Craft',           label: 'Microelectronics' },
+    foreign_language_arabic:  { group: 'ForeignLanguage', label: 'Arabic' },
+    foreign_language_chinese: { group: 'ForeignLanguage', label: 'Chinese (Mandarin)' },
+    foreign_language_french:  { group: 'ForeignLanguage', label: 'French' },
+    foreign_language_russian: { group: 'ForeignLanguage', label: 'Russian' },
+    foreign_language_spanish: { group: 'ForeignLanguage', label: 'Spanish' },
+    science_biology:          { group: 'Science',         label: 'Biology' },
+    science_chemistry:        { group: 'Science',         label: 'Chemistry' },
+    science_mathematics:      { group: 'Science',         label: 'Mathematics' },
+    science_physics:          { group: 'Science',         label: 'Physics' },
+};
+
 const STAT_LABELS = { str: 'STR', con: 'CON', dex: 'DEX', int: 'INT', pow: 'POW', cha: 'CHA' };
 
 const STAT_DESCRIPTOR_TIERS = {
@@ -164,8 +185,9 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
         skills: {},          // key → value
         optionalPicks: [],   // indices of chosen optional skills
         bonusBoosts: ['', '', '', '', '', '', '', ''],  // 8 bonus-pick slots (each holds a skill key)
-        bonds: [],           // array of { name, score }
-        biography: { name: '', profession: '', employer: '', nationality: '', sex: '', age: '', education: '', notes: '' },
+        bonds: [],           // array of { name, score, relationship, description }
+        biography: { name: '', profession: '', employer: '', nationality: '', sex: '', age: '', education: '', physicalDescription: '' },
+        motivations: ['', '', '', '', ''],               // up to 5 motivation strings
         equipment: [],       // array of item names from catalog
     };
 
@@ -221,6 +243,14 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
         const optLimit = prof ? (prof.optionalSkills?.[0]?.limit ?? 2) : 0;
         const optPicksUsed = this.#data.optionalPicks.length;
 
+        // Pre-fill all bond slots when entering the bonds step
+        if (step === 'bonds' && prof) {
+            const limit = this.#getBondLimit(prof);
+            while (this.#data.bonds.length < limit) {
+                this.#data.bonds.push({ name: '', score: this.#data.stats.cha, relationship: '', description: '' });
+            }
+        }
+
         return {
             step,
             stepIndex: this.#step,
@@ -244,6 +274,7 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
             bondLimit,
             bondsAtLimit: this.#data.bonds.length >= bondLimit,
             biography: this.#data.biography,
+            motivations: this.#data.motivations,
             equipmentCount: this.#data.equipment.length,
             review: step === 'review' ? this.#buildReviewContext() : null,
         };
@@ -295,9 +326,12 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
     // Map a display name like "Computer Science" → system key "computer_science"
     // -----------------------------------------------------------------------
     #findSkillKey(name) {
-        const normalized = name.toLowerCase().replace(/[^a-z]/g, '_').replace(/__+/g, '_');
-        // direct match
+        const normalized = name.toLowerCase()
+            .replace(/[^a-z]/g, '_')
+            .replace(/__+/g, '_')
+            .replace(/^_+|_+$/g, '');  // strip leading/trailing underscores
         if (SKILL_KEY_MAP[normalized]) return normalized;
+        if (TYPED_SKILL_MAP[normalized]) return normalized;
         // fuzzy: find first key that appears in the normalized name
         return Object.keys(SKILL_KEY_MAP).find(k => normalized.includes(k)) ?? normalized;
     }
@@ -325,7 +359,7 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
     // -----------------------------------------------------------------------
     #buildReviewContext() {
         const boostCounts = {};
-        for (const key of this.#data.bonusBoosts) {
+        for (const key of this.#data.bonusBoosts) {  // eslint-disable-line no-unused-vars
             if (key) boostCounts[key] = (boostCounts[key] ?? 0) + 1;
         }
         const bonusAllocations = Object.entries(boostCounts)
@@ -354,9 +388,11 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
                 .filter(([, v]) => v)
                 .map(([k, v]) => ({
                     key: k,
-                    label: k.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
+                    label: k === 'physicalDescription' ? 'Physical Description'
+                        : k.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
                     value: v,
                 })),
+            motivations: this.#data.motivations.filter(m => m.trim()),
             equipment: this.#data.equipment,
             bonusAllocations,
         };
@@ -651,8 +687,12 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
             const key = raw['professionKey'];
             if (!key) { ui.notifications.warn('Please select a profession.'); return false; }
             this.#data.professionKey = key;
-            // Pre-fill required skill values
             const prof = PROFESSIONS[key];
+            // Auto-fill biography profession field from profession title
+            if (!this.#data.biography.profession) {
+                this.#data.biography.profession = prof.title;
+            }
+            // Pre-fill required skill values
             for (const s of prof.requiredSkills ?? []) {
                 const sk = this.#findSkillKey(s.name);
                 this.#data.skills[sk] = Math.max(SKILL_DEFAULTS[sk] ?? 0, s.value);
@@ -701,6 +741,9 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
             for (const k of Object.keys(this.#data.biography)) {
                 this.#data.biography[k] = (raw[`biography.${k}`] ?? '').toString().trim();
             }
+            for (let i = 0; i < 5; i++) {
+                this.#data.motivations[i] = (raw[`motivation.${i}`] ?? '').toString().trim();
+            }
         }
 
         if (step === 'equipment') {
@@ -717,9 +760,10 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
     async #applyToActor() {
         const updates = {};
 
-        // Statistics
+        // Statistics + stat descriptors (distinguishing_feature)
         for (const [k, v] of Object.entries(this.#data.stats)) {
             updates[`system.statistics.${k}.value`] = v;
+            updates[`system.statistics.${k}.distinguishing_feature`] = getStatDescriptor(k, v);
         }
 
         // HP = (CON + STR) / 2, rounded up; WP = POW
@@ -733,10 +777,13 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
         updates['system.sanity.value'] = this.#data.stats.pow * 5;
         updates['system.sanity.currentBreakingPoint'] = this.#data.stats.pow * 5 - this.#data.stats.pow;
 
-        // Skills — base profession values
+        // Skills — base profession values; typed skills collected separately
+        const typedSkillUpdates = {};  // key → {label, group, proficiency}
         for (const [key, value] of Object.entries(this.#data.skills)) {
             if (SKILL_KEY_MAP[key]) {
                 updates[`system.skills.${key}.proficiency`] = value;
+            } else if (TYPED_SKILL_MAP[key]) {
+                typedSkillUpdates[key] = { ...TYPED_SKILL_MAP[key], proficiency: value };
             }
         }
 
@@ -746,18 +793,36 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
             if (key) boostCounts[key] = (boostCounts[key] ?? 0) + 1;
         }
         for (const [key, boosts] of Object.entries(boostCounts)) {
-            if (boosts > 0 && SKILL_KEY_MAP[key]) {
+            if (boosts <= 0) continue;
+            if (SKILL_KEY_MAP[key]) {
                 const base = this.#data.skills[key] ?? SKILL_DEFAULTS[key] ?? 0;
                 updates[`system.skills.${key}.proficiency`] = Math.min(80, base + boosts * 20);
+            } else if (TYPED_SKILL_MAP[key]) {
+                const existing = typedSkillUpdates[key];
+                const base = existing?.proficiency ?? 0;
+                typedSkillUpdates[key] = { ...TYPED_SKILL_MAP[key], proficiency: Math.min(80, base + boosts * 20) };
             }
         }
 
-        // Biography — actor name is top-level; remaining fields go to system.biography
+        // Apply typed/specialty skills as system.typedSkills entries
+        for (const [key, tsData] of Object.entries(typedSkillUpdates)) {
+            const tsKey = `tskill_wiz_${key}`;
+            updates[`system.typedSkills.${tsKey}.label`] = tsData.label;
+            updates[`system.typedSkills.${tsKey}.group`] = tsData.group;
+            updates[`system.typedSkills.${tsKey}.proficiency`] = tsData.proficiency;
+            updates[`system.typedSkills.${tsKey}.failure`] = false;
+        }
+
+        // Biography — actor name is top-level; physicalDescription is system.physicalDescription
         const bioName = this.#data.biography.name;
         if (bioName) updates['name'] = bioName;
         for (const [k, v] of Object.entries(this.#data.biography)) {
             if (k === 'name') continue;
-            updates[`system.biography.${k}`] = v;
+            if (k === 'physicalDescription') {
+                updates['system.physicalDescription'] = v;
+            } else {
+                updates[`system.biography.${k}`] = v;
+            }
         }
 
         await this.#actor.update(updates);
@@ -768,12 +833,27 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
             if (existingBonds.length > 0) {
                 await this.#actor.deleteEmbeddedDocuments('Item', existingBonds.map(i => i.id));
             }
-            const bondItems = this.#data.bonds.map(b => ({
-                name: b.name || 'Unnamed Bond',
-                type: 'bond',
-                system: { score: b.score, relationship: '', description: '' },
+            const bondItems = this.#data.bonds
+                .filter(b => b.name)
+                .map(b => ({
+                    name: b.name,
+                    type: 'bond',
+                    system: { score: b.score, relationship: b.relationship ?? '', description: b.description ?? '' },
+                }));
+            if (bondItems.length > 0) {
+                await this.#actor.createEmbeddedDocuments('Item', bondItems);
+            }
+        }
+
+        // Motivations — create as motivation items
+        const motivationStrings = this.#data.motivations.filter(m => m.trim());
+        if (motivationStrings.length > 0) {
+            const motivationItems = motivationStrings.map(m => ({
+                name: m,
+                type: 'motivation',
+                system: { disorder: '', crossedOut: false, disorderCured: false },
             }));
-            await this.#actor.createEmbeddedDocuments('Item', bondItems);
+            await this.#actor.createEmbeddedDocuments('Item', motivationItems);
         }
 
         // Equipment — create as Items on the actor

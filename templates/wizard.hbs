@@ -56,8 +56,7 @@
                 <p><em>HP = ⌈(STR+CON)÷2⌉ &nbsp;|&nbsp; WP = POW &nbsp;|&nbsp; SAN = POW×5</em></p>
             </details>
 
-            <p class="dg-hint">Distribute 72 points across your six statistics (3–18). HP = ⌈(STR+CON)÷2⌉ · WP = POW ·
-                SAN = POW×5</p>
+            <p class="dg-hint">Distribute 72 points across your six statistics (3–18).</p>
 
             <div class="dg-points-bar">
                 Points remaining: <span
@@ -102,8 +101,11 @@
 
             <details class="dg-tips">
                 <summary>Tips</summary>
-                <p>Your profession is your biggest decision. It determines your skill set, starting resources, number of
-                    bonds, and role in the Program.</p>
+                <p>This is your biggest decision. Profession determines your Agent's skills, role in an operation, and
+                    sometimes the resources your Agent can bring to bear by requisitioning equipment.</p>
+                <p>A handful of core professions are most frequently seen among Agents: Anthropologist or Historian,
+                    Computer Scientist or Engineer, Federal Agent, Physician, Scientist, and Special Operator. Many
+                    other professions are described in the Agent's Handbook.</p>
                 <p>Each profession provides <em>required skills</em> at fixed values and <em>optional skills</em> you
                     may choose from. After you pick your skills, you'll get <strong>8 background bonus skill
                         picks</strong> (+20 each) to customize further.</p>
@@ -325,9 +327,17 @@
                         placeholder="e.g. BA Criminology, Quantico" />
                 </label>
                 <label class="dg-bio-full-row">Physical Description
-                    <textarea name="biography.notes" rows="3"
-                        placeholder="Build, height, hair, eyes, notable features…">{{biography.notes}}</textarea>
+                    <textarea name="biography.physicalDescription" rows="3"
+                        placeholder="Build, height, hair, eyes, notable features…">{{biography.physicalDescription}}</textarea>
                 </label>
+
+                <fieldset class="dg-bio-full-row dg-motivations-block">
+                    <legend>Motivations (up to 5)</legend>
+                    {{#each motivations}}
+                    <input type="text" name="motivation.{{@index}}" value="{{this}}"
+                        placeholder="e.g. Protect my family, Uncover the truth…" />
+                    {{/each}}
+                </fieldset>
             </div>
         </div>
         {{/if}}
@@ -434,6 +444,17 @@
                     {{/each}}
                 </div>
             </section>
+
+            {{#if review.motivations.length}}
+            <section class="dg-review-section">
+                <h3>Motivations</h3>
+                <ul class="dg-review-motivations">
+                    {{#each review.motivations}}
+                    <li>{{this}}</li>
+                    {{/each}}
+                </ul>
+            </section>
+            {{/if}}
 
             {{#each review.bonusAllocations}}
             {{#if @first}}
