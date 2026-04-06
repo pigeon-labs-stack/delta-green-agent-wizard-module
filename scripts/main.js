@@ -124,12 +124,14 @@ function injectWizardButton(app, element) {
     const bar = document.createElement('div');
     bar.className = 'dg-agent-wizard-bar' + (collapsed ? ' dg-wizard-bar-collapsed' : '');
     bar.innerHTML = `
-        <button type="button" class="dg-agent-wizard-launch">
-            <i class="fa-solid fa-user-secret"></i> Agent Wizard
-        </button>
-        <button type="button" class="dg-agent-pdf-export" title="Export to DD Form 315 PDF">
-            <i class="fa-solid fa-file-pdf"></i> Export PDF
-        </button>
+        <div class="dg-wizard-bar-buttons">
+            <button type="button" class="dg-agent-wizard-launch">
+                <i class="fa-solid fa-user-secret"></i> Agent Wizard
+            </button>
+            <button type="button" class="dg-agent-pdf-export" title="Export to DD Form 315 PDF">
+                <i class="fa-solid fa-file-pdf"></i> Export PDF
+            </button>
+        </div>
         <button type="button" class="dg-wizard-bar-toggle" title="Collapse wizard bar">
             <span class="dg-wizard-bar-triangle"></span>
         </button>`;

@@ -16,6 +16,22 @@
     transition: padding 0.2s ease;
 }
 
+/* Buttons container — wraps all action buttons; collapse hides the whole group */
+.dg-wizard-bar-buttons {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    overflow: hidden;
+    max-width: 600px;
+    transition: max-width 0.2s ease, opacity 0.2s ease;
+}
+
+.dg-wizard-bar-collapsed .dg-wizard-bar-buttons {
+    max-width: 0;
+    opacity: 0;
+    pointer-events: none;
+}
+
 .dg-agent-wizard-launch {
     background: #2a3a1a;
     border: 1px solid #4a6a2a;
@@ -27,10 +43,8 @@
     display: flex;
     align-items: center;
     gap: 5px;
-    transition: opacity 0.2s ease, max-width 0.2s ease;
-    overflow: hidden;
-    max-width: 200px;
     white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .dg-agent-wizard-launch:hover {
@@ -38,7 +52,7 @@
     color: #c8e88a;
 }
 
-/* PDF export button — same style as wizard launch */
+/* PDF export button */
 .dg-agent-pdf-export {
     background: #1a2a3a;
     border: 1px solid #2a5a8a;
@@ -50,10 +64,8 @@
     display: flex;
     align-items: center;
     gap: 5px;
-    transition: opacity 0.2s ease, max-width 0.2s ease;
-    overflow: hidden;
-    max-width: 200px;
     white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .dg-agent-pdf-export:hover {
@@ -61,15 +73,7 @@
     color: #8acae8;
 }
 
-.dg-wizard-bar-collapsed .dg-agent-pdf-export {
-    opacity: 0;
-    max-width: 0;
-    padding: 0;
-    border-width: 0;
-    pointer-events: none;
-}
-
-/* Toggle button — always visible, sits right of the launch button */
+/* Toggle button — always visible, sits right of the buttons group */
 .dg-wizard-bar-toggle {
     background: none;
     border: none;
@@ -104,14 +108,6 @@
 .dg-wizard-bar-collapsed {
     padding-top: 2px;
     padding-bottom: 2px;
-}
-
-.dg-wizard-bar-collapsed .dg-agent-wizard-launch {
-    opacity: 0;
-    max-width: 0;
-    padding: 0;
-    border-width: 0;
-    pointer-events: none;
 }
 
 .dg-wizard-bar-collapsed .dg-wizard-bar-triangle {
