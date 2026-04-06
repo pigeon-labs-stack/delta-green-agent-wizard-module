@@ -35,19 +35,32 @@
         {{#if (eq step "stats")}}
         <div class="dg-step dg-step-stats">
             <h2>Statistics</h2>
-            <p class="dg-hint">Assign or roll your six statistics (3–18). HP = (STR+CON)÷2. WP = POW. Sanity = POW×5.
-            </p>
+            <p class="dg-hint">Distribute 72 points across your six statistics (3–18). HP = ⌈(STR+CON)÷2⌉ · WP = POW · SAN = POW×5</p>
+
+            <div class="dg-points-bar">
+                Points remaining: <span class="dg-points-remaining{{#if (eq pointsRemaining 0)}} depleted{{/if}}">{{pointsRemaining}}</span> / 72
+            </div>
+
             <div class="dg-stats-grid">
                 {{#each stats}}
                 <div class="dg-stat-block">
-                    <label>{{lookup ../statLabels @key}}</label>
-                    <input type="number" name="stats.{{@key}}" value="{{this}}" min="3" max="18" />
+                    <label class="dg-stat-label">{{lookup ../statLabels @key}}</label>
+                    <div class="dg-stat-controls">
+                        <button type="button" data-action="adjustStat" data-stat="{{@key}}" data-delta="-1" class="dg-adjust-btn">−</button>
+                        <input type="number" name="stats.{{@key}}" value="{{this}}" min="3" max="18" class="dg-stat-input" />
+                        <button type="button" data-action="adjustStat" data-stat="{{@key}}" data-delta="1" class="dg-adjust-btn">+</button>
+                    </div>
                     <span class="dg-x5">×5 = {{multiply this 5}}</span>
+                    <span class="dg-descriptor">{{lookup ../statDescriptors @key}}</span>
                 </div>
                 {{/each}}
             </div>
-            <button type="button" data-action="rollStats" class="dg-btn-secondary">🎲 Roll All (4d6 drop
-                lowest)</button>
+
+            <div class="dg-stats-actions">
+                <button type="button" data-action="rollStats" class="dg-btn-secondary">🎲 Roll All (4d6 drop lowest)</button>
+                <button type="button" data-action="randomizeStats" class="dg-btn-secondary">🔀 Randomize (72 pts)</button>
+                <button type="button" data-action="resetStats" class="dg-btn-secondary">↺ Reset</button>
+            </div>
         </div>
         {{/if}}
 

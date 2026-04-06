@@ -60,6 +60,23 @@ const SKILL_DEFAULTS = {
 
 const STAT_LABELS = { str: 'STR', con: 'CON', dex: 'DEX', int: 'INT', pow: 'POW', cha: 'CHA' };
 
+const STAT_DESCRIPTOR_TIERS = {
+    str: [[3, 'Feeble'], [5, 'Weak'], [9, 'Average'], [13, 'Muscular'], [17, 'Huge']],
+    dex: [[3, 'Barely Mobile'], [5, 'Clumsy'], [9, 'Average'], [13, 'Nimble'], [17, 'Acrobatic']],
+    con: [[3, 'Bedridden'], [5, 'Sickly'], [9, 'Average'], [13, 'Perfect health'], [17, 'Indefatigable']],
+    int: [[3, 'Imbecilic'], [5, 'Slow'], [9, 'Average'], [13, 'Perceptive'], [17, 'Brilliant']],
+    pow: [[3, 'Spineless'], [5, 'Nervous'], [9, 'Average'], [13, 'Strong willed'], [17, 'Indomitable']],
+    cha: [[3, 'Unbearable'], [5, 'Awkward'], [9, 'Average'], [13, 'Charming'], [17, 'Magnetic']],
+};
+
+function getStatDescriptor(key, value) {
+    const tiers = STAT_DESCRIPTOR_TIERS[key];
+    if (!tiers) return '';
+    let desc = tiers[0][1];
+    for (const [min, label] of tiers) { if (value >= min) desc = label; }
+    return desc;
+}
+
 const STEPS = ['welcome', 'stats', 'profession', 'skills', 'bonds', 'biography', 'review'];
 
 // ---------------------------------------------------------------------------
@@ -102,6 +119,9 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
             nextStep: DeltaGreenChargenWizard.#onNextStep,
             prevStep: DeltaGreenChargenWizard.#onPrevStep,
             rollStats: DeltaGreenChargenWizard.#onRollStats,
+            adjustStat: DeltaGreenChargenWizard.#onAdjustStat,
+            randomizeStats: DeltaGreenChargenWizard.#onRandomizeStats,
+            resetStats: DeltaGreenChargenWizard.#onResetStats,
             addBond: DeltaGreenChargenWizard.#onAddBond,
             removeBond: DeltaGreenChargenWizard.#onRemoveBond,
             suggestBond: DeltaGreenChargenWizard.#onSuggestBond,
@@ -122,6 +142,12 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
         const prof = profKey ? PROFESSIONS[profKey] : null;
         const bondLimit = prof ? this.#getBondLimit(prof) : 0;
 
+        const statValues = this.#data.stats;
+        const pointsRemaining = 72 - Object.values(statValues).reduce((a, b) => a + b, 0);
+        const statDescriptors = Object.fromEntries(
+            Object.entries(statValues).map(([k, v]) => [k, getStatDescriptor(k, v)])
+        );
+
         return {
             step,
             stepIndex: this.#step,
@@ -132,6 +158,8 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
             // step-specific
             stats: this.#data.stats,
             statLabels: STAT_LABELS,
+            statDescriptors,
+            pointsRemaining,
             professions: Object.entries(PROFESSIONS).map(([key, p]) => ({ key, title: p.title })),
             professionKey: profKey,
             profession: prof,
@@ -249,6 +277,40 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
         for (const stat of Object.keys(this.#data.stats)) {
             this.#data.stats[stat] = await rollStat();
         }
+        this.render({ force: true });
+    }
+
+    static async #onAdjustStat(event, target) {
+        const stat = target.dataset.stat;
+        const delta = parseInt(target.dataset.delta, 10);
+        const input = this.element?.querySelector(`input[name="stats.${stat}"]`);
+        const current = input ? (parseInt(input.value, 10) || 3) : (this.#data.stats[stat] || 3);
+        this.#data.stats[stat] = Math.max(3, Math.min(18, current + delta));
+        this.render({ force: true });
+    }
+
+    static async #onRandomizeStats(event, target) {
+        const statKeys = Object.keys(this.#data.stats);
+        const TOTAL = 72, MIN = 3, MAX = 18;
+        statKeys.forEach(k => { this.#data.stats[k] = MIN; });
+        let remaining = TOTAL - statKeys.length * MIN;
+        while (remaining > 0) {
+            for (const k of statKeys) {
+                if (remaining <= 0) break;
+                const cur = this.#data.stats[k];
+                if (cur < MAX) {
+                    const maxAdd = Math.min(remaining, MAX - cur);
+                    const add = Math.floor(Math.random() * maxAdd) + 1;
+                    this.#data.stats[k] = cur + add;
+                    remaining -= add;
+                }
+            }
+        }
+        this.render({ force: true });
+    }
+
+    static async #onResetStats(event, target) {
+        for (const k of Object.keys(this.#data.stats)) this.#data.stats[k] = 3;
         this.render({ force: true });
     }
 
