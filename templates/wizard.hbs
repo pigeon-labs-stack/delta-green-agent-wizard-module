@@ -129,7 +129,7 @@
                     {{/each}}
                 </select>
             </div>
-            <div class="dg-profession-desc" {{#unless profession}}style="display:none"{{/unless}}>
+            <div class="dg-profession-desc" {{#unless profession}}style="display:none" {{/unless}}>
                 <pre class="dg-desc-text">{{#if profession}}{{profession.description}}{{/if}}</pre>
             </div>
         </div>
@@ -187,17 +187,17 @@
                         <strong>{{optPicksUsed}} / {{optLimit}}</strong></span>
                 </div>
                 {{#each optionalSkillItems}}
-                <div class="dg-opt-skill-row{{#if isSpecialty}} dg-opt-spec-row{{/if}}">
+                <div class="dg-opt-skill-row">
                     <label class="dg-opt-label">
                         <input type="checkbox" name="optPick" value="{{optIndex}}" {{#if picked}}checked{{/if}} />
                         <span class="dg-opt-skill-name">{{label}}</span>
+                        {{#if isSpecialty}}
+                        <input type="text" name="specialty.opt.{{optIndex}}" value="{{specialtyLabel}}"
+                            list="dg-sp-{{group}}" placeholder="Choose or type subspecialty"
+                            class="dg-specialty-input dg-opt-spec-input" {{#unless picked}}disabled{{/unless}} />
+                        {{/if}}
                         <span class="dg-opt-skill-value">{{profValue}}%</span>
                     </label>
-                    {{#if isSpecialty}}
-                    <input type="text" name="specialty.opt.{{optIndex}}" value="{{specialtyLabel}}"
-                        list="dg-sp-{{group}}" placeholder="Choose or type subspecialty"
-                        class="dg-specialty-input dg-opt-spec-input" {{#unless picked}}disabled{{/unless}} />
-                    {{/if}}
                 </div>
                 {{/each}}
             </div>
@@ -265,6 +265,8 @@
             </details>
 
             {{#if bonusSkills}}
+            <p class="dg-bonus-choice-note">Pick a <strong>background package</strong> to auto-fill your 8 skill picks —
+                or skip it and assign them manually below.</p>
             <div class="dg-bonus-pack-row">
                 <label>Background package:
                     <select id="dg-bonus-pack-select">
@@ -373,12 +375,6 @@
                 {{/if}}
             </div>
             {{/each}}
-            {{#unless bondsAtLimit}}
-            <button type="button" data-action="addBond" class="dg-btn-secondary">+ Add Bond</button>
-            {{/unless}}
-            {{#if bondsAtLimit}}
-            <p class="dg-warn">Maximum bonds reached for this profession.</p>
-            {{/if}}
         </div>
         {{/if}}
 
@@ -624,10 +620,6 @@
         {{/unless}}
         <span class="dg-nav-spacer"></span>
         {{#if isLast}}
-        <button type="button" data-action="exportPdf" class="dg-btn-secondary dg-btn-export-pdf"
-            title="Export to DD Form 315 PDF">
-            <i class="fa-solid fa-file-pdf"></i> Export PDF
-        </button>
         <button type="button" data-action="finish" class="dg-btn-primary dg-btn-finish">✔ Apply to Sheet</button>
         {{else}}
         <button type="button" data-action="nextStep" class="dg-btn-primary">Next →</button>

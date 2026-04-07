@@ -428,7 +428,6 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
             adjustStat: DeltaGreenChargenWizard.#onAdjustStat,
             randomizeStats: DeltaGreenChargenWizard.#onRandomizeStats,
             resetStats: DeltaGreenChargenWizard.#onResetStats,
-            addBond: DeltaGreenChargenWizard.#onAddBond,
             removeBond: DeltaGreenChargenWizard.#onRemoveBond,
             suggestBond: DeltaGreenChargenWizard.#onSuggestBond,
             randomBio: DeltaGreenChargenWizard.#onRandomBio,
@@ -436,7 +435,6 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
             finish: DeltaGreenChargenWizard.#onFinish,
             loadLoadout: DeltaGreenChargenWizard.#onLoadLoadout,
             fillPack: DeltaGreenChargenWizard.#onFillPack,
-            exportPdf: DeltaGreenChargenWizard.#onExportPdf,
         },
     };
 
@@ -1074,9 +1072,9 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
             el.querySelectorAll('input[name="optPick"]:not(:checked)').forEach(cb => { cb.disabled = checked >= optLimit; });
             el.querySelectorAll('input[name="optPick"]:checked').forEach(cb => { cb.disabled = false; });
             // Enable specialty text inputs only when their checkbox is checked
-            el.querySelectorAll('.dg-opt-spec-row').forEach(row => {
+            el.querySelectorAll('.dg-opt-skill-row').forEach(row => {
                 const cb = row.querySelector('input[name="optPick"]');
-                const inp = row.querySelector('.dg-specialty-input');
+                const inp = row.querySelector('.dg-opt-spec-input');
                 if (cb && inp) inp.disabled = !cb.checked;
             });
         };
@@ -1231,10 +1229,6 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
     // -----------------------------------------------------------------------
     static async #onNextStep(event, target) {
         if (!this.#collectCurrentStep()) return;
-        if (this.element?.querySelector('.dg-specialty-dupe')) {
-            ui.notifications.warn('Each specialty skill must be unique within its group.');
-            return;
-        }
         if (this.#step < STEPS.length - 1) {
             this.#step++;
             this.#saveState();
@@ -1294,17 +1288,6 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
 
     static async #onResetStats(event, target) {
         for (const k of Object.keys(this.#data.stats)) this.#data.stats[k] = 3;
-        this.render({ force: true });
-    }
-
-    static async #onAddBond(event, target) {
-        const prof = this.#data.professionKey ? PROFESSIONS[this.#data.professionKey] : null;
-        const limit = prof ? this.#getBondLimit(prof) : 4;
-        if (this.#data.bonds.length >= limit) {
-            ui.notifications.warn(`This profession allows a maximum of ${limit} bonds.`);
-            return;
-        }
-        this.#data.bonds.push({ name: '', score: this.#data.stats.cha });
         this.render({ force: true });
     }
 
@@ -1393,11 +1376,6 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
         ui.notifications.info(`${this.#actor.name} is ready for fieldwork.`);
     }
 
-    static async #onExportPdf(event, target) {
-        this.#collectCurrentStep();
-        exportToPDF(this.#buildPdfState());
-    }
-
     // -----------------------------------------------------------------------
     // Collect form data from the current step before advancing
     // -----------------------------------------------------------------------
@@ -1468,6 +1446,23 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
             // Update required specialty slot labels
             for (const slot of this.#data.specialtySlots.filter(sl => sl.required)) {
                 slot.label = (raw[`specialty.req.${slot.id}`] ?? slot.label).toString().trim();
+            }
+
+            // Block duplicate required specialties within the same group
+            {
+                const reqByGroup = {};
+                for (const slot of this.#data.specialtySlots.filter(sl => sl.required)) {
+                    const val = slot.label.toLowerCase();
+                    if (!val) continue;
+                    (reqByGroup[slot.group] ??= []).push(val);
+                }
+                for (const [group, vals] of Object.entries(reqByGroup)) {
+                    if (new Set(vals).size < vals.length) {
+                        const display = Object.entries(SPECIALTY_PREFIXES).find(([, g]) => g === group)?.[0] ?? group;
+                        ui.notifications.warn(`Each ${display} specialty must be unique.`);
+                        return false;
+                    }
+                }
             }
 
             // Re-derive optional picks: specialty → specialty slots; plain → skills dict
@@ -1641,7 +1636,7 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
         for (const [k, v] of Object.entries(this.#data.biography)) {
             if (k === 'name') continue;
             if (k === 'physicalDescription') {
-                updates['system.physicalDescription'] = v;
+                updates['system.physicalDescription'] = v ? `<p>${v}</p>` : '';
             } else {
                 updates[`system.biography.${k}`] = v;
             }

@@ -87,7 +87,7 @@ function buildActorPdfState(actor) {
         sex: bioSys.sex ?? '',
         age: bioSys.age ?? '',
         education: bioSys.education ?? '',
-        physicalDesc: sys.physicalDescription ?? '',
+        physicalDesc: (sys.physicalDescription ?? '').replace(/<[^>]+>/g, '').trim(),
         motivations: motivationStrings,
         personalDetails: bioSys.notes ?? '',
     };
@@ -155,6 +155,12 @@ function injectWizardButton(app, element) {
             <button type="button" class="dg-agent-pdf-export" title="Export to DD Form 315 PDF">
                 <i class="fa-solid fa-file-pdf"></i> Export PDF
             </button>
+            <button type="button" class="dg-agent-json-export" title="Export wizard state to JSON">
+                <i class="fa-solid fa-file-export"></i> Export JSON
+            </button>
+            <button type="button" class="dg-agent-json-import" title="Import wizard state from JSON">
+                <i class="fa-solid fa-file-import"></i> Import JSON
+            </button>
         </div>
         <button type="button" class="dg-wizard-bar-toggle" title="Collapse wizard bar">
             <span class="dg-wizard-bar-triangle"></span>
@@ -173,6 +179,39 @@ function injectWizardButton(app, element) {
 
     bar.querySelector('.dg-agent-pdf-export').addEventListener('click', () => {
         exportToPDF(buildActorPdfState(actor));
+    });
+
+    bar.querySelector('.dg-agent-json-export').addEventListener('click', () => {
+        const saved = actor.getFlag('delta-green-agent-wizard', 'wizardState');
+        if (!saved) { ui.notifications.warn('No wizard data saved for this agent yet.'); return; }
+        const payload = JSON.stringify(saved, null, 2);
+        const blob = new Blob([payload], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `dg-wizard-${(actor.name ?? 'agent').replace(/[^a-z0-9_\-]/gi, '_')}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+    });
+
+    bar.querySelector('.dg-agent-json-import').addEventListener('click', () => {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.json,application/json';
+        input.addEventListener('change', async () => {
+            const file = input.files?.[0];
+            if (!file) return;
+            try {
+                const text = await file.text();
+                const parsed = JSON.parse(text);
+                if (!parsed?.data?.stats) throw new Error('Not a valid wizard JSON file.');
+                await actor.setFlag('delta-green-agent-wizard', 'wizardState', parsed);
+                ui.notifications.info('Wizard state imported — open Agent Wizard to continue.');
+            } catch (err) {
+                ui.notifications.error(`Import failed: ${err.message}`);
+            }
+        });
+        input.click();
     });
 
     bar.querySelector('.dg-wizard-bar-toggle').addEventListener('click', () => {
