@@ -332,6 +332,55 @@ const BONUS_PACKAGES = [
     },
 ];
 
+// ---------------------------------------------------------------------------
+// Skill tooltip descriptions — sourced verbatim from DELTA-GREEN-STATS website
+// ---------------------------------------------------------------------------
+const SKILL_TOOLTIPS = {
+    accounting: `Accounting — Base: 10%\nThe study of finance and business. Use it to sift through financial records for anomalies, such as a hidden bank account or money laundering.`,
+    alertness: `Alertness — Base: 20%\nDetects danger. Use it to hear a safety being switched off, spot the bulge of a pistol under a jacket, or catch someone trying to escape notice.`,
+    anthropology: `Anthropology — Base: 0%\nThe study of living human cultures. Use it to understand morals, religious beliefs, customs, and to identify (but not translate) obscure languages.`,
+    archeology: `Archeology — Base: 0%\nThe study of physical remains of human cultures. Use it to analyse ruins, determine the age of an artifact, or tell a genuine artifact from a fake.`,
+    artillery: `Artillery — Base: 0%\nSafe and accurate use of mortars, missiles, howitzers, tank cannons, and other heavy gunnery.`,
+    athletics: `Athletics — Base: 30%\nLong practice doing things like running, jumping, climbing, and throwing. Use it to outrun someone, jump an intimidating gap, climb in a crisis, or hit a target with a thrown weapon.`,
+    bureaucracy: `Bureaucracy — Base: 10%\nManipulating the rules and personalities that govern an organisation. Use it to locate supplies, convince an official to provide resources, or gain credentials for a restricted area.`,
+    computer_science: `Computer Science — Base: 0%\nDeep knowledge of computers and the programs that run them. Use it to recover encrypted data, implant software to hijack a system, clone a phone's SIM card, or falsify data.`,
+    criminology: `Criminology — Base: 10%\nKnowledge of criminal and conspiratorial behaviour. Use it to identify criminal behaviour, deduce relationships in a conspiracy, or know whom to talk to in the criminal underground.`,
+    demolitions: `Demolitions — Base: 0%\nSafe handling of explosives in a crisis. Use it to disarm a bomb, set a charge to destroy a target, or jury-rig an explosive from hardware-store supplies.`,
+    disguise: `Disguise — Base: 10%\nAlter your Agent's appearance, voice, posture, body language, and mannerisms to avoid recognition without drawing attention.`,
+    dodge: `Dodge — Base: 30%\nEvading danger and attacks through instinct and reflexes. Against firearms and explosives, Dodge can get an Agent to cover before bullets and shrapnel fly.`,
+    drive: `Drive — Base: 20%\nHandling an automobile or motorcycle safely in a crisis. Use this skill in a high-speed pursuit or on dangerous terrain.`,
+    firearms: `Firearms — Base: 20%\nSafe and accurate shooting with small arms in combat. Use it to hit a target despite the adrenaline and panic of violence.`,
+    first_aid: `First Aid — Base: 10%\nThe initial treatment and stabilisation of injuries. Use it to help a character recover lost Hit Points.`,
+    forensics: `Forensics — Base: 0%\nGathering detailed evidence using forensic equipment. Use it to record biometric data, determine weapon details, or collect and compare fingerprints and DNA.`,
+    heavy_machiner: `Heavy Machinery — Base: 10%\nSafe operation of a tractor, crane, bulldozer, tank, heavy truck, or other big machine in a crisis.`,
+    heavy_weapons: `Heavy Weapons — Base: 0%\nSafe and accurate use of man-portable heavy ordnance such as machine guns and rocket launchers.`,
+    history: `History — Base: 10%\nUncovering facts and theories about the human past. Use it to remember a key fact, recognise an obscure reference, or comb a library for information that needs deep education.`,
+    humint: `HUMINT — Base: 10%\nHuman intelligence. Obtains information — especially information a subject would conceal — through observation, conversation, or examining patterns of behaviour.`,
+    law: `Law — Base: 0%\nUsing laws and courts to your Agent's advantage. Use it to get your way in court, determine correct procedures for evidence, or minimise legal risks.`,
+    medicine: `Medicine — Base: 0%\nThe study and treatment of injury and illness. Use it to diagnose injury, disease, or poisoning; identify abnormalities; or determine cause and time of death.`,
+    melee_weapons: `Melee Weapons — Base: 30%\nLethal use of melee weapons in combat. Use it to hurt or kill an opponent with a knife, axe, club, or other weapon.`,
+    navigate: `Navigate — Base: 10%\nFinding your way quickly with maps, charts, instruments, or dead reckoning.`,
+    occult: `Occult — Base: 10%\nThe study of the supernatural as understood by human traditions, including conspiracy theories, fringe science, and cryptozoology. Can never reveal the genuinely unnatural.`,
+    persuade: `Persuade — Base: 20%\nChanging another's deeply-held decision or desire. Use it when what your Agent wants is so valuable, or the deception so flagrant, that Charisma isn't enough.`,
+    pharmacy: `Pharmacy — Base: 0%\nKnowledge of drugs: their ingredients, creation, effects, uses, and misuses. Use it to identify and produce medicines and antidotes — as well as poisons.`,
+    psychotherapy: `Psychotherapy — Base: 10%\nThe diagnosis and treatment of mental illness. Use it to identify a disorder, help a patient recover, or talk someone down when a disorder begins to take over. Cannot be used on yourself.`,
+    ride: `Ride — Base: 10%\nHandling, training, and riding horses, donkeys, camels, and other beasts. Use it to stay on a mount in a crisis and to keep animals calm.`,
+    search: `Search — Base: 20%\nFinding things that are concealed or obscured. Use it to find an object hidden with Stealth, or so well hidden it needs an expert eye.`,
+    sigint: `SIGINT — Base: 0%\nSignals intelligence. Encompasses encryption, communications intelligence, and surveillance of radio and digital communications. Use it to install bugs, operate surveillance equipment, and break codes.`,
+    stealth: `Stealth — Base: 10%\nConcealing your presence or activities. Use it to hide a pistol, move silently, follow without being seen, or blend into a crowd. Detected only by opposing Alertness or Search.`,
+    surgery: `Surgery — Base: 0%\nThe treatment of an injury by invasive means. First Aid keeps a patient alive until surgery is possible; Medicine ensures long-term recovery.`,
+    survival: `Survival — Base: 10%\nKnowledge of the natural world. Use it to find tracks, predict weather, recognise unusual fauna or flora, or find food, water, and shelter.`,
+    swim: `Swim — Base: 20%\nUse in a dangerous crisis: going a long distance in choppy water, keeping a friend from drowning, or getting to a boat before something below grabs you.`,
+    unarmed_combat: `Unarmed Combat — Base: 40%\nSelf-defence. Use it to hurt or kill an opponent with your Agent's bare hands, feet, elbows, teeth, or head.`,
+    unnatural: `Unnatural — Base: 0%\nKnowledge of the fundamental, mind-rending secrets of the universe. Your Agent's SAN can never be higher than 99 minus their Unnatural skill rating.`,
+    art: `Art (Type) — Base: 0%\nExpertise at creating or performing a work that sways emotions. Each type is a separate skill: Acting, Creative Writing, Forgery, Painting, Photography, Scriptwriting, etc.`,
+    craft: `Craft (Type) — Base: 0%\nMaking and repairing sophisticated tools and structures. Each type is separate: Electrician, Locksmith, Mechanic, Microelectronics, Gunsmith, etc.`,
+    foreign_language: `Foreign Language (Type) — Base: 0%\nFluency in another language. Each language is a distinct skill. At 20% halting conversation; at 50% speak and read like a native.`,
+    military_science: `Military Science (Type) — Base: 0%\nKnowledge of military culture and techniques. Use it to identify battlefield threats, recognise weaknesses in fortifications, or deploy forces advantageously.`,
+    pilot: `Pilot (Type) — Base: 0%\nPiloting waterborne, airborne, or aerospace vehicles in a crisis. Each vessel type is separate: Airplane, Drone, Helicopter, Small Boat, Ship, etc.`,
+    science: `Science (Type) — Base: 0%\nThe deep study of the processes of the world. Each science is separate: Astronomy, Biology, Chemistry, Geology, Mathematics, Physics, Zoology, etc.`,
+};
+
 const STAT_LABELS = { str: 'STR', con: 'CON', dex: 'DEX', int: 'INT', pow: 'POW', cha: 'CHA' };
 
 const STAT_DESCRIPTOR_TIERS = {
@@ -433,8 +482,11 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
             randomBio: DeltaGreenChargenWizard.#onRandomBio,
             clearEquipment: DeltaGreenChargenWizard.#onClearEquipment,
             finish: DeltaGreenChargenWizard.#onFinish,
+            applyAndKeep: DeltaGreenChargenWizard.#onApplyAndKeep,
             loadLoadout: DeltaGreenChargenWizard.#onLoadLoadout,
             fillPack: DeltaGreenChargenWizard.#onFillPack,
+            jumpToStep: DeltaGreenChargenWizard.#onJumpToStep,
+            pickPortrait: DeltaGreenChargenWizard.#onPickPortrait,
         },
     };
 
@@ -503,6 +555,8 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
             motivations: this.#data.motivations,
             equipmentCount: this.#data.equipment.length,
             review: step === 'review' ? this.#buildReviewContext() : null,
+            stepWarnings: this.#buildStepWarnings(),
+            stepTitles: ['Welcome', 'Statistics', 'Profession', 'Skills', 'Bonus Skills', 'Bonds', 'Biography', 'Equipment', 'Review'],
         };
     }
 
@@ -525,6 +579,7 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
                 current: this.#data.skills[key] ?? Math.max(SKILL_DEFAULTS[key] ?? 0, s.value),
                 required: true,
                 optional: false,
+                tooltip: SKILL_TOOLTIPS[key] ?? '',
             });
         }
         return result;
@@ -560,6 +615,7 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
                     isSpecialty: false,
                     group: '',
                     specialtyLabel: '',
+                    tooltip: SKILL_TOOLTIPS[this.#findSkillKey(s.name)] ?? '',
                 });
             }
         }
@@ -743,7 +799,25 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
             motivations: this.#data.motivations.filter(m => m.trim()),
             equipment: this.#data.equipment,
             bonusAllocations,
+            derived: {
+                hp: Math.ceil((this.#data.stats.str + this.#data.stats.con) / 2),
+                wp: this.#data.stats.pow,
+                san: this.#data.stats.pow * 5,
+                bp: this.#data.stats.pow * 5 - this.#data.stats.pow,
+            },
+            hasBioName: !!this.#data.biography.name,
         };
+    }
+
+    // -----------------------------------------------------------------------
+    // Build step-warning indicators (one boolean per step index)
+    // -----------------------------------------------------------------------
+    #buildStepWarnings() {
+        const w = new Array(STEPS.length).fill(false);
+        if (!this.#data.professionKey) w[2] = true;
+        if (this.#data.bonds.every(b => !b.name)) w[5] = true;
+        if (!this.#data.biography.name) w[6] = true;
+        return w;
     }
 
     // -----------------------------------------------------------------------
@@ -887,6 +961,19 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
         if (STEPS[this.#step] === 'skills') { this.#setupSkillsUI(); this.#setupSpecialtyUI(); }
         if (STEPS[this.#step] === 'bonus_skills') this.#setupBonusSkillsUI();
         if (STEPS[this.#step] === 'welcome') this.#initWelcomePyramid();
+        // Enter key → Next/Finish button click (except equipment/bonus_skills which have their own inputs)
+        const step = STEPS[this.#step];
+        if (!['equipment', 'bonus_skills', 'welcome'].includes(step)) {
+            this.element?.querySelector('form.dg-wizard-form')?.addEventListener('keydown', (e) => {
+                if (e.key !== 'Enter') return;
+                const tag = e.target.tagName;
+                if (tag === 'TEXTAREA' || tag === 'SELECT') return;
+                e.preventDefault();
+                const nav = this.element?.querySelector('.dg-wizard-nav');
+                const btn = nav?.querySelector('[data-action="finish"]') ?? nav?.querySelector('[data-action="nextStep"]');
+                btn?.click();
+            });
+        }
     }
 
     // -----------------------------------------------------------------------
@@ -1376,6 +1463,31 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
         ui.notifications.info(`${this.#actor.name} is ready for fieldwork.`);
     }
 
+    static async #onApplyAndKeep(event, target) {
+        if (!this.#collectCurrentStep()) return;
+        await this.#applyToActor();
+        this.render({ force: true });
+        ui.notifications.info(`Changes applied — wizard still open.`);
+    }
+
+    static async #onJumpToStep(event, target) {
+        this.#collectCurrentStep();
+        this.#step = parseInt(target.dataset.step, 10);
+        this.#saveState();
+        this.render({ force: true });
+    }
+
+    static async #onPickPortrait(event, target) {
+        new FilePicker({
+            type: 'image',
+            current: this.#actor.img,
+            callback: async (path) => {
+                await this.#actor.update({ img: path });
+                this.render({ force: true });
+            },
+        }).browse();
+    }
+
     // -----------------------------------------------------------------------
     // Collect form data from the current step before advancing
     // -----------------------------------------------------------------------
@@ -1501,7 +1613,7 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
             this.#data.bonds = this.#data.bonds.map((bond, i) => ({
                 name: (raw[`bonds.${i}.name`] ?? bond.name).toString().trim(),
                 score: parseInt(raw[`bonds.${i}.score`], 10) || bond.score,
-                relationship: bond.relationship ?? '',
+                relationship: (raw[`bonds.${i}.relationship`] ?? bond.relationship ?? '').toString().trim(),
                 description: bond.description ?? '',
             }));
         }
