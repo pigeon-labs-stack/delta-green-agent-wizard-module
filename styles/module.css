@@ -249,6 +249,43 @@
     margin: 0 auto 1rem;
 }
 
+/* Welcome step: match all greens to the pyramid phosphor colour (#008219 / #00b41e) */
+[data-step="welcome"] .dg-step-dot.active {
+    border-bottom-color: #00b41e;
+}
+
+[data-step="welcome"] .dg-step-dot.done {
+    border-bottom-color: #00821a;
+}
+
+[data-step="welcome"] .dg-step-label {
+    color: #00b41e;
+}
+
+[data-step="welcome"] .dg-step h2 {
+    color: #00b41e;
+    border-bottom-color: #00821a;
+}
+
+[data-step="welcome"] .dg-step-welcome .dg-flavour {
+    color: #7acea0;
+}
+
+[data-step="welcome"] .dg-btn-primary {
+    background: #005c10;
+    border-color: #00b41e;
+    color: #b8ffcc;
+}
+
+[data-step="welcome"] .dg-btn-primary:hover {
+    background: #007318;
+}
+
+[data-step="welcome"] .dg-btn-secondary {
+    border-color: #00821a;
+    color: #00b41e;
+}
+
 .dg-welcome-pyramid {
     display: block;
     width: 100%;
