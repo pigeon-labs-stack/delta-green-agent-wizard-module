@@ -4,8 +4,7 @@
     <div class="dg-wizard-progress">
         {{#each (range 0 totalSteps)}}
         <div class="dg-step-dot {{#if (eq this ../stepIndex)}}active{{/if}} {{#if (lt this ../stepIndex)}}done{{/if}} {{#if (lookup ../stepWarnings this)}}has-warning{{/if}}"
-             data-step-index="{{this}}"
-             title="{{lookup ../stepTitles this}}">
+            data-step-index="{{this}}" title="{{lookup ../stepTitles this}}">
         </div>
         {{/each}}
         <span class="dg-step-label">Step {{inc stepIndex}} of {{totalSteps}}</span>
@@ -189,7 +188,7 @@
                         <strong>{{optPicksUsed}} / {{optLimit}}</strong></span>
                 </div>
                 {{#each optionalSkillItems}}
-                <div class="dg-opt-skill-row"{{#if tooltip}} title="{{tooltip}}"{{/if}}>
+                <div class="dg-opt-skill-row" {{#if tooltip}} title="{{tooltip}}" {{/if}}>
                     <label class="dg-opt-label">
                         <input type="checkbox" name="optPick" value="{{optIndex}}" {{#if picked}}checked{{/if}} />
                         <span class="dg-opt-skill-name">{{label}}</span>
@@ -233,7 +232,7 @@
                 </thead>
                 <tbody>
                     {{#each skills}}
-                    <tr class="dg-skill-required"{{#if tooltip}} title="{{tooltip}}"{{/if}}>
+                    <tr class="dg-skill-required" {{#if tooltip}} title="{{tooltip}}" {{/if}}>
                         <td>{{label}}</td>
                         <td class="dg-num dg-skill-current">{{current}}</td>
                     </tr>
@@ -529,7 +528,8 @@
             {{#unless review.hasBioName}}<p class="dg-warn">⚠ No agent name set — go back to Biography.</p>{{/unless}}
 
             <section class="dg-review-section">
-                <h3><button type="button" data-action="jumpToStep" data-step="1" class="dg-review-jump-btn">Statistics ✎</button></h3>
+                <h3><button type="button" data-action="jumpToStep" data-step="1" class="dg-review-jump-btn">Statistics
+                        ✎</button></h3>
                 <div class="dg-stats-grid dg-stats-readonly">
                     {{#each review.stats}}
                     <div class="dg-stat-block">
@@ -552,12 +552,14 @@
             </section>
 
             <section class="dg-review-section">
-                <h3><button type="button" data-action="jumpToStep" data-step="2" class="dg-review-jump-btn">Profession ✎</button></h3>
+                <h3><button type="button" data-action="jumpToStep" data-step="2" class="dg-review-jump-btn">Profession
+                        ✎</button></h3>
                 <p>{{review.profession}}</p>
             </section>
 
             <section class="dg-review-section">
-                <h3><button type="button" data-action="jumpToStep" data-step="3" class="dg-review-jump-btn">Key Skills ✎</button></h3>
+                <h3><button type="button" data-action="jumpToStep" data-step="3" class="dg-review-jump-btn">Key Skills
+                        ✎</button></h3>
                 <div class="dg-review-skills">
                     {{#each review.skills}}
                     <span class="dg-review-skill">{{label}}: <strong>{{value}}%</strong></span>
@@ -570,7 +572,8 @@
             </section>
 
             <section class="dg-review-section">
-                <h3><button type="button" data-action="jumpToStep" data-step="5" class="dg-review-jump-btn">Bonds ✎</button></h3>
+                <h3><button type="button" data-action="jumpToStep" data-step="5" class="dg-review-jump-btn">Bonds
+                        ✎</button></h3>
                 {{#each review.bonds}}
                 <div class="dg-review-bond">{{name}}{{#if relationship}} — {{relationship}}{{/if}} ({{score}})</div>
                 {{/each}}
@@ -580,7 +583,8 @@
             </section>
 
             <section class="dg-review-section">
-                <h3><button type="button" data-action="jumpToStep" data-step="6" class="dg-review-jump-btn">Biography ✎</button></h3>
+                <h3><button type="button" data-action="jumpToStep" data-step="6" class="dg-review-jump-btn">Biography
+                        ✎</button></h3>
                 <div class="dg-review-bio-grid">
                     {{#each review.biography}}
                     <span class="dg-review-bio-key">{{label}}</span>
@@ -591,7 +595,8 @@
 
             {{#if review.motivations.length}}
             <section class="dg-review-section">
-                <h3><button type="button" data-action="jumpToStep" data-step="6" class="dg-review-jump-btn">Motivations ✎</button></h3>
+                <h3><button type="button" data-action="jumpToStep" data-step="6" class="dg-review-jump-btn">Motivations
+                        ✎</button></h3>
                 <ul class="dg-review-motivations">
                     {{#each review.motivations}}
                     <li>{{this}}</li>
@@ -603,7 +608,8 @@
             {{#each review.bonusAllocations}}
             {{#if @first}}
             <section class="dg-review-section">
-                <h3><button type="button" data-action="jumpToStep" data-step="4" class="dg-review-jump-btn">Bonus Skill Picks ✎</button></h3>
+                <h3><button type="button" data-action="jumpToStep" data-step="4" class="dg-review-jump-btn">Bonus Skill
+                        Picks ✎</button></h3>
                 <div class="dg-review-skills">
                     {{/if}}
                     <span class="dg-review-skill">{{label}}: <strong>+{{total}}%</strong></span>
@@ -615,7 +621,8 @@
 
             {{#if review.equipment.length}}
             <section class="dg-review-section">
-                <h3><button type="button" data-action="jumpToStep" data-step="7" class="dg-review-jump-btn">Equipment ({{review.equipment.length}} items) ✎</button></h3>
+                <h3><button type="button" data-action="jumpToStep" data-step="7" class="dg-review-jump-btn">Equipment
+                        ({{review.equipment.length}} items) ✎</button></h3>
                 <div class="dg-review-equipment">
                     {{#each review.equipment}}
                     <span class="dg-review-eq-item">{{this}}</span>

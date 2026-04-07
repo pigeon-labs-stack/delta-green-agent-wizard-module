@@ -1022,7 +1022,7 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
             [1, 0.6, 1],
             [-1, 0.6, 1],
         ];
-        const edges = [[0,1],[0,2],[0,3],[0,4],[1,2],[2,3],[3,4],[4,1]];
+        const edges = [[0, 1], [0, 2], [0, 3], [0, 4], [1, 2], [2, 3], [3, 4], [4, 1]];
 
         let ay = 0;
         const ax = 0.38;
@@ -1031,12 +1031,12 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
         let lastFrameTime = 0;
         let stopped = false;
 
-        const rotY = (v, a) => [v[0]*Math.cos(a)+v[2]*Math.sin(a), v[1], -v[0]*Math.sin(a)+v[2]*Math.cos(a)];
-        const rotX = (v, a) => [v[0], v[1]*Math.cos(a)-v[2]*Math.sin(a), v[1]*Math.sin(a)+v[2]*Math.cos(a)];
+        const rotY = (v, a) => [v[0] * Math.cos(a) + v[2] * Math.sin(a), v[1], -v[0] * Math.sin(a) + v[2] * Math.cos(a)];
+        const rotX = (v, a) => [v[0], v[1] * Math.cos(a) - v[2] * Math.sin(a), v[1] * Math.sin(a) + v[2] * Math.cos(a)];
         const project = (v, cx, cy, scale) => {
             const fov = 4.5;
             const s = (fov / (v[2] + fov)) * scale;
-            return [cx + v[0]*s, cy + v[1]*s];
+            return [cx + v[0] * s, cy + v[1] * s];
         };
 
         const draw = (now) => {
@@ -1052,7 +1052,7 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
 
             ctx.clearRect(0, 0, W, H);
             const scale = Math.min(W, H) * 0.32;
-            const pts = verts.map(v => project(rotX(rotY(v, ay), ax), W/2, H/2, scale));
+            const pts = verts.map(v => project(rotX(rotY(v, ay), ax), W / 2, H / 2, scale));
 
             ctx.strokeStyle = 'rgba(0, 180, 30, 0.10)';
             ctx.lineWidth = 8;
