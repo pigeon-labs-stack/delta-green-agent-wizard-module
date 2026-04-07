@@ -81,8 +81,10 @@
 
 /* Toggle button — always visible, sits right of the buttons group */
 .dg-wizard-bar-toggle {
-    background: none;
-    border: none;
+    background: none !important;
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
     cursor: pointer;
     padding: 6px 10px;
     display: flex;
@@ -97,8 +99,14 @@
     white-space: nowrap;
 }
 
-.dg-wizard-bar-toggle:hover {
+.dg-wizard-bar-toggle:hover,
+.dg-wizard-bar-toggle:focus,
+.dg-wizard-bar-toggle:active {
     opacity: 1;
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+    background: none !important;
 }
 
 /* Label text — shown via JS; hidden (display:none) when collapsed */
