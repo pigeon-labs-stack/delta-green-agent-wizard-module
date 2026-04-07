@@ -187,7 +187,8 @@ function injectWizardButton(app, element) {
             name: actor.name,
             img: actor.img,
             system: actor.system,
-            items: actor.items.map(i => ({ name: i.name, type: i.type, img: i.img, system: i.system })),
+            effects: actor.effects.map(e => e.toObject()),
+            items: actor.items.map(i => ({ name: i.name, type: i.type, img: i.img, system: i.system, effects: i.effects.map(e => e.toObject()) })),
         };
         const payload = JSON.stringify(exportData, null, 2);
         const blob = new Blob([payload], { type: 'application/json' });
@@ -210,7 +211,9 @@ function injectWizardButton(app, element) {
                 const text = await file.text();
                 const parsed = JSON.parse(text);
                 if (!parsed?._format?.startsWith('dg-agent-sheet')) throw new Error('Not a valid DG agent sheet backup.');
-                await actor.update({ name: parsed.name, img: parsed.img, system: parsed.system });
+                const updates = { name: parsed.name, img: parsed.img, system: parsed.system };
+                if (parsed.effects?.length) updates.effects = parsed.effects;
+                await actor.update(updates);
                 if (parsed.items?.length) {
                     const existing = actor.items.map(i => i.id);
                     if (existing.length) await actor.deleteEmbeddedDocuments('Item', existing);
