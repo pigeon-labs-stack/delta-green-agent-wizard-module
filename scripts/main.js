@@ -182,14 +182,18 @@ function injectWizardButton(app, element) {
     });
 
     bar.querySelector('.dg-agent-json-export').addEventListener('click', () => {
-        const saved = actor.getFlag('delta-green-agent-wizard', 'wizardState');
-        if (!saved) { ui.notifications.warn('No wizard data saved for this agent yet.'); return; }
-        const payload = JSON.stringify(saved, null, 2);
+        const exportData = {
+            _format: 'dg-agent-sheet-v1',
+            name: actor.name,
+            system: actor.system,
+            items: actor.items.map(i => ({ name: i.name, type: i.type, system: i.system })),
+        };
+        const payload = JSON.stringify(exportData, null, 2);
         const blob = new Blob([payload], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `dg-wizard-${(actor.name ?? 'agent').replace(/[^a-z0-9_\-]/gi, '_')}.json`;
+        a.download = `${(actor.name ?? 'agent').replace(/[^a-z0-9_\-]/gi, '_')}.json`;
         a.click();
         URL.revokeObjectURL(url);
     });
@@ -204,9 +208,14 @@ function injectWizardButton(app, element) {
             try {
                 const text = await file.text();
                 const parsed = JSON.parse(text);
-                if (!parsed?.data?.stats) throw new Error('Not a valid wizard JSON file.');
-                await actor.setFlag('delta-green-agent-wizard', 'wizardState', parsed);
-                ui.notifications.info('Wizard state imported — open Agent Wizard to continue.');
+                if (!parsed?._format?.startsWith('dg-agent-sheet')) throw new Error('Not a valid DG agent sheet backup.');
+                await actor.update({ name: parsed.name, system: parsed.system });
+                if (parsed.items?.length) {
+                    const existing = actor.items.map(i => i.id);
+                    if (existing.length) await actor.deleteEmbeddedDocuments('Item', existing);
+                    await actor.createEmbeddedDocuments('Item', parsed.items);
+                }
+                ui.notifications.info(`${parsed.name ?? 'Agent'} restored from backup.`);
             } catch (err) {
                 ui.notifications.error(`Import failed: ${err.message}`);
             }
