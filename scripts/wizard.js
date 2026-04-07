@@ -882,10 +882,13 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
     // -----------------------------------------------------------------------
     async _onRender(context, options) {
         await super._onRender?.(context, options);
+        // Stop any previous pyramid loop when navigating away
+        this.element?.querySelector('#dg-welcome-pyramid')?._stopPyramid?.();
         if (STEPS[this.#step] === 'profession') this.#setupProfessionUI();
         if (STEPS[this.#step] === 'equipment') this.#buildEquipmentUI();
         if (STEPS[this.#step] === 'skills') { this.#setupSkillsUI(); this.#setupSpecialtyUI(); }
         if (STEPS[this.#step] === 'bonus_skills') this.#setupBonusSkillsUI();
+        if (STEPS[this.#step] === 'welcome') this.#initWelcomePyramid();
     }
 
     // -----------------------------------------------------------------------
@@ -918,6 +921,73 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
             inp.addEventListener('change', checkDupes);
         });
         checkDupes();
+    }
+
+    // -----------------------------------------------------------------------
+    // Welcome step: spinning wireframe pyramid (ported from DELTA-GREEN-STATS)
+    // -----------------------------------------------------------------------
+    #initWelcomePyramid() {
+        const canvas = this.element?.querySelector('#dg-welcome-pyramid');
+        if (!canvas) return;
+
+        const verts = [
+            [0, -1.2, 0],
+            [-1, 0.6, -1],
+            [1, 0.6, -1],
+            [1, 0.6, 1],
+            [-1, 0.6, 1],
+        ];
+        const edges = [[0,1],[0,2],[0,3],[0,4],[1,2],[2,3],[3,4],[4,1]];
+
+        let ay = 0;
+        const ax = 0.38;
+        const ctx = canvas.getContext('2d');
+        const FRAME_MS = 1000 / 24;
+        let lastFrameTime = 0;
+        let stopped = false;
+
+        const rotY = (v, a) => [v[0]*Math.cos(a)+v[2]*Math.sin(a), v[1], -v[0]*Math.sin(a)+v[2]*Math.cos(a)];
+        const rotX = (v, a) => [v[0], v[1]*Math.cos(a)-v[2]*Math.sin(a), v[1]*Math.sin(a)+v[2]*Math.cos(a)];
+        const project = (v, cx, cy, scale) => {
+            const fov = 4.5;
+            const s = (fov / (v[2] + fov)) * scale;
+            return [cx + v[0]*s, cy + v[1]*s];
+        };
+
+        const draw = (now) => {
+            if (stopped || document.hidden) { if (!stopped) requestAnimationFrame(draw); return; }
+            if (now - lastFrameTime < FRAME_MS) { requestAnimationFrame(draw); return; }
+            const elapsed = now - lastFrameTime;
+            lastFrameTime = now;
+
+            const W = canvas.offsetWidth || 260;
+            const H = canvas.offsetHeight || 200;
+            if (canvas.width !== W) canvas.width = W;
+            if (canvas.height !== H) canvas.height = H;
+
+            ctx.clearRect(0, 0, W, H);
+            const scale = Math.min(W, H) * 0.32;
+            const pts = verts.map(v => project(rotX(rotY(v, ay), ax), W/2, H/2, scale));
+
+            ctx.strokeStyle = 'rgba(0, 180, 30, 0.10)';
+            ctx.lineWidth = 8;
+            ctx.beginPath();
+            edges.forEach(([a, b]) => { ctx.moveTo(pts[a][0], pts[a][1]); ctx.lineTo(pts[b][0], pts[b][1]); });
+            ctx.stroke();
+
+            ctx.strokeStyle = 'rgba(0, 130, 25, 0.70)';
+            ctx.lineWidth = 1.2;
+            ctx.beginPath();
+            edges.forEach(([a, b]) => { ctx.moveTo(pts[a][0], pts[a][1]); ctx.lineTo(pts[b][0], pts[b][1]); });
+            ctx.stroke();
+
+            ay += 0.00036 * elapsed;
+            requestAnimationFrame(draw);
+        };
+
+        // Stop the loop when we navigate away from the welcome step
+        canvas._stopPyramid = () => { stopped = true; };
+        requestAnimationFrame(draw);
     }
 
     // -----------------------------------------------------------------------
