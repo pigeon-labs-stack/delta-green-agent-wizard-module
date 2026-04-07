@@ -228,6 +228,27 @@
     margin-bottom: 0.75rem;
 }
 
+.dg-step-welcome {
+    text-align: center;
+}
+
+.dg-step-welcome h2 {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+}
+
+.dg-step-welcome .dg-flavour {
+    font-size: 1.1rem;
+    max-width: 560px;
+    margin: 0 auto 1rem;
+}
+
+.dg-step-welcome > p:not(.dg-flavour) {
+    font-size: 1rem;
+    max-width: 560px;
+    margin: 0 auto 1rem;
+}
+
 .dg-welcome-pyramid {
     display: block;
     width: 100%;
