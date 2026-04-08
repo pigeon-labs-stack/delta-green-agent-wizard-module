@@ -1690,9 +1690,10 @@
 .dg-review-derived-grid {
     display: grid;
     grid-template-columns: auto auto auto auto auto auto auto auto;
-    gap: 0.2rem 0.7rem;
+    column-gap: 0.25rem;
     align-items: baseline;
     font-size: 0.9rem;
+    width: fit-content;
 }
 
 .dg-review-derived-grid span {
@@ -1700,6 +1701,10 @@
     font-size: 0.78rem;
     text-transform: uppercase;
     letter-spacing: 0.05em;
+}
+
+.dg-review-derived-grid span:not(:first-child) {
+    padding-left: 1.25rem;
 }
 
 .dg-review-derived-grid strong {
