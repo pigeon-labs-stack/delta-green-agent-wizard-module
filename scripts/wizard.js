@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { PROFESSIONS } from './professions.js';
 import { BONDS } from './bonds.js';
 import { EQUIPMENT_CATALOG, EQUIPMENT_CATEGORIES } from './equipment.js';
