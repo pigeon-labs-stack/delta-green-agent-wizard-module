@@ -43,7 +43,7 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
         bonds: [],           // array of { name, score, relationship, description }
         specialtySlots: [],  // [{id, group, label, proficiency, required, optIndex}] typed/specialty skills
         optSpecialtyLabels: {},  // optIndex → label string for checked optional specialty picks
-        biography: { name: '', profession: '', employer: '', nationality: '', sex: '', age: '', education: '', notes: '' },
+        biography: { name: '', profession: '', employer: '', nationality: '', sex: '', age: '', education: '' },
         motivations: ['', '', '', '', ''],               // up to 5 motivation strings
         equipment: [],       // array of item names from catalog
     };
@@ -1353,18 +1353,13 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
             updates['system.typedSkills'] = typedSkillsToWrite;
         }
 
-        // Biography — actor name is top-level; standard fields → system.biography.*;
-        // physicalDescription + notes → combined into system.physicalDescription (ProseMirror rich-text field).
+        // Biography — actor name is top-level; standard fields → system.biography.*
         const bioName = this.#data.biography.name;
         if (bioName) updates['name'] = bioName;
         const dgBioFields = ['profession', 'employer', 'nationality', 'sex', 'age', 'education'];
         for (const k of dgBioFields) {
             if (this.#data.biography[k] !== undefined) updates[`system.biography.${k}`] = this.#data.biography[k];
         }
-        // Personal notes → system.physicalDescription (ProseMirror HTML field)
-        const notes = this.#data.biography.notes?.trim() ?? '';
-        if (notes) updates['system.physicalDescription'] = notes.split(/\n+/).map(l => `<p>${l}</p>`).join('');
-
         await this.#actor.update(updates);
 
         // Bonds — create as Bond items (remove existing first to avoid duplicates)
