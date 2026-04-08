@@ -1457,7 +1457,7 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
     }
 
     static async #onPickPortrait(event, target) {
-        new FilePicker({
+        new (foundry.applications.apps.FilePicker.implementation)({
             type: 'image',
             current: this.#actor.img,
             callback: async (path) => {
@@ -1491,28 +1491,33 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
         if (step === 'profession') {
             const key = raw['professionKey'];
             if (!key) { ui.notifications.warn('Please select a profession.'); return false; }
+            const profChanged = key !== this.#data.professionKey;
             this.#data.professionKey = key;
             const prof = PROFESSIONS[key];
             // Auto-fill biography profession field from profession title
             if (!this.#data.biography.profession) {
                 this.#data.biography.profession = prof.title;
             }
-            // Reset skills + specialty slots for the new profession
-            this.#data.skills = {};
-            this.#data.specialtySlots = [];
-            this.#data.optSpecialtyLabels = {};
-            let slotId = 0;
-            // Required skills: specialty types → specialtySlots; plain skills → skills dict
-            for (const s of prof.requiredSkills ?? []) {
-                const sp = parseSpecialtyFromName(s.name);
-                if (sp) {
-                    this.#data.specialtySlots.push({
-                        id: slotId++, group: sp.group, label: sp.label,
-                        proficiency: s.value, required: true, optIndex: null,
-                    });
-                } else {
-                    const sk = this.#findSkillKey(s.name);
-                    this.#data.skills[sk] = Math.max(SKILL_DEFAULTS[sk] ?? 0, s.value);
+            // Only reset skills + specialty slots when profession actually changes.
+            // Preserves specialty labels and optional picks when re-traversing the same profession.
+            if (profChanged) {
+                this.#data.skills = {};
+                this.#data.specialtySlots = [];
+                this.#data.optSpecialtyLabels = {};
+                this.#data.optionalPicks = [];
+                let slotId = 0;
+                // Required skills: specialty types → specialtySlots; plain skills → skills dict
+                for (const s of prof.requiredSkills ?? []) {
+                    const sp = parseSpecialtyFromName(s.name);
+                    if (sp) {
+                        this.#data.specialtySlots.push({
+                            id: slotId++, group: sp.group, label: sp.label,
+                            proficiency: s.value, required: true, optIndex: null,
+                        });
+                    } else {
+                        const sk = this.#findSkillKey(s.name);
+                        this.#data.skills[sk] = Math.max(SKILL_DEFAULTS[sk] ?? 0, s.value);
+                    }
                 }
             }
         }
@@ -1721,19 +1726,21 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
             updates['system.typedSkills'] = typedSkillsToWrite;
         }
 
-        // Biography — actor name is top-level; all other fields go to system.biography.*
-        // physicalDescription and notes are rich-text (ProseMirror) — wrap in <p> tags.
+        // Biography — actor name is top-level; standard fields → system.biography.*;
+        // physicalDescription + notes → combined into system.physicalDescription (ProseMirror rich-text field).
         const bioName = this.#data.biography.name;
         if (bioName) updates['name'] = bioName;
-        const richTextBioFields = ['physicalDescription', 'notes'];
-        for (const [k, v] of Object.entries(this.#data.biography)) {
-            if (k === 'name') continue;
-            if (richTextBioFields.includes(k)) {
-                updates[`system.biography.${k}`] = v ? `<p>${v.replace(/\n+/g, '</p><p>')}</p>` : '';
-            } else {
-                updates[`system.biography.${k}`] = v;
-            }
+        const dgBioFields = ['profession', 'employer', 'nationality', 'sex', 'age', 'education'];
+        for (const k of dgBioFields) {
+            if (this.#data.biography[k] !== undefined) updates[`system.biography.${k}`] = this.#data.biography[k];
         }
+        // Physical description + personal notes → system.physicalDescription (HTML field used by ProseMirror)
+        const physDesc = this.#data.biography.physicalDescription?.trim() ?? '';
+        const notes = this.#data.biography.notes?.trim() ?? '';
+        const htmlParts = [];
+        if (physDesc) htmlParts.push(...physDesc.split(/\n+/).map(l => `<p>${l}</p>`));
+        if (notes) htmlParts.push(...notes.split(/\n+/).map(l => `<p>${l}</p>`));
+        updates['system.physicalDescription'] = htmlParts.join('');
 
         await this.#actor.update(updates);
 
