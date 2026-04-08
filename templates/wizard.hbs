@@ -266,10 +266,11 @@
                 </p>
             </details>
 
-            {{#if bonusSkills}}            {{!-- Datalists for specialty autocomplete --}}
+            {{#if bonusSkills}} {{!-- Datalists for specialty autocomplete --}}
             {{#each bonusSkills.bonusDataLists}}
             <datalist id="{{id}}">{{#each options}}<option value="{{this}}">{{/each}}</datalist>
-            {{/each}}            <p class="dg-bonus-choice-note">Pick a <strong>background package</strong> to auto-fill your 8 skill picks —
+            {{/each}} <p class="dg-bonus-choice-note">Pick a <strong>background package</strong> to auto-fill your 8
+                skill picks —
                 or skip it and assign them manually below.</p>
             <div class="dg-bonus-pack-row">
                 <label>Background package:
