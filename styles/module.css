@@ -620,7 +620,7 @@
 }
 
 .dg-bond-num {
-    font-size: 0.8rem;
+    font-size: 0.93rem;
     color: var(--dg-text-disabled);
     min-width: 1.2rem;
 }
@@ -655,16 +655,16 @@
 }
 
 .dg-bond-relationship {
-    font-size: 0.78rem;
+    font-size: 0.93rem;
     color: var(--dg-green-mid);
     font-weight: bold;
 }
 
 .dg-bond-description {
-    font-size: 0.75rem;
+    font-size: 0.93rem;
     color: var(--dg-text-faint);
     margin: 0.15rem 0 0;
-    line-height: 1.4;
+    line-height: 1.5;
     font-style: italic;
 }
 
@@ -948,7 +948,7 @@
 }
 
 .dg-picks-counter {
-    font-size: 0.88rem;
+    font-size: 0.95rem;
     color: var(--dg-text-soft);
 }
 
@@ -969,7 +969,7 @@
 }
 
 .dg-bonus-slot-label {
-    font-size: 0.78rem;
+    font-size: 0.9rem;
     color: var(--dg-text-disabled);
     min-width: 3.5rem;
     flex-shrink: 0;
@@ -982,7 +982,7 @@
     border: 1px solid var(--dg-border-input);
     border-radius: 3px;
     padding: 0.2rem 0.3rem;
-    font-size: 0.8rem;
+    font-size: 0.93rem;
     font-family: inherit;
 }
 
@@ -996,7 +996,7 @@
     border: 1px solid var(--dg-text-ghost);
     border-radius: 3px;
     padding: 0.2rem 0.3rem;
-    font-size: 0.8rem;
+    font-size: 0.93rem;
     font-family: inherit;
 }
 
@@ -1011,7 +1011,7 @@
 }
 
 .dg-bonus-choice-note {
-    font-size: 0.82rem;
+    font-size: 0.93rem;
     color: var(--dg-text-faint);
     margin: 0.4rem 0 0.6rem;
 }
@@ -1021,7 +1021,7 @@
 }
 
 .dg-bonus-pack-row label {
-    font-size: 0.82rem;
+    font-size: 0.93rem;
     color: var(--dg-text-dim);
     display: flex;
     align-items: center;
@@ -1279,6 +1279,30 @@
 .dg-review-skill-specialty {
     font-style: italic;
     opacity: 0.9;
+}
+
+.dg-review-bonus-divider {
+    flex-basis: 100%;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--dg-text-faint);
+    margin-top: 0.3rem;
+    padding-top: 0.3rem;
+    border-top: 1px solid var(--dg-border);
+}
+
+.dg-review-jump-inline {
+    font-size: 0.75rem;
+    padding: 0;
+    opacity: 0.7;
+}
+
+.dg-review-skill-bonus {
+    opacity: 0.85;
 }
 
 /* --------------------------------------------------------------------------

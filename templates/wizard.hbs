@@ -93,10 +93,14 @@
             </div>
 
             <div class="dg-derived-bar">
-                <div class="dg-derived-item"><span class="dg-derived-label">HP</span><strong>{{derived.hp}}</strong></div>
-                <div class="dg-derived-item"><span class="dg-derived-label">WP</span><strong>{{derived.wp}}</strong></div>
-                <div class="dg-derived-item"><span class="dg-derived-label">SAN</span><strong>{{derived.san}}</strong></div>
-                <div class="dg-derived-item"><span class="dg-derived-label">BP</span><strong>{{derived.bp}}</strong></div>
+                <div class="dg-derived-item"><span class="dg-derived-label">HP</span><strong>{{derived.hp}}</strong>
+                </div>
+                <div class="dg-derived-item"><span class="dg-derived-label">WP</span><strong>{{derived.wp}}</strong>
+                </div>
+                <div class="dg-derived-item"><span class="dg-derived-label">SAN</span><strong>{{derived.san}}</strong>
+                </div>
+                <div class="dg-derived-item"><span class="dg-derived-label">BP</span><strong>{{derived.bp}}</strong>
+                </div>
             </div>
 
             <div class="dg-stats-actions">
@@ -569,6 +573,12 @@
                     <span class="dg-review-skill dg-review-skill-specialty">{{label}}:
                         <strong>{{value}}%</strong></span>
                     {{/each}}
+                    {{#if review.bonusAllocations.length}}
+                    <span class="dg-review-bonus-divider">Bonus picks <button type="button" data-action="jumpToStep" data-step="4" class="dg-review-jump-btn dg-review-jump-inline">✎</button></span>
+                    {{#each review.bonusAllocations}}
+                    <span class="dg-review-skill dg-review-skill-bonus">{{label}}: <strong>+{{total}}%</strong></span>
+                    {{/each}}
+                    {{/if}}
                 </div>
             </section>
 
@@ -605,20 +615,6 @@
                 </ul>
             </section>
             {{/if}}
-
-            {{#each review.bonusAllocations}}
-            {{#if @first}}
-            <section class="dg-review-section">
-                <h3><button type="button" data-action="jumpToStep" data-step="4" class="dg-review-jump-btn">Bonus Skill
-                        Picks ✎</button></h3>
-                <div class="dg-review-skills">
-                    {{/if}}
-                    <span class="dg-review-skill">{{label}}: <strong>+{{total}}%</strong></span>
-                    {{#if @last}}
-                </div>
-            </section>
-            {{/if}}
-            {{/each}}
 
             {{#if review.equipment.length}}
             <section class="dg-review-section">
