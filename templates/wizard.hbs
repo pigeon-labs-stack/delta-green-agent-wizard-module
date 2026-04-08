@@ -259,14 +259,17 @@
                 <p>These 8 bonus skill picks represent that history — hobbies, side training, a past life. Use them to
                     round out your Agent as a person: a Federal Agent who rock-climbs on weekends, a Physician who
                     speaks three languages, a Soldier who paints.</p>
-                <p>No skill can go above <strong>80%</strong> during character creation.</p>
-                <p>For specialty skills (Art, Craft, Foreign Language, Pilot, Science, Military Science) choose the
-                    <em>Other…</em> option at the bottom of each group to type in a custom specialty.
+                <p>No skill can go above <strong>80%</strong> during character creation. You may pick the same skill
+                    more than once to boost it further (still capped at 80).</p>
+                <p>For specialty skills (Art, Craft, Foreign Language, Pilot, Science, Military Science) select the
+                    group from the dropdown — a subspecialty text box will appear beside it.
                 </p>
             </details>
 
-            {{#if bonusSkills}}
-            <p class="dg-bonus-choice-note">Pick a <strong>background package</strong> to auto-fill your 8 skill picks —
+            {{#if bonusSkills}}            {{!-- Datalists for specialty autocomplete --}}
+            {{#each bonusSkills.bonusDataLists}}
+            <datalist id="{{id}}">{{#each options}}<option value="{{this}}">{{/each}}</datalist>
+            {{/each}}            <p class="dg-bonus-choice-note">Pick a <strong>background package</strong> to auto-fill your 8 skill picks —
                 or skip it and assign them manually below.</p>
             <div class="dg-bonus-pack-row">
                 <label>Background package:

@@ -61,25 +61,19 @@ const SKILL_DEFAULTS = {
     unnatural: 0,
 };
 
-// All skill options for bonus picks: base skills + common subspecialties, sorted alphabetically.
+// All skill options for bonus picks. Specialty groups show as bare group name — a text input
+// for the subspecialty appears beside the dropdown when a specialty group is selected.
 const BONUS_SKILL_OPTIONS = [
     { key: 'accounting', label: 'Accounting' },
     { key: 'alertness', label: 'Alertness' },
     { key: 'anthropology', label: 'Anthropology' },
     { key: 'archeology', label: 'Archeology' },
-    { key: 'art_painting', label: 'Art (Painting)' },
-    { key: 'art_photography', label: 'Art (Photography)' },
-    { key: 'art_writing', label: 'Art (Writing)' },
-    { key: '_custom_Art', label: 'Art (Other…)' },
+    { key: '_custom_Art', label: 'Art' },
     { key: 'artillery', label: 'Artillery' },
     { key: 'athletics', label: 'Athletics' },
     { key: 'bureaucracy', label: 'Bureaucracy' },
     { key: 'computer_science', label: 'Computer Science' },
-    { key: 'craft_electrician', label: 'Craft (Electrician)' },
-    { key: 'craft_locksmithing', label: 'Craft (Locksmithing)' },
-    { key: 'craft_mechanic', label: 'Craft (Mechanic)' },
-    { key: 'craft_microelectronics', label: 'Craft (Microelectronics)' },
-    { key: '_custom_Craft', label: 'Craft (Other…)' },
+    { key: '_custom_Craft', label: 'Craft' },
     { key: 'criminology', label: 'Criminology' },
     { key: 'demolitions', label: 'Demolitions' },
     { key: 'disguise', label: 'Disguise' },
@@ -87,12 +81,7 @@ const BONUS_SKILL_OPTIONS = [
     { key: 'drive', label: 'Drive' },
     { key: 'firearms', label: 'Firearms' },
     { key: 'first_aid', label: 'First Aid' },
-    { key: 'foreign_language_arabic', label: 'Foreign Language (Arabic)' },
-    { key: 'foreign_language_chinese', label: 'Foreign Language (Chinese)' },
-    { key: 'foreign_language_french', label: 'Foreign Language (French)' },
-    { key: 'foreign_language_russian', label: 'Foreign Language (Russian)' },
-    { key: 'foreign_language_spanish', label: 'Foreign Language (Spanish)' },
-    { key: '_custom_ForeignLanguage', label: 'Foreign Language (Other…)' },
+    { key: '_custom_ForeignLanguage', label: 'Foreign Language' },
     { key: 'forensics', label: 'Forensics' },
     { key: 'heavy_machiner', label: 'Heavy Machinery' },
     { key: 'heavy_weapons', label: 'Heavy Weapons' },
@@ -101,25 +90,15 @@ const BONUS_SKILL_OPTIONS = [
     { key: 'law', label: 'Law' },
     { key: 'medicine', label: 'Medicine' },
     { key: 'melee_weapons', label: 'Melee Weapons' },
-    { key: 'military_science_air', label: 'Military Science (Air)' },
-    { key: 'military_science_land', label: 'Military Science (Land)' },
-    { key: 'military_science_sea', label: 'Military Science (Sea)' },
-    { key: 'military_science_special_operations', label: 'Military Science (Special Ops)' },
-    { key: '_custom_MilitaryScience', label: 'Military Science (Other…)' },
+    { key: '_custom_MilitaryScience', label: 'Military Science' },
     { key: 'navigate', label: 'Navigate' },
     { key: 'occult', label: 'Occult' },
     { key: 'persuade', label: 'Persuade' },
     { key: 'pharmacy', label: 'Pharmacy' },
-    { key: 'pilot_airplane', label: 'Pilot (Airplane)' },
-    { key: 'pilot_helicopter', label: 'Pilot (Helicopter)' },
-    { key: '_custom_Pilot', label: 'Pilot (Other…)' },
+    { key: '_custom_Pilot', label: 'Pilot' },
     { key: 'psychotherapy', label: 'Psychotherapy' },
     { key: 'ride', label: 'Ride' },
-    { key: 'science_biology', label: 'Science (Biology)' },
-    { key: 'science_chemistry', label: 'Science (Chemistry)' },
-    { key: 'science_mathematics', label: 'Science (Mathematics)' },
-    { key: 'science_physics', label: 'Science (Physics)' },
-    { key: '_custom_Science', label: 'Science (Other…)' },
+    { key: '_custom_Science', label: 'Science' },
     { key: 'search', label: 'Search' },
     { key: 'sigint', label: 'SIGINT' },
     { key: 'stealth', label: 'Stealth' },
@@ -730,7 +709,12 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
         const packIdx = this.#data.selectedPackIdx ?? -1;
         const packDesc = packIdx >= 0 ? (BONUS_PACKAGES[packIdx]?.desc ?? '') : '';
 
-        return { options: BONUS_SKILL_OPTIONS, profSlotOptions, packages: BONUS_PACKAGES, packIdx, packDesc, slots, picksUsed };
+        const bonusDataLists = Object.entries(SPECIALTY_OPTIONS).map(([group, options]) => ({
+            id: `dg-bonus-sp-${group}`,
+            options,
+        }));
+
+        return { options: BONUS_SKILL_OPTIONS, profSlotOptions, packages: BONUS_PACKAGES, packIdx, packDesc, slots, picksUsed, bonusDataLists };
     }
 
     // -----------------------------------------------------------------------
@@ -1108,38 +1092,32 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
         if (!el) return;
         const selects = [...el.querySelectorAll('.dg-bonus-slot-select')];
 
+        const SPECIALTY_PLACEHOLDERS = {
+            Art: 'e.g. Painting, Photography…',
+            Craft: 'e.g. Electrician, Mechanic…',
+            ForeignLanguage: 'e.g. Spanish, Arabic…',
+            MilitaryScience: 'e.g. Land, Air…',
+            Pilot: 'e.g. Airplane, Helicopter…',
+            Science: 'e.g. Biology, Physics…',
+        };
+
         const updateRow = (select) => {
             const row = select.closest('.dg-bonus-slot-row');
             const input = row?.querySelector('.dg-bonus-custom-input');
-            if (input) input.style.display = select.value.startsWith('_custom_') ? 'inline-block' : 'none';
-        };
-
-        // Disable any option that is already chosen in another slot.
-        // _custom_* options are exempt — different slots can pick different subspecialties.
-        const syncOptions = () => {
-            const chosen = new Set(
-                selects.map(s => s.value).filter(v => v !== '' && !v.startsWith('_custom_'))
-            );
-            selects.forEach(sel => {
-                sel.querySelectorAll('option').forEach(opt => {
-                    if (opt.value === '' || opt.value === sel.value || opt.value.startsWith('_custom_')) {
-                        opt.disabled = false;
-                    } else {
-                        opt.disabled = chosen.has(opt.value);
-                    }
-                });
-            });
+            if (!input) return;
+            const isCustom = select.value.startsWith('_custom_');
+            input.style.display = isCustom ? 'inline-block' : 'none';
+            if (isCustom) {
+                const group = select.value.slice('_custom_'.length);
+                input.setAttribute('list', `dg-bonus-sp-${group}`);
+                input.placeholder = SPECIALTY_PLACEHOLDERS[group] ?? 'Specialty name…';
+            }
         };
 
         selects.forEach(select => {
             updateRow(select);
-            select.addEventListener('change', () => {
-                updateRow(select);
-                syncOptions();
-            });
+            select.addEventListener('change', () => updateRow(select));
         });
-
-        syncOptions();
     }
 
     // -----------------------------------------------------------------------
@@ -1742,13 +1720,15 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
             updates['system.typedSkills'] = typedSkillsToWrite;
         }
 
-        // Biography — actor name is top-level; physicalDescription is system.physicalDescription
+        // Biography — actor name is top-level; all other fields go to system.biography.*
+        // physicalDescription and notes are rich-text (ProseMirror) — wrap in <p> tags.
         const bioName = this.#data.biography.name;
         if (bioName) updates['name'] = bioName;
+        const richTextBioFields = ['physicalDescription', 'notes'];
         for (const [k, v] of Object.entries(this.#data.biography)) {
             if (k === 'name') continue;
-            if (k === 'physicalDescription') {
-                updates['system.physicalDescription'] = v ? `<p>${v}</p>` : '';
+            if (richTextBioFields.includes(k)) {
+                updates[`system.biography.${k}`] = v ? `<p>${v.replace(/\n+/g, '</p><p>')}</p>` : '';
             } else {
                 updates[`system.biography.${k}`] = v;
             }
@@ -1774,7 +1754,11 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
             }
         }
 
-        // Motivations — create as motivation items
+        // Motivations — delete existing first to avoid duplicates, then create fresh
+        const existingMotivations = this.#actor.items.filter(i => i.type === 'motivation');
+        if (existingMotivations.length > 0) {
+            await this.#actor.deleteEmbeddedDocuments('Item', existingMotivations.map(i => i.id));
+        }
         const motivationStrings = this.#data.motivations.filter(m => m.trim());
         if (motivationStrings.length > 0) {
             const motivationItems = motivationStrings.map(m => ({
@@ -1785,15 +1769,23 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
             await this.#actor.createEmbeddedDocuments('Item', motivationItems);
         }
 
-        // Equipment — create as Items on the actor (catalog items get full data; custom names get generic gear)
+        // Equipment — delete any items previously created by the wizard (flagged), then recreate
+        const existingWizardItems = this.#actor.items.filter(
+            i => i.flags?.['delta-green-agent-wizard']?.fromWizard === true
+        );
+        if (existingWizardItems.length > 0) {
+            await this.#actor.deleteEmbeddedDocuments('Item', existingWizardItems.map(i => i.id));
+        }
         if (this.#data.equipment.length > 0) {
+            const wizardFlag = { 'delta-green-agent-wizard': { fromWizard: true } };
             const eqItems = this.#data.equipment
                 .filter(name => name && name.trim())
                 .map(name => {
                     const catalogItem = EQUIPMENT_CATALOG.find(i => i.name === name);
-                    if (catalogItem) return catalogItem;
+                    if (catalogItem) return { ...catalogItem, flags: { ...(catalogItem.flags ?? {}), ...wizardFlag } };
                     return {
-                        name, type: 'gear', img: 'icons/svg/item-bag.svg', flags: {}, effects: [],
+                        name, type: 'gear', img: 'icons/svg/item-bag.svg',
+                        flags: wizardFlag, effects: [],
                         system: { name: '', description: '', equipped: true, expense: '' }
                     };
                 });
