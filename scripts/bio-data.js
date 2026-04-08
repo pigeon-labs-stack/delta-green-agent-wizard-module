@@ -294,5 +294,5 @@ export function generateBio(stats = {}, professionKey = '') {
     const employer = rand(profile.employers);
     const education = rand(profile.educations);
 
-    return { name: `${firstName} ${lastName}`, sex, age, nationality, employer, education, physicalDescription: notes };
+    return { name: `${firstName} ${lastName}`, sex, age, nationality, employer, education };
 }

@@ -43,7 +43,7 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
         bonds: [],           // array of { name, score, relationship, description }
         specialtySlots: [],  // [{id, group, label, proficiency, required, optIndex}] typed/specialty skills
         optSpecialtyLabels: {},  // optIndex → label string for checked optional specialty picks
-        biography: { name: '', profession: '', employer: '', nationality: '', sex: '', age: '', education: '', physicalDescription: '', notes: '' },
+        biography: { name: '', profession: '', employer: '', nationality: '', sex: '', age: '', education: '', notes: '' },
         motivations: ['', '', '', '', ''],               // up to 5 motivation strings
         equipment: [],       // array of item names from catalog
     };
@@ -406,8 +406,7 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
                 .filter(([, v]) => v)
                 .map(([k, v]) => ({
                     key: k,
-                    label: k === 'physicalDescription' ? 'Physical Description'
-                        : k.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
+                    label: k.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
                     value: v,
                 })),
             motivations: this.#data.motivations.filter(m => m.trim()),
@@ -538,7 +537,6 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
             sex: this.#data.biography.sex,
             age: this.#data.biography.age,
             education: this.#data.biography.education,
-            physicalDesc: this.#data.biography.physicalDescription,
             motivations: this.#data.motivations.filter(m => m.trim()).join('\n'),
             personalDetails: this.#data.biography.notes,
         };
@@ -1363,13 +1361,9 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
         for (const k of dgBioFields) {
             if (this.#data.biography[k] !== undefined) updates[`system.biography.${k}`] = this.#data.biography[k];
         }
-        // Physical description + personal notes → system.physicalDescription (HTML field used by ProseMirror)
-        const physDesc = this.#data.biography.physicalDescription?.trim() ?? '';
+        // Personal notes → system.physicalDescription (ProseMirror HTML field)
         const notes = this.#data.biography.notes?.trim() ?? '';
-        const htmlParts = [];
-        if (physDesc) htmlParts.push(...physDesc.split(/\n+/).map(l => `<p>${l}</p>`));
-        if (notes) htmlParts.push(...notes.split(/\n+/).map(l => `<p>${l}</p>`));
-        updates['system.physicalDescription'] = htmlParts.join('');
+        if (notes) updates['system.physicalDescription'] = notes.split(/\n+/).map(l => `<p>${l}</p>`).join('');
 
         await this.#actor.update(updates);
 
