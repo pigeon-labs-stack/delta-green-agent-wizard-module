@@ -1642,25 +1642,6 @@
 }
 
 /* --------------------------------------------------------------------------
-   Step dot — warning indicator
-   -------------------------------------------------------------------------- */
-.dg-step-dot.has-warning {
-    position: relative;
-}
-
-.dg-step-dot.has-warning::after {
-    content: '';
-    position: absolute;
-    top: -3px;
-    right: -3px;
-    width: 6px;
-    height: 6px;
-    background: var(--dg-warn);
-    border-radius: 50%;
-    border: 1px solid var(--dg-bg-base);
-}
-
-/* --------------------------------------------------------------------------
    Bond relationship input
    -------------------------------------------------------------------------- */
 .dg-bond-relationship-row {

@@ -574,7 +574,8 @@
                         <strong>{{value}}%</strong></span>
                     {{/each}}
                     {{#if review.bonusAllocations.length}}
-                    <span class="dg-review-bonus-divider">Bonus picks <button type="button" data-action="jumpToStep" data-step="4" class="dg-review-jump-btn dg-review-jump-inline">✎</button></span>
+                    <span class="dg-review-bonus-divider">Bonus picks <button type="button" data-action="jumpToStep"
+                            data-step="4" class="dg-review-jump-btn dg-review-jump-inline">✎</button></span>
                     {{#each review.bonusAllocations}}
                     <span class="dg-review-skill dg-review-skill-bonus">{{label}}: <strong>+{{total}}%</strong></span>
                     {{/each}}
@@ -639,7 +640,6 @@
         {{/unless}}
         <span class="dg-nav-spacer"></span>
         {{#if isLast}}
-        <button type="button" data-action="applyAndKeep" class="dg-btn-secondary">↻ Apply &amp; Keep Open</button>
         <button type="button" data-action="finish" class="dg-btn-primary dg-btn-finish">✔ Apply to Sheet</button>
         {{else}}
         <button type="button" data-action="nextStep" class="dg-btn-primary">Next →</button>
