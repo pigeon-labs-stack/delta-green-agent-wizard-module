@@ -133,6 +133,13 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
             }
         }
 
+        const derived = {
+            hp: Math.ceil((statValues.str + statValues.con) / 2),
+            wp: statValues.pow,
+            san: statValues.pow * 5,
+            bp: statValues.pow * 5 - statValues.pow,
+        };
+
         return {
             step,
             stepIndex: this.#step,
@@ -145,6 +152,7 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
             statLabels: STAT_LABELS,
             statDescriptors,
             pointsRemaining,
+            derived,
             professions: Object.entries(PROFESSIONS).map(([key, p]) => ({ key, title: p.title, description: p.description })),
             professionKey: profKey,
             profession: prof,

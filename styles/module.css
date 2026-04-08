@@ -293,23 +293,29 @@
 
 .dg-step-welcome {
     text-align: center;
+    font-family: 'Courier New', Courier, monospace;
 }
 
 .dg-step-welcome h2 {
     font-size: 2rem;
     margin-bottom: 1rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
 }
 
 .dg-step-welcome .dg-flavour {
     font-size: 1.1rem;
     max-width: 560px;
     margin: 0 auto 1rem;
+    font-family: 'Courier New', Courier, monospace;
+    line-height: 1.7;
 }
 
 .dg-step-welcome>p:not(.dg-flavour) {
     font-size: 1rem;
     max-width: 560px;
     margin: 0 auto 1rem;
+    font-family: 'Courier New', Courier, monospace;
 }
 
 /* Welcome step: everything is pyramid phosphor green */
@@ -470,6 +476,40 @@
     color: var(--dg-text);
     border-radius: 3px;
     padding: 0.1rem;
+}
+
+}
+
+.dg-derived-bar {
+    display: flex;
+    gap: 1.5rem;
+    justify-content: center;
+    padding: 0.6rem 1rem;
+    margin: 0.75rem 0 0.25rem;
+    background: var(--dg-bg-input);
+    border: 1px solid var(--dg-border);
+    border-radius: 4px;
+}
+
+.dg-derived-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.1rem;
+}
+
+.dg-derived-label {
+    color: var(--dg-text-faint);
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.dg-derived-item strong {
+    color: var(--dg-green);
+    font-size: 1.25rem;
+    font-weight: 700;
+    line-height: 1;
 }
 
 .dg-stats-actions {
