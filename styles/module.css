@@ -7,62 +7,62 @@
    -------------------------------------------------------------------------- */
 :root {
     /* ── Green accent ────────────────────────── */
-    --dg-green:              #c0e060;
-    --dg-green-mid:          #8db84f;
-    --dg-green-light:        #c8e88a;
-    --dg-green-border:       #6bad63;
-    --dg-green-btn:          #4a7c44;
-    --dg-green-btn-hover:    #5a9c54;
+    --dg-green: #c0e060;
+    --dg-green-mid: #8db84f;
+    --dg-green-light: #c8e88a;
+    --dg-green-border: #6bad63;
+    --dg-green-btn: #4a7c44;
+    --dg-green-btn-hover: #5a9c54;
 
     /* ── Backgrounds ─────────────────────────── */
-    --dg-bg-darkest:         #111;
-    --dg-bg-base:            #1c1c1c;
-    --dg-bg-sunken:          #181818;
-    --dg-bg-input:           #1a1a1a;
-    --dg-bg-raised:          #252525;
-    --dg-bg-muted:           #2e2e2e;
-    --dg-bg-green-dark:      #2a3a20;
-    --dg-bg-green-subtle:    #1c2318;
+    --dg-bg-darkest: #111;
+    --dg-bg-base: #1c1c1c;
+    --dg-bg-sunken: #181818;
+    --dg-bg-input: #1a1a1a;
+    --dg-bg-raised: #252525;
+    --dg-bg-muted: #2e2e2e;
+    --dg-bg-green-dark: #2a3a20;
+    --dg-bg-green-subtle: #1c2318;
 
     /* ── Borders ─────────────────────────────── */
-    --dg-border:             #333;
-    --dg-border-subtle:      #2e2e2e;
-    --dg-border-panel:       #3a3a3a;
-    --dg-border-input:       #444;
-    --dg-border-light:       #555;
-    --dg-border-green:       #3a4a30;
-    --dg-border-green-bright:#5a803a;
+    --dg-border: #333;
+    --dg-border-subtle: #2e2e2e;
+    --dg-border-panel: #3a3a3a;
+    --dg-border-input: #444;
+    --dg-border-light: #555;
+    --dg-border-green: #3a4a30;
+    --dg-border-green-bright: #5a803a;
 
     /* ── Text ────────────────────────────────── */
-    --dg-text-white:         #fff;
-    --dg-text:               #ddd;
-    --dg-text-soft:          #ccc;
-    --dg-text-muted:         #bbb;
-    --dg-text-dim:           #aaa;
-    --dg-text-faint:         #999;
-    --dg-text-disabled:      #888;
-    --dg-text-ghost:         #666;
+    --dg-text-white: #fff;
+    --dg-text: #ddd;
+    --dg-text-soft: #ccc;
+    --dg-text-muted: #bbb;
+    --dg-text-dim: #aaa;
+    --dg-text-faint: #999;
+    --dg-text-disabled: #888;
+    --dg-text-ghost: #666;
 
     /* ── Warning / Danger ────────────────────── */
-    --dg-warn:               #d97742;
-    --dg-warn-border:        #fe640b;
-    --dg-danger:             #c0392b;
-    --dg-danger-text:        #d08080;
-    --dg-danger-border:      #7a3333;
-    --dg-danger-bg:          #3a1e1e;
+    --dg-warn: #d97742;
+    --dg-warn-border: #fe640b;
+    --dg-danger: #c0392b;
+    --dg-danger-text: #d08080;
+    --dg-danger-border: #7a3333;
+    --dg-danger-bg: #3a1e1e;
 
     /* ── Blue / Info ─────────────────────────── */
-    --dg-blue:               #60aadf;
-    --dg-blue-light:         #8acae8;
-    --dg-bg-blue:            #1a2a3a;
-    --dg-bg-blue-hover:      #22405a;
-    --dg-border-blue:        #2a5a8a;
+    --dg-blue: #60aadf;
+    --dg-blue-light: #8acae8;
+    --dg-bg-blue: #1a2a3a;
+    --dg-bg-blue-hover: #22405a;
+    --dg-border-blue: #2a5a8a;
 
     /* ── Welcome phosphor ────────────────────── */
-    --dg-phosphor:           #00b41e;
-    --dg-phosphor-dark:      #00821a;
-    --dg-phosphor-bg:        #001f05;
-    --dg-phosphor-bg-hover:  #003a0c;
+    --dg-phosphor: #00b41e;
+    --dg-phosphor-dark: #00821a;
+    --dg-phosphor-bg: #001f05;
+    --dg-phosphor-bg-hover: #003a0c;
 }
 
 /* --------------------------------------------------------------------------
