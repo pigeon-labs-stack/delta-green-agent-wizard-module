@@ -16,7 +16,7 @@
     },
     "authors": [
         {
-            "name": "PigeonFX"
+            "name": "Pigeon-Labs"
         }
     ],
     "esmodules": [
@@ -26,7 +26,7 @@
         "styles/module.css"
     ],
     "languages": [],
-    "url": "",
-    "manifest": "",
-    "download": ""
+    "url": "https://github.com/pigeon-labs-stack/delta-green-agent-wizard-module",
+    "manifest": "https://github.com/pigeon-labs-stack/delta-green-agent-wizard-module/releases/latest/download/module.json",
+    "download": "https://github.com/pigeon-labs-stack/delta-green-agent-wizard-module/releases/download/0.1.0/module.zip"
 }
