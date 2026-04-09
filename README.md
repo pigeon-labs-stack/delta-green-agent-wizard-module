@@ -2,6 +2,22 @@
 
 A step-by-step character creation wizard for the **Delta Green** RPG system in Foundry VTT. A port of the [DELTA-GREEN-STATS](https://github.com/PigeonFX/DELTA-GREEN-STATS) web app — same profession data, same skill rules, same optional pick logic — packaged as a Foundry module.
 
+---
+
+### The Wizard
+
+![Character creation wizard walkthrough](Art/wiz.gif)
+
+Walk through Statistics, Profession, Skills, Bonus Picks, Bonds, Biography, Equipment, and Review — all in one guided flow inside Foundry.
+
+### Applied to the Sheet
+
+![Wizard output applied to the actor sheet](Art/wiz2.gif)
+
+Once you click **Apply to Sheet**, every stat, skill, bond, and biography field is written directly to the Delta Green actor — no copy-pasting required.
+
+---
+
 ## Requirements
 
 - Foundry VTT v13+
