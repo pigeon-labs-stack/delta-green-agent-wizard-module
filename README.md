@@ -37,7 +37,7 @@ Open any **Agent** actor sheet. A **Wizard** button appears in the top bar of th
 3. **Skills** — Optional profession skills appear at the top as checkboxes with a pick counter enforcing the correct limit (1–5 depending on profession). Required specialty skills (Foreign Language, Science, Craft, etc.) have inline text inputs. The full required skills table is shown below for reference.
 4. **Bonus Skills** — 8 bonus skill picks from your Agent's background. Choose from preset background packages or pick individually. Specialty skills support free-text subspecialties.
 5. **Bonds** — Add bonds up to the profession's allowed maximum. Suggest random bonds from themed pools (Friends & Family, Delta Green, Underworld, LGBTQ+, PISCES).
-6. **Biography** — Name, employer, nationality, sex, age, education, physical description, motivations, and personal notes.
+6. **Biography** — Name, profession/job title, employer, nationality, sex, age, and education. Add up to 5 motivations — deeply held beliefs that can restore Willpower once per session. Hit **🎲 Random Bio** to auto-generate details matched to the chosen profession.
 7. **Equipment** — Choose a preset loadout or browse the full catalog. Filter by category or search by name.
 8. **Review** — Check everything, then click **Apply to Sheet** to write all data to the Foundry actor.
 
@@ -59,6 +59,7 @@ delta-green-agent-wizard/
   scripts/
     main.js          ← Foundry hooks, sheet bar button injection, actor PDF export
     wizard.js        ← ApplicationV2 step-by-step wizard class
+    constants.js     ← Shared profession, skill, bond, and equipment constants
     pdf-export.js    ← DD Form 315 PDF field mapper (pdf-lib)
     professions.js   ← All official profession data (ported from DELTA-GREEN-STATS)
     bonds.js         ← Bond suggestion pool (ported from DELTA-GREEN-STATS)
