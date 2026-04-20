@@ -2,7 +2,7 @@
     "id": "delta-green-agent-wizard",
     "title": "Delta Green Character Creation Wizard",
     "description": "A step-by-step character creation wizard for the Delta Green RPG system. Guides players through profession selection, statistics, skills, bonds, and biography.",
-    "version": "0.1.0",
+    "version": "0.1.1",
     "compatibility": {
         "minimum": "13",
         "verified": "13"

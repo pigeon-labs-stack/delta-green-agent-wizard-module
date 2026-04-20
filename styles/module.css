@@ -1046,6 +1046,95 @@
     line-height: 1.5;
 }
 
+/* ---- Skills reference (bonus_skills step) — 3 side-by-side tables ---- */
+.dg-skills-ref-details {
+    margin-top: 1rem;
+}
+
+.dg-skills-ref-details>summary {
+    cursor: pointer;
+    font-size: 0.9rem;
+    color: var(--dg-text-soft);
+    padding: 0.25rem 0.5rem;
+    background: var(--dg-bg-raised);
+    border: 1px solid var(--dg-border-panel);
+    border-radius: 4px;
+    list-style: none;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.dg-skills-ref-details>summary::before {
+    content: '▶';
+    font-size: 0.7rem;
+    color: var(--dg-text-faint);
+    transition: transform 0.15s;
+}
+
+.dg-skills-ref-details[open]>summary::before {
+    transform: rotate(90deg);
+}
+
+.dg-skills-ref-cols {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.4rem;
+    align-items: flex-start;
+}
+
+.dg-skills-ref-table {
+    flex: 1;
+    min-width: 0;
+    font-size: 0.82rem;
+    border-collapse: collapse;
+    border: 1px solid var(--dg-border-panel);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.dg-skills-ref-table thead th {
+    background: var(--dg-bg-raised);
+    color: var(--dg-text-faint);
+    font-weight: bold;
+    padding: 0.25rem 0.4rem;
+    text-align: left;
+    border-bottom: 1px solid var(--dg-border-input);
+    white-space: nowrap;
+}
+
+.dg-skills-ref-table thead th.dg-num {
+    text-align: right;
+    width: 2.6rem;
+}
+
+.dg-skills-ref-table td.dg-num {
+    width: 2.6rem;
+}
+
+.dg-skills-ref-row td {
+    padding: 0.18rem 0.4rem;
+}
+
+.dg-skills-ref-row {
+    border-bottom: 1px solid var(--dg-bg-raised);
+}
+
+.dg-skills-ref-row:hover td {
+    background: var(--dg-bg-raised);
+}
+
+.dg-skill-boosted .dg-skill-ref-boost,
+.dg-skill-boosted .dg-skill-ref-value {
+    color: var(--dg-green);
+    font-weight: bold;
+}
+
+.dg-skill-custom td:first-child {
+    font-style: italic;
+    color: var(--dg-text-muted);
+}
+
 /* --------------------------------------------------------------------------
    Skills step — optional pick chooser section
    -------------------------------------------------------------------------- */

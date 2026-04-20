@@ -323,6 +323,34 @@
                 </div>
                 {{/each}}
             </div>
+            <details class="dg-skills-ref-details">
+                <summary>Skills Reference</summary>
+                <div class="dg-skills-ref-cols">
+                    {{#each bonusSkills.skillsCols}}
+                    <table class="dg-skills-ref-table">
+                        <thead>
+                            <tr>
+                                <th>Skill</th>
+                                <th class="dg-num">Base</th>
+                                <th class="dg-num">Boost</th>
+                                <th class="dg-num">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {{#each this}}
+                            <tr class="dg-skills-ref-row{{#if boosted}} dg-skill-boosted{{/if}}{{#if isCustom}} dg-skill-custom{{/if}}" data-key="{{key}}"
+                                data-base="{{base}}">
+                                <td>{{label}}</td>
+                                <td class="dg-num">{{base}}</td>
+                                <td class="dg-num dg-skill-ref-boost">{{#if boosted}}+{{boostAmount}}{{/if}}</td>
+                                <td class="dg-num dg-skill-ref-value">{{effective}}</td>
+                            </tr>
+                            {{/each}}
+                        </tbody>
+                    </table>
+                    {{/each}}
+                </div>
+            </details>
             {{/if}}
         </div>
         {{/if}}

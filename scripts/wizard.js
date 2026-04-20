@@ -352,7 +352,31 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
             options,
         }));
 
-        return { options: BONUS_SKILL_OPTIONS, profSlotOptions, packages: BONUS_PACKAGES, packIdx, packDesc, slots, picksUsed, bonusDataLists };
+        // Build skills summary for the reference table at the bottom of this step
+        const boostCounts = {};
+        for (const key of rawSlots) {
+            if (!key || key.startsWith('_custom_') || key.startsWith('profslot__')) continue;
+            boostCounts[key] = (boostCounts[key] ?? 0) + 1;
+        }
+        const skillsSummary = BONUS_SKILL_OPTIONS
+            .filter(opt => !opt.key.startsWith('_custom_'))
+            .map(opt => {
+                const boosts = boostCounts[opt.key] ?? 0;
+                const base = this.#data.skills[opt.key] ?? SKILL_DEFAULTS[opt.key] ?? 0;
+                const boostAmount = boosts * 20;
+                const effective = Math.min(80, base + boostAmount);
+                return { key: opt.key, label: opt.label, base, boostAmount, effective, boosted: boosts > 0 };
+            })
+            .sort((a, b) => a.label.localeCompare(b.label));
+
+        const colSize = Math.ceil(skillsSummary.length / 3);
+        const skillsCols = [
+            skillsSummary.slice(0, colSize),
+            skillsSummary.slice(colSize, colSize * 2),
+            skillsSummary.slice(colSize * 2),
+        ];
+
+        return { options: BONUS_SKILL_OPTIONS, profSlotOptions, packages: BONUS_PACKAGES, packIdx, packDesc, slots, picksUsed, bonusDataLists, skillsSummary, skillsCols };
     }
 
     // -----------------------------------------------------------------------
@@ -754,6 +778,72 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
             updateRow(select);
             select.addEventListener('change', () => updateRow(select));
         });
+
+        // Live-update the skills reference table when a slot or text input changes
+        const updateSkillsTable = () => {
+            const counts = {};
+            const specRows = {}; // ck -> { label, base, boosts }
+            for (const select of selects) {
+                const key = select.value;
+                if (!key) continue;
+                if (key.startsWith('_custom_')) {
+                    const slotRow = select.closest('.dg-bonus-slot-row');
+                    const input = slotRow?.querySelector('.dg-bonus-custom-input');
+                    const label = input?.value?.trim() ?? '';
+                    if (!label) continue;
+                    const ck = `${key}__${label}`;
+                    const group = key.slice('_custom_'.length);
+                    const groupDisplay = Object.entries(SPECIALTY_PREFIXES).find(([, g]) => g === group)?.[0] ?? group;
+                    if (!specRows[ck]) specRows[ck] = { label: `${groupDisplay} (${label})`, base: 0, boosts: 0 };
+                    specRows[ck].boosts++;
+                } else if (key.startsWith('profslot__')) {
+                    const parts = key.split('__');
+                    const group = parts[1];
+                    const slotLabel = parts[2];
+                    const groupDisplay = Object.entries(SPECIALTY_PREFIXES).find(([, g]) => g === group)?.[0] ?? group;
+                    const sl = this.#data.specialtySlots.find(s => s.group === group && s.label === slotLabel);
+                    if (!specRows[key]) specRows[key] = { label: `${groupDisplay} (${slotLabel})`, base: sl?.proficiency ?? 0, boosts: 0 };
+                    specRows[key].boosts++;
+                } else {
+                    counts[key] = (counts[key] ?? 0) + 1;
+                }
+            }
+
+            // Update plain skill rows
+            el.querySelectorAll('.dg-skills-ref-row:not(.dg-skill-custom)').forEach(row => {
+                const key = row.dataset.key;
+                const base = parseInt(row.dataset.base, 10) || 0;
+                const boosts = counts[key] ?? 0;
+                const boostAmount = boosts * 20;
+                const effective = Math.min(80, base + boostAmount);
+                const boostCell = row.querySelector('.dg-skill-ref-boost');
+                const valueCell = row.querySelector('.dg-skill-ref-value');
+                if (boostCell) boostCell.textContent = boostAmount > 0 ? `+${boostAmount}` : '';
+                if (valueCell) valueCell.textContent = effective;
+                row.classList.toggle('dg-skill-boosted', boosts > 0);
+            });
+
+            // Clear old specialty rows and rebuild from current DOM state
+            el.querySelectorAll('.dg-skill-custom').forEach(r => r.remove());
+            const tables = [...el.querySelectorAll('.dg-skills-ref-table')];
+            const lastTbody = tables[tables.length - 1]?.querySelector('tbody');
+            if (lastTbody) {
+                for (const [ck, { label, base, boosts }] of Object.entries(specRows)) {
+                    const boostAmount = boosts * 20;
+                    const effective = Math.min(80, base + boostAmount);
+                    const tr = document.createElement('tr');
+                    tr.className = 'dg-skills-ref-row dg-skill-custom dg-skill-boosted';
+                    tr.dataset.key = ck;
+                    tr.dataset.base = String(base);
+                    tr.innerHTML = `<td>${label}</td><td class="dg-num">${base}</td><td class="dg-num dg-skill-ref-boost">+${boostAmount}</td><td class="dg-num dg-skill-ref-value">${effective}</td>`;
+                    lastTbody.appendChild(tr);
+                }
+            }
+        };
+
+        selects.forEach(select => select.addEventListener('change', updateSkillsTable));
+        el.querySelectorAll('.dg-bonus-custom-input').forEach(input => input.addEventListener('input', updateSkillsTable));
+        updateSkillsTable();
     }
 
     // -----------------------------------------------------------------------
