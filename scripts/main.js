@@ -249,7 +249,9 @@ function injectWizardButton(app, element) {
                 }
 
                 // --- Confirm what will be replaced ---
-                const confirmed = await foundry.applications.api.DialogV2.confirm({
+                // Foundry ≥13 DialogV2.confirm resolves to 'yes'/'no'/object,
+                // not a boolean — a truthy string check would accept "No".
+                const answer = await foundry.applications.api.DialogV2.confirm({
                     window: { title: 'Restore Agent Backup' },
                     content: `<p>Restore <strong>${file.name}</strong> onto <strong>${actor.name}</strong>?</p>`
                         + (replaceItems
@@ -259,6 +261,7 @@ function injectWizardButton(app, element) {
                             : '')
                         + (replaceEffects ? '<p>Existing active effects will be replaced.</p>' : ''),
                 });
+                const confirmed = answer === true || answer === 'yes' || answer?.button === 'yes';
                 if (!confirmed) return;
 
                 // --- Snapshot for recovery ---
@@ -318,7 +321,23 @@ function injectWizardButton(app, element) {
         labelEl.style.display = isNowCollapsed ? 'none' : '';
     });
 
-    content.prepend(bar);
+    // v13-era sheets (DG ≤1.7) flow window-content as block: prepend puts the
+    // bar at the top. DG 2.x agent sheets make window-content a CSS GRID whose
+    // children occupy named cells; an auto-placed prepended bar lands in an
+    // implicit row BELOW all content. For grid sheets, mount the bar as a
+    // direct child of the window frame, just under .window-header.
+    if (getComputedStyle(content).display === 'grid') {
+        const frame = content.parentElement;
+        const header = frame?.querySelector(':scope > .window-header');
+        bar.classList.add('dg-wizard-bar-framed');
+        if (frame) {
+            frame.insertBefore(bar, header ? header.nextSibling : frame.firstChild);
+        } else {
+            content.prepend(bar); // last-resort fallback
+        }
+    } else {
+        content.prepend(bar);
+    }
 }
 
 // Cover both the default sheet and the opt-in V2 sheet via render hooks

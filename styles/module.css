@@ -80,6 +80,13 @@
     transition: padding 0.2s ease;
 }
 
+/* Mounted on the window frame (DG 2.x grid sheets): stretch across the frame */
+.dg-agent-wizard-bar.dg-wizard-bar-framed {
+    width: 100%;
+    box-sizing: border-box;
+    flex: 0 0 auto;
+}
+
 /* Buttons container — wraps all action buttons; collapse hides the whole group */
 .dg-wizard-bar-buttons {
     display: flex;
