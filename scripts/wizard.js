@@ -10,6 +10,28 @@ import {
     SKILL_TOOLTIPS, STAT_LABELS, STAT_DESCRIPTOR_TIERS, getStatDescriptor, STEPS,
 } from './constants.js';
 
+/** Strip document ids (incl. nested effect ids) so a document recreates fresh. */
+function stripDocumentIds(doc) {
+    const { _id, id, effects, ...rest } = structuredClone(doc);
+    rest.effects = (effects ?? []).map(({ _id: e1, id: e2, ...r }) => r);
+    return rest;
+}
+
+/** Content-level comparison of the live actor against a pre-apply snapshot.
+ * Document ids are excluded: recovered documents are recreated with new ids. */
+function applyStateMatchesSnapshot(actor, snap) {
+    try {
+        if (actor.name !== snap.name) return false;
+        if (JSON.stringify(actor.system) !== JSON.stringify(snap.system)) return false;
+        const fxKey = e => `${e.label}|${e.origin ?? ''}|${JSON.stringify(e.changes ?? [])}`;
+        const itemKey = i => `${i.type}|${i.name}|${JSON.stringify(i.system)}|${(i.effects ?? []).map(fxKey).sort().join(';')}`;
+        return actor.items.map(itemKey).sort().join('\n') === snap.items.map(itemKey).sort().join('\n');
+    } catch (err) {
+        console.error('[DG Agent Wizard] snapshot comparison failed:', err);
+        return false;
+    }
+}
+
 // ---------------------------------------------------------------------------
 // Wizard Application (ApplicationV2, Foundry v13)
 // ---------------------------------------------------------------------------
@@ -1382,13 +1404,23 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
         for (const k of dgBioFields) {
             if (this.#data.biography[k] !== undefined) updates[`system.biography.${k}`] = this.#data.biography[k];
         }
+        // --- Snapshot everything apply can touch, so a mid-way failure can be
+        // fully undone (actor fields, items incl. their active effects) ---
+        const snapshot = {
+            name: this.#actor.name,
+            system: foundry.utils.deepClone(this.#actor.system),
+            items: this.#actor.items.map(i => i.toObject()),
+        };
+
         await this.#actor.update(updates);
 
-        // Bonds, motivations, and wizard equipment are replaced create-then-delete:
-        // replacements are created first and originals deleted only on success, so a
-        // failed write never leaves the Agent stripped. The wizard-state flag is
-        // cleared by the caller only after this method resolves, which preserves the
-        // draft for a retry.
+        // Bonds, motivations, and wizard equipment are replaced create-then-delete,
+        // and the whole item phase runs as one transaction: if any step fails, every
+        // item created so far is deleted, every item deleted so far is recreated, and
+        // the actor-field update is reverted. The wizard-state flag is cleared by the
+        // caller only after this method resolves, which keeps the draft for a retry;
+        // a retry recomputes old ids from the (restored) live sheet, so it cannot
+        // duplicate items.
         const replaceBonds = this.#data.bonds.length > 0;
         const bondItems = replaceBonds
             ? this.#data.bonds.filter(b => b.name).map(b => ({
@@ -1439,9 +1471,9 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
             },
         ];
 
-        for (const section of sections) {
-            const createdIds = [];
-            try {
+        const createdIds = [];
+        try {
+            for (const section of sections) {
                 if (section.items.length > 0) {
                     const created = await this.#actor.createEmbeddedDocuments('Item', section.items);
                     createdIds.push(...created.map(d => d.id));
@@ -1449,17 +1481,37 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
                 if (section.oldIds.length > 0) {
                     await this.#actor.deleteEmbeddedDocuments('Item', section.oldIds);
                 }
-            } catch (err) {
-                // Undo any partial replacement; originals are still intact.
-                if (createdIds.length > 0) {
-                    await this.#actor.deleteEmbeddedDocuments('Item', createdIds).catch(() => {});
-                }
-                console.error(`[DG Agent Wizard] Apply to Sheet failed while replacing ${section.label}:`, err);
-                ui.notifications.error(
-                    `Apply to Sheet: replacing ${section.label} failed. Existing items were preserved and your wizard progress was kept — try again.`
-                );
-                throw err;
             }
+        } catch (err) {
+            console.error('[DG Agent Wizard] Apply to Sheet failed; rolling back:', err);
+            const problems = [];
+            // 1. Remove every item this apply created (any section).
+            if (createdIds.length > 0) {
+                try { await this.#actor.deleteEmbeddedDocuments('Item', createdIds); }
+                catch (e) { problems.push(`${createdIds.length} created item(s) left on the sheet`); console.error(e); }
+            }
+            // 2. Recreate items the apply deleted (new ids; Foundry regenerates them).
+            const survivingIds = new Set(this.#actor.items.map(i => i.id));
+            const lostItems = snapshot.items.filter(i => !survivingIds.has(i.id));
+            if (lostItems.length > 0) {
+                try { await this.#actor.createEmbeddedDocuments('Item', lostItems.map(stripDocumentIds)); }
+                catch (e) { problems.push(`${lostItems.length} original item(s) not recovered`); console.error(e); }
+            }
+            // 3. Revert the actor-field update.
+            try { await this.#actor.update({ name: snapshot.name, system: snapshot.system }); }
+            catch (e) { problems.push('agent fields not reverted'); console.error(e); }
+            // Report a full rollback only when it verifiably completed.
+            if (problems.length === 0 && applyStateMatchesSnapshot(this.#actor, snapshot)) {
+                ui.notifications.warn(
+                    'Apply to Sheet failed — all changes were rolled back. Your wizard progress was kept — try again.');
+            } else {
+                const detail = problems.length ? problems.join('; ') : 'the rolled-back state does not match the pre-apply state';
+                console.error('[DG Agent Wizard] Apply rollback incomplete:', detail);
+                ui.notifications.error(
+                    `Apply to Sheet failed (${err.message}) and the rollback is INCOMPLETE (${detail}). `
+                    + 'Check this agent sheet and the console before continuing — your wizard progress was kept.');
+            }
+            throw err;
         }
     }
 }

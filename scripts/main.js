@@ -24,6 +24,30 @@ const WIZARD_BAR_COLLAPSED_KEY_BASE = 'dg-wizard-bar-collapsed';
 const RESTORE_ITEM_TYPES = new Set([
     'weapon', 'armor', 'gear', 'bond', 'motivation', 'tome', 'ritual', 'profession', 'vehicle',
 ]);
+
+/** Strip document ids (incl. nested effect ids) so a document recreates fresh. */
+function stripDocumentIds(doc) {
+    const { _id, id, effects, ...rest } = structuredClone(doc);
+    rest.effects = (effects ?? []).map(({ _id: e1, id: e2, ...r }) => r);
+    return rest;
+}
+
+/** Content-level comparison of the live actor against a restore snapshot.
+ * Document ids are excluded: recovered documents are recreated with new ids. */
+function restoreSnapshotMatches(actor, snap) {
+    try {
+        if (actor.name !== snap.name || actor.img !== snap.img) return false;
+        if (JSON.stringify(actor.system) !== JSON.stringify(snap.system)) return false;
+        const fxKey = e => `${e.label}|${e.origin ?? ''}|${JSON.stringify(e.changes ?? [])}`;
+        if (actor.effects.map(fxKey).sort().join('\n') !== snap.effects.map(fxKey).sort().join('\n')) return false;
+        const itemKey = i => `${i.type}|${i.name}|${JSON.stringify(i.system)}|${(i.effects ?? []).map(fxKey).sort().join(';')}`;
+        if (actor.items.map(itemKey).sort().join('\n') !== snap.items.map(itemKey).sort().join('\n')) return false;
+        return true;
+    } catch (err) {
+        console.error('[DG Agent Wizard] snapshot comparison failed:', err);
+        return false;
+    }
+}
 // Per-world key so collapse state does not leak between worlds on a shared host.
 // Evaluated lazily — `game.world` is not guaranteed at module load time.
 const wizardBarCollapsedKey = () => `${WIZARD_BAR_COLLAPSED_KEY_BASE}:${globalThis.game?.world?.id ?? 'default'}`;
@@ -247,6 +271,9 @@ function injectWizardButton(app, element) {
                 if (replaceEffects && !Array.isArray(parsed.effects)) {
                     throw new Error('Backup effects must be an array.');
                 }
+                // Effect ids from the export are not meaningful on restore —
+                // strip them so the collection is replaced deterministically.
+                if (replaceEffects) parsed.effects = parsed.effects.map(stripDocumentIds);
 
                 // --- Confirm what will be replaced ---
                 // Foundry ≥13 DialogV2.confirm resolves to 'yes'/'no'/object,
@@ -264,11 +291,15 @@ function injectWizardButton(app, element) {
                 const confirmed = answer === true || answer === 'yes' || answer?.button === 'yes';
                 if (!confirmed) return;
 
-                // --- Snapshot for recovery ---
+                // --- Snapshot every document the restore can touch, so a
+                // mid-way failure can be fully undone (fields, active effects,
+                // items incl. their effects) ---
                 const snapshot = {
                     name: actor.name,
                     img: actor.img,
                     system: foundry.utils.deepClone(actor.system),
+                    effects: actor.effects.map(e => e.toObject()),
+                    items: actor.items.map(i => i.toObject()),
                 };
 
                 const createdIds = [];
@@ -292,16 +323,37 @@ function injectWizardButton(app, element) {
                         }
                     }
                 } catch (restoreErr) {
-                    // Best-effort recovery from the in-memory snapshot
+                    // Best-effort recovery: undo every write this attempt made.
+                    const problems = [];
+                    // 1. Remove items this restore created.
+                    if (createdIds.length) {
+                        try { await actor.deleteEmbeddedDocuments('Item', createdIds); }
+                        catch (e) { problems.push(`${createdIds.length} backup item(s) left on the sheet`); console.error(e); }
+                    }
+                    // 2. Recreate originals lost to a committed deletion.
+                    // (Foundry regenerates document ids on recreation.)
+                    const survivingIds = new Set(actor.items.map(i => i.id));
+                    const lostItems = snapshot.items.filter(i => !survivingIds.has(i.id));
+                    if (lostItems.length) {
+                        try { await actor.createEmbeddedDocuments('Item', lostItems.map(stripDocumentIds)); }
+                        catch (e) { problems.push(`${lostItems.length} original item(s) not recovered`); console.error(e); }
+                    }
+                    // 3. Revert fields and active effects.
                     try {
-                        if (createdIds.length) {
-                            await actor.deleteEmbeddedDocuments('Item', createdIds).catch(() => { });
-                        }
-                        await actor.update(snapshot);
-                        ui.notifications.warn('Restore failed part-way — the agent was rolled back to its state before the restore.');
-                    } catch (recoverErr) {
-                        console.error('[DG Agent Wizard] Restore recovery failed:', recoverErr);
-                        ui.notifications.error('Restore failed and rollback did not complete — check this agent sheet and the console before continuing.');
+                        await actor.update({
+                            name: snapshot.name,
+                            img: snapshot.img,
+                            system: snapshot.system,
+                            effects: snapshot.effects.map(stripDocumentIds),
+                        });
+                    } catch (e) { problems.push('agent fields/active effects not reverted'); console.error(e); }
+                    // Report a full rollback only when it verifiably completed.
+                    if (problems.length === 0 && restoreSnapshotMatches(actor, snapshot)) {
+                        ui.notifications.warn('Restore failed — the agent was rolled back to its state before the restore.');
+                    } else {
+                        const detail = problems.length ? problems.join('; ') : 'the rolled-back state does not match the pre-restore state';
+                        console.error('[DG Agent Wizard] Restore rollback incomplete:', detail);
+                        ui.notifications.error(`Restore failed and the rollback is INCOMPLETE (${detail}). Check this agent sheet and the console before continuing — the console has the pre-restore snapshot if needed.`);
                     }
                     throw restoreErr;
                 }
