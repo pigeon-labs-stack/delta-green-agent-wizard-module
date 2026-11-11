@@ -71,7 +71,7 @@
             <div class="dg-points-bar">
                 Points remaining: <span
                     class="dg-points-remaining{{#if (eq pointsRemaining 0)}} depleted{{/if}}">{{pointsRemaining}}</span>
-                / 72
+                / 72{{#if (eq statsMethod "roll")}} <span class="dg-stats-method">(rolled — budget not enforced)</span>{{/if}}{{#if (eq statsMethod "manual")}} <span class="dg-stats-method">(manual entry — budget not enforced)</span>{{/if}}
             </div>
 
             <div class="dg-stats-grid">

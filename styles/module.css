@@ -441,6 +441,12 @@
     color: var(--dg-text-disabled);
 }
 
+.dg-stats-method {
+    font-size: 0.8rem;
+    font-style: italic;
+    color: var(--dg-text-disabled);
+}
+
 .dg-stat-controls {
     display: flex;
     align-items: center;
