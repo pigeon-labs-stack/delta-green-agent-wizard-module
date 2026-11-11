@@ -246,7 +246,24 @@ Commit each numbered row as focused commits (AGENTS.md style); bump `module.json
 >
 > *System limitation (documented, not module-side):* both DG 1.6.5 and DG 2.0.1 **strip `ActiveEffect` sub-documents from agent sheet item types** (bond/motivation/gear create with `effects:[…]` is rejected or emptied; actor-level effects are also stripped on agents), so live item-effect-UUID preservation is not exercisable on this system — it is covered by the Node suite's effect-id/UUID-set assertions. Live runs cover item-UUID preservation and effect-state preservation (the empty set, which stays intact).
 
+> **0.1.3 persistent-build + diff-apply, player-ownership live matrix 2026-11-11 (rev 2.7) — working-tree wizard changes, tested as a regular **player** owning a disposable Agent on both test worlds. ALL 5 FLOWS PASS on both cells.**
+>
+> | Flow | Foundry 14.370 + DG 2.0.1 | Foundry 13.351 + DG 1.6.5 |
+> |---|---|---|
+> | 1. Fill wizard, close before applying, reopen | **PASS** — reopened at Review, all choices (stats, profession, bonus picks, bonds, bio, gear) intact | **PASS** |
+> | 2. Apply, reload Foundry, reopen wizard | **PASS** — opens at Review ("Apply Changes", saved-choices hint), choices intact, `wizardApplied` set, draft cleared | **PASS** |
+> | 3. Apply again, nothing changed | **PASS — ZERO actor writes** (instrumented `Actor.prototype.update/create/delete/update/setFlag/unsetFlag`: 0 calls) | **PASS — ZERO writes** |
+> | 4. Change employer only (with HP damaged to 7/12) | **PASS** — exactly 2 writes (`system.biography.employer` + applied flag); HP stayed **7/12**, WP/SAN/BP, law/firearms, bond ids+scores, item count and hand-added **Manual Charm** all untouched | **PASS** — 2 writes, same invariants held |
+> | 5. Replace one wizard item (Knife → Ordinary binoculars) | **PASS** — old removed, replacement exactly once, Manual Charm untouched, HP damage preserved; net write = 1 create + 1 delete + flag | **PASS** — 1 create + 1 delete + flag |
+>
+> Supporting observations: (a) the **rebuild confirm dialog** fires for a player's pre-built agent with no saved build (existing sheet data is not silently clobbered) and applies on Yes; (b) a no-change Apply that follows in-session draft edits writes only the flags (draft-cleanup `-=wizardState`), verified byte-identical `wizardApplied` payload — not a sheet write; (c) one intermittent 3-create/3-delete churn was observed on v14 during a mid-session equipment swap — sheet outcome stayed correct (old gone, replacement once, hand-made items untouched) and the identical swap re-ran 1/1 clean on v14 and v13; logged as an open (cosmetic, write-amplification-only) item. (d) The intermittent **"items is undefined" from the earlier GM run did not recur** across 5 full player flows × 2 environments (~12 applies, wizard opens from cold flag state each time) in this session — not reproducible, no stack captured; the flow that would trigger it is unknown; re-instrument at next sighting.
+>
+> **Manifest v12:** `compatibility` declares `minimum: "13", verified: "14"` — **the manifest makes no v12 claim**; v12 is out of scope and untested (marked unverified).
+>
+> Test infra: disposable `TestPlayer` (role Player) + `P14 Agent`/`P13 Agent` (player-owned, hand-added gear) created per world and **deleted after the run**; both worlds restored to pre-test actors/users; container module files restored byte-identical to the committed HEAD.
+
 **Open questions for the owner:**
+
 1. **Support policy:** confirm single-release 13+14 policy, `verified: 14` gated on F1+F2, system minimum = oldest tested (1.6.6) — and whether 1.7.0 combinations are documented support or best-effort.
 2. **In-wizard PDF export** (D6): keep the removal from `e61b1ff` permanent (delete `#buildPdfState`) or restore the button?
 3. **Unnatural bonus pick** (D2 rev 2): keep (DELTA-GREEN-STATS parity) or remove from bonus picks (creation-rule restriction per the module's own tooltip)? Verify the rulebook reading first; no schema change needed either way.
