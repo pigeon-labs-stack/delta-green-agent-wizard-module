@@ -28,6 +28,9 @@
 "use strict";
 
 const TEMPLATE_URL = "modules/delta-green-agent-wizard/assets/Delta-Green-RPG-Character-Sheet.pdf";
+// pdf-lib is vendored (MIT, v1.17.1) so exports work offline / on LAN-only servers.
+// The CDN URL is kept as a fallback for parity with DELTA-GREEN-STATS/pdf-export.js.
+const PDF_LIB_LOCAL  = "modules/delta-green-agent-wizard/scripts/vendor/pdf-lib.min.js";
 const PDF_LIB_CDN  = "https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js";
 
 // ── Skill key → AcroForm field name ──────────────────────────────────────────
@@ -90,15 +93,24 @@ const WEAPON_LETTERS = ["a", "b", "c", "d", "e", "f", "g"];
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-function loadPdfLib() {
+function loadScript(src) {
     return new Promise((resolve, reject) => {
-        if (window.PDFLib) { resolve(); return; }
         const s = document.createElement("script");
-        s.src = PDF_LIB_CDN;
+        s.src = src;
         s.onload = resolve;
-        s.onerror = () => reject(new Error("Could not load pdf-lib from CDN."));
+        s.onerror = () => reject(new Error(`Could not load script: ${src}`));
         document.head.appendChild(s);
     });
+}
+
+async function loadPdfLib() {
+    if (window.PDFLib) return;
+    try {
+        await loadScript(PDF_LIB_LOCAL);
+    } catch (localErr) {
+        console.warn("[DG PDF Export] Bundled pdf-lib unavailable, falling back to CDN:", localErr);
+        await loadScript(PDF_LIB_CDN);
+    }
 }
 
 function setField(form, fieldName, value) {
@@ -169,11 +181,11 @@ export async function exportToPDF(state) {
         });
 
         // ── Derived attributes ───────────────────────────────────────────────
-        setField(form, "MAXIMUMHit Points HP",         derived.hp);
+        setField(form, "MAXIMUMHit Points HP",         derived.hpMax ?? derived.hp);
         setField(form, "CURRENTHit Points HP",         derived.hp);
-        setField(form, "MAXIMUMWillpower Points WP",   derived.wp);
+        setField(form, "MAXIMUMWillpower Points WP",   derived.wpMax ?? derived.wp);
         setField(form, "CURRENTWillpower Points WP",   derived.wp);
-        setField(form, "MAXIMUMSanity Points SAN",     derived.san);
+        setField(form, "MAXIMUMSanity Points SAN",     derived.sanMax ?? derived.san);
         setField(form, "CURRENTSanity Points SAN",     derived.san);
         setField(form, "CURRENTBreaking Point BP",     derived.bp);
 
