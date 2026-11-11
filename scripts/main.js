@@ -32,6 +32,26 @@ function stripDocumentIds(doc) {
     return rest;
 }
 
+/** Deterministic key-ordered JSON for state comparison (flatten/revert updates
+ * reorder nested keys on the live document, which value-equal JSON misses). */
+function canonJson(v) {
+    if (Array.isArray(v)) return v.map(canonJson);
+    if (v && typeof v === 'object') return Object.fromEntries(Object.keys(v).sort().map(k => [k, canonJson(v[k])]));
+    return v;
+}
+
+/** Flatten to dot-keys, keeping empty objects as leaves (foundry's
+ * flattenObject drops them, which would leave added/removed containers behind
+ * when reverting a snapshot). */
+function flatLeaves(o, prefix = '', out = {}) {
+    for (const [k, v] of Object.entries(o ?? {})) {
+        const key = prefix ? `${prefix}.${k}` : k;
+        if (v && typeof v === 'object' && !Array.isArray(v) && Object.keys(v).length > 0) flatLeaves(v, key, out);
+        else out[key] = v;
+    }
+    return out;
+}
+
 /** Content-level comparison of the live actor against a restore snapshot.
  * Includes document ids: recovery recreates with keepId/keepEmbeddedIds, so a
  * complete rollback must leave item ids, active-effect ids, and effect contents
@@ -39,7 +59,7 @@ function stripDocumentIds(doc) {
 function restoreSnapshotMatches(actor, snap) {
     try {
         if (actor.name !== snap.name || actor.img !== snap.img) return false;
-        if (JSON.stringify(actor.system) !== JSON.stringify(snap.system)) return false;
+        if (JSON.stringify(canonJson(actor.system)) !== JSON.stringify(canonJson(snap.system))) return false;
         const fxKey = e => `${e.id ?? e._id}|${e.label}|${e.origin ?? ''}|${JSON.stringify(e.changes ?? [])}`;
         if (actor.effects.map(fxKey).sort().join('\n') !== snap.effects.map(fxKey).sort().join('\n')) return false;
         const itemKey = i => `${i.id ?? i._id}|${i.type}|${i.name}|${JSON.stringify(i.system)}|${(i.effects ?? []).map(fxKey).sort().join(';')}`;
@@ -346,13 +366,21 @@ function injectWizardButton(app, element) {
                         catch (e) { problems.push(`${lostItems.length} original item(s) not recovered`); console.error(e); }
                     }
                     // 3. Revert fields and active effects (effect _ids preserved).
+                    // Flatten to dot-keys: DG 2.x's preUpdate recompute silently
+                    // discards whole-object `system` reverts on Foundry 14, and
+                    // leaf keys are removed when absent from the snapshot.
                     try {
-                        await actor.update({
+                        const revert = flatLeaves({
                             name: snapshot.name,
                             img: snapshot.img,
                             system: snapshot.system,
-                            effects: foundry.utils.deepClone(snapshot.effects),
-                        }, { keepEmbeddedIds: true });
+                        });
+                        const liveFlat = flatLeaves({
+                            name: actor.name, img: actor.img, system: actor.system,
+                        });
+                        for (const k of Object.keys(liveFlat)) if (!(k in revert)) revert[k] = undefined;
+                        revert.effects = foundry.utils.deepClone(snapshot.effects);
+                        await actor.update(revert, { keepEmbeddedIds: true });
                     } catch (e) { problems.push('agent fields/active effects not reverted'); console.error(e); }
                     // Report a full rollback only when it verifiably completed.
                     if (problems.length === 0 && restoreSnapshotMatches(actor, snapshot)) {

@@ -10,6 +10,26 @@ import {
     SKILL_TOOLTIPS, STAT_LABELS, STAT_DESCRIPTOR_TIERS, getStatDescriptor, STEPS,
 } from './constants.js';
 
+/** Deterministic key-ordered JSON for state comparison (flatten/revert updates
+ * reorder nested keys on the live document, which value-equal JSON misses). */
+function canonJson(v) {
+    if (Array.isArray(v)) return v.map(canonJson);
+    if (v && typeof v === 'object') return Object.fromEntries(Object.keys(v).sort().map(k => [k, canonJson(v[k])]));
+    return v;
+}
+
+/** Flatten to dot-keys, keeping empty objects as leaves (foundry's
+ * flattenObject drops them, which would leave added/removed containers behind
+ * when reverting a snapshot). */
+function flatLeaves(o, prefix = '', out = {}) {
+    for (const [k, v] of Object.entries(o ?? {})) {
+        const key = prefix ? `${prefix}.${k}` : k;
+        if (v && typeof v === 'object' && !Array.isArray(v) && Object.keys(v).length > 0) flatLeaves(v, key, out);
+        else out[key] = v;
+    }
+    return out;
+}
+
 /** Content-level comparison of the live actor against a pre-apply snapshot.
  * Includes document ids: recovery recreates with keepId/keepEmbeddedIds, so a
  * complete rollback must leave item ids, item-effect ids, and effect contents
@@ -17,7 +37,7 @@ import {
 function applyStateMatchesSnapshot(actor, snap) {
     try {
         if (actor.name !== snap.name) return false;
-        if (JSON.stringify(actor.system) !== JSON.stringify(snap.system)) return false;
+        if (JSON.stringify(canonJson(actor.system)) !== JSON.stringify(canonJson(snap.system))) return false;
         const fxKey = e => `${e.id ?? e._id}|${e.label}|${e.origin ?? ''}|${JSON.stringify(e.changes ?? [])}`;
         const itemKey = i => `${i.id ?? i._id}|${i.type}|${i.name}|${JSON.stringify(i.system)}|${(i.effects ?? []).map(fxKey).sort().join(';')}`;
         return actor.items.map(itemKey).sort().join('\n') === snap.items.map(itemKey).sort().join('\n');
@@ -1498,8 +1518,16 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
                 }
                 catch (e) { problems.push(`${lostItems.length} original item(s) not recovered`); console.error(e); }
             }
-            // 3. Revert the actor-field update.
-            try { await this.#actor.update({ name: snapshot.name, system: snapshot.system }); }
+            // 3. Revert the actor-field update. Flatten to dot-keys: DG 2.x's
+            // preUpdate recompute silently discards whole-object `system` reverts
+            // on Foundry 14, and leaf keys added by the apply are removed when
+            // absent from the snapshot.
+            try {
+                const revert = flatLeaves({ name: snapshot.name, system: snapshot.system });
+                const liveFlat = flatLeaves({ name: this.#actor.name, system: this.#actor.system });
+                for (const k of Object.keys(liveFlat)) if (!(k in revert)) revert[k] = undefined;
+                await this.#actor.update(revert);
+            }
             catch (e) { problems.push('agent fields not reverted'); console.error(e); }
             // Report a full rollback only when it verifiably completed.
             if (problems.length === 0 && applyStateMatchesSnapshot(this.#actor, snapshot)) {
