@@ -13,7 +13,7 @@ Step-by-step character creation wizard for the Delta Green RPG (Foundry VTT, sys
 - `scripts/main.js` — Foundry hooks, sheet-bar button injection, actor PDF export (the only esmodule entry)
 - `scripts/wizard.js` — ApplicationV2 step wizard class
 - `scripts/constants.js` / `professions.js` / `bonds.js` / `equipment.js` / `bio-data.js` — data + generator
-- `scripts/pdf-export.js` — DD Form 315 field mapper (pdf-lib)
+- `scripts/pdf-export.js` — DD Form 315 field mapper (pdf-lib; vendored at `scripts/vendor/pdf-lib.min.js`, CDN fallback)
 - `templates/wizard.hbs`, `styles/module.css` (dark DG aesthetic)
 
 ## Verify changes by
