@@ -262,6 +262,20 @@ Commit each numbered row as focused commits (AGENTS.md style); bump `module.json
 >
 > Test infra: disposable `TestPlayer` (role Player) + `P14 Agent`/`P13 Agent` (player-owned, hand-added gear) created per world and **deleted after the run**; both worlds restored to pre-test actors/users; container module files restored byte-identical to the committed HEAD.
 
+> **JSON Restore × saved wizard builds — fixed and live-verified 2026-11-11 (rev 2.8). Player-owned Agent on both cells; 3/3 scenarios PASS each.**
+>
+> Defect: JSON export dropped the wizard flags and item ids; restore recreated every item with a new id, so the applied build's `itemIds` pointed at deleted documents. A wizard swap after a restore deleted the phantom old ids and **left the restored item on the sheet** (reproduced: Knife survived a Knife→Binoculars swap).
+> Fix (`scripts/main.js`): export embeds `_wizard` (applied build + draft) and per-item `_id`/`_fromWizard` metadata; restore creates fresh documents, **remaps the applied build's item ids** onto them, re-tags wizard-created items, and writes the remapped flags. Backups without `_wizard` (older exports) stay readable and **clear stale wizard state** so the wizard starts fresh on the restored sheet. The failure rollback also reverts wizard flags, and the snapshot-verification includes them.
+>
+> | Scenario (as Player) | Foundry 14.370 + DG 2.0.1 | Foundry 13.351 + DG 1.6.5 |
+> |---|---|---|
+> | Apply Knife build → export → restore → reopen wizard | **PASS** — new Knife id remapped into `wizardApplied.itemIds`, `fromWizard` tag restored; wizard opens at Review with choices | **PASS** |
+> | Swap Knife → Binoculars after restore | **PASS** — Knife 0, Binoculars exactly 1 (tracked+tagged), Manual Charm untouched | **PASS** |
+> | Older backup (no `_wizard`) | **PASS** — wizard flags cleared, wizard opens at Welcome, gear survives | **PASS** |
+> | Forced restore failure (injected delete throw) | **PASS** — full rollback: item ids byte-identical, system canon-equal, wizard flags unchanged | **PASS** |
+>
+> Note: a loadout pack that itself contains a Knife makes the swap outcome ambiguous by design (two identical wizard selections — removing one row removes one of them, the other stays tracked). Verified with an unambiguous one-Knife build. "items is undefined" did not recur in this session.
+
 **Open questions for the owner:**
 
 1. **Support policy:** confirm single-release 13+14 policy, `verified: 14` gated on F1+F2, system minimum = oldest tested (1.6.6) — and whether 1.7.0 combinations are documented support or best-effort.

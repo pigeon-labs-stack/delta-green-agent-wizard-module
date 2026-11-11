@@ -24,10 +24,14 @@ const WIZARD_BAR_COLLAPSED_KEY_BASE = 'dg-wizard-bar-collapsed';
 const RESTORE_ITEM_TYPES = new Set([
     'weapon', 'armor', 'gear', 'bond', 'motivation', 'tome', 'ritual', 'profession', 'vehicle',
 ]);
+// Flag scope shared with scripts/wizard.js: wizardState + wizardApplied live here.
+const WIZARD_FLAG_SCOPE = 'delta-green-agent-wizard';
 
-/** Strip document ids (incl. nested effect ids) so a document recreates fresh. */
+/** Strip document ids (incl. nested effect ids) so a document recreates fresh.
+ * Also drops the export's restore-metadata keys (_id is destructured; the
+ * `_fromWizard` marker is not part of the item schema). */
 function stripDocumentIds(doc) {
-    const { _id, id, effects, ...rest } = structuredClone(doc);
+    const { _id, id, effects, _fromWizard, ...rest } = structuredClone(doc);
     rest.effects = (effects ?? []).map(({ _id: e1, id: e2, ...r }) => r);
     return rest;
 }
@@ -60,6 +64,8 @@ function restoreSnapshotMatches(actor, snap) {
     try {
         if (actor.name !== snap.name || actor.img !== snap.img) return false;
         if (JSON.stringify(canonJson(actor.system)) !== JSON.stringify(canonJson(snap.system))) return false;
+        const liveFlags = canonJson(actor.toObject().flags?.[WIZARD_FLAG_SCOPE] ?? {});
+        if (JSON.stringify(liveFlags) !== JSON.stringify(canonJson(snap.flags ?? {}))) return false;
         const fxKey = e => `${e.id ?? e._id}|${e.label}|${e.origin ?? ''}|${JSON.stringify(e.changes ?? [])}`;
         if (actor.effects.map(fxKey).sort().join('\n') !== snap.effects.map(fxKey).sort().join('\n')) return false;
         const itemKey = i => `${i.id ?? i._id}|${i.type}|${i.name}|${JSON.stringify(i.system)}|${(i.effects ?? []).map(fxKey).sort().join(';')}`;
@@ -244,14 +250,32 @@ function injectWizardButton(app, element) {
     });
 
     bar.querySelector('.dg-agent-json-export').addEventListener('click', () => {
+        const wizardFlags = actor.flags?.[WIZARD_FLAG_SCOPE];
         const exportData = {
             _format: 'dg-agent-sheet-v1',
             name: actor.name,
             img: actor.img,
             system: actor.system,
             effects: actor.effects.map(e => e.toObject()),
-            items: actor.items.map(i => ({ name: i.name, type: i.type, img: i.img, system: i.system, effects: i.effects.map(e => e.toObject()) })),
+            // _id/_fromWizard are restore metadata only: restore creates fresh
+            // documents and remaps the applied build's item ids through them,
+            // so the wizard keeps tracking its items across a restore.
+            items: actor.items.map(i => ({
+                _id: i.id,
+                _fromWizard: !!i.flags?.[WIZARD_FLAG_SCOPE]?.fromWizard,
+                name: i.name,
+                type: i.type,
+                img: i.img,
+                system: i.system,
+                effects: i.effects.map(e => e.toObject()),
+            })),
         };
+        if (wizardFlags && (wizardFlags.wizardApplied !== undefined || wizardFlags.wizardState !== undefined)) {
+            exportData._wizard = foundry.utils.deepClone({
+                wizardApplied: wizardFlags.wizardApplied,
+                wizardState: wizardFlags.wizardState,
+            });
+        }
         const payload = JSON.stringify(exportData, null, 2);
         const blob = new Blob([payload], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
@@ -322,9 +346,11 @@ function injectWizardButton(app, element) {
                     system: foundry.utils.deepClone(actor.system),
                     effects: actor.effects.map(e => e.toObject()),
                     items: actor.items.map(i => i.toObject()),
+                    flags: foundry.utils.deepClone(actor.toObject().flags?.[WIZARD_FLAG_SCOPE]),
                 };
 
                 const createdIds = [];
+                const idMap = new Map();   // exported item id -> created item id
                 try {
                     const updates = {};
                     if (parsed.name !== undefined) updates.name = parsed.name;
@@ -336,12 +362,57 @@ function injectWizardButton(app, element) {
                     if (replaceItems) {
                         // Create replacements first; delete originals only on success.
                         const existingIds = actor.items.map(i => i.id);
+                        // stripDocumentIds drops the export's reference _id (and
+                        // nested effect ids) so every document recreates fresh.
                         const created = parsed.items.length
-                            ? await actor.createEmbeddedDocuments('Item', parsed.items)
+                            ? await actor.createEmbeddedDocuments('Item', parsed.items.map(it => stripDocumentIds(it)))
                             : [];
                         createdIds.push(...created.map(d => d.id));
+                        parsed.items.forEach((it, i) => { if (it?._id && created[i]) idMap.set(it._id, created[i].id); });
+                        // Wizard-created items lose their flag through the export;
+                        // re-tag them so the wizard's ownership tracking survives.
+                        const reTag = created
+                            .map((doc, i) => parsed.items[i]?._fromWizard
+                                ? { _id: doc.id, [`flags.${WIZARD_FLAG_SCOPE}.fromWizard`]: true }
+                                : null)
+                            .filter(Boolean);
+                        if (reTag.length) await actor.updateEmbeddedDocuments('Item', reTag);
                         if (existingIds.length) {
                             await actor.deleteEmbeddedDocuments('Item', existingIds);
+                        }
+                    }
+
+                    // --- Wizard state follows the restored items ---
+                    if ('_wizard' in parsed) {
+                        // New-style backup: carry the applied build, remapping its
+                        // item ids onto the freshly created documents.
+                        const w = parsed._wizard ?? {};
+                        const flagUpdates = {};
+                        let applied = w.wizardApplied;
+                        if (typeof applied === 'string') {
+                            try {
+                                const appliedObj = JSON.parse(applied);
+                                for (const ids of Object.values(appliedObj?.itemIds ?? {})) {
+                                    for (let i = 0; i < ids.length; i++) ids[i] = ids[i] ? (idMap.get(ids[i]) ?? null) : null;
+                                }
+                                applied = JSON.stringify(appliedObj);
+                            } catch { applied = null; }   // unreadable build: start fresh
+                        }
+                        if (applied) flagUpdates[`flags.${WIZARD_FLAG_SCOPE}.wizardApplied`] = applied;
+                        else flagUpdates[`flags.${WIZARD_FLAG_SCOPE}.-=wizardApplied`] = null;
+                        if (typeof w.wizardState === 'string') flagUpdates[`flags.${WIZARD_FLAG_SCOPE}.wizardState`] = w.wizardState;
+                        else flagUpdates[`flags.${WIZARD_FLAG_SCOPE}.-=wizardState`] = null;
+                        await actor.update(flagUpdates);
+                    } else {
+                        // Older backup (no wizard block): its item ids no longer
+                        // exist, so any saved build on the actor is stale — clear it
+                        // and let the wizard start fresh on top of the restored sheet.
+                        const had = actor.toObject().flags?.[WIZARD_FLAG_SCOPE];
+                        if (had && (had.wizardApplied !== undefined || had.wizardState !== undefined)) {
+                            await actor.update({
+                                [`flags.${WIZARD_FLAG_SCOPE}.-=wizardApplied`]: null,
+                                [`flags.${WIZARD_FLAG_SCOPE}.-=wizardState`]: null,
+                            });
                         }
                     }
                 } catch (restoreErr) {
@@ -382,6 +453,16 @@ function injectWizardButton(app, element) {
                         revert.effects = foundry.utils.deepClone(snapshot.effects);
                         await actor.update(revert, { keepEmbeddedIds: true });
                     } catch (e) { problems.push('agent fields/active effects not reverted'); console.error(e); }
+                    // 4. Revert wizard flags to their pre-restore values.
+                    try {
+                        const scope = snapshot.flags ?? {};
+                        const revertFlags = {};
+                        for (const key of ['wizardApplied', 'wizardState']) {
+                            if (scope[key] !== undefined) revertFlags[`flags.${WIZARD_FLAG_SCOPE}.${key}`] = scope[key];
+                            else revertFlags[`flags.${WIZARD_FLAG_SCOPE}.-=${key}`] = null;
+                        }
+                        await actor.update(revertFlags);
+                    } catch (e) { problems.push('wizard state not reverted'); console.error(e); }
                     // Report a full rollback only when it verifiably completed.
                     if (problems.length === 0 && restoreSnapshotMatches(actor, snapshot)) {
                         ui.notifications.warn('Restore failed — the agent was rolled back to its state before the restore.');
