@@ -1490,9 +1490,10 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
                 try { await this.#actor.deleteEmbeddedDocuments('Item', createdIds); }
                 catch (e) { problems.push(`${createdIds.length} created item(s) left on the sheet`); console.error(e); }
             }
-            // 2. Recreate items the apply deleted (new ids; Foundry regenerates them).
+            // 2. Recreate items the apply deleted (toObject() carries `_id`;
+            // Foundry regenerates ids on recreation).
             const survivingIds = new Set(this.#actor.items.map(i => i.id));
-            const lostItems = snapshot.items.filter(i => !survivingIds.has(i.id));
+            const lostItems = snapshot.items.filter(i => !survivingIds.has(i._id ?? i.id));
             if (lostItems.length > 0) {
                 try { await this.#actor.createEmbeddedDocuments('Item', lostItems.map(stripDocumentIds)); }
                 catch (e) { problems.push(`${lostItems.length} original item(s) not recovered`); console.error(e); }

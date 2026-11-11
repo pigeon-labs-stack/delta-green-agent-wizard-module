@@ -331,9 +331,9 @@ function injectWizardButton(app, element) {
                         catch (e) { problems.push(`${createdIds.length} backup item(s) left on the sheet`); console.error(e); }
                     }
                     // 2. Recreate originals lost to a committed deletion.
-                    // (Foundry regenerates document ids on recreation.)
+                    // (toObject() carries `_id`; document ids regenerate on recreation.)
                     const survivingIds = new Set(actor.items.map(i => i.id));
-                    const lostItems = snapshot.items.filter(i => !survivingIds.has(i.id));
+                    const lostItems = snapshot.items.filter(i => !survivingIds.has(i._id ?? i.id));
                     if (lostItems.length) {
                         try { await actor.createEmbeddedDocuments('Item', lostItems.map(stripDocumentIds)); }
                         catch (e) { problems.push(`${lostItems.length} original item(s) not recovered`); console.error(e); }
