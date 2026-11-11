@@ -19,7 +19,14 @@ Handlebars.registerHelper('range', (start, end) => {
 // DGAgentSheet and DGAgentSheetV2 are AppV2-based, so Foundry fires
 // render{ClassName} — not the old generic renderActorSheet hook.
 // ---------------------------------------------------------------------------
-const WIZARD_BAR_COLLAPSED_KEY = 'dg-wizard-bar-collapsed';
+const WIZARD_BAR_COLLAPSED_KEY_BASE = 'dg-wizard-bar-collapsed';
+// Item types accepted by JSON restore (Delta Green 1.6.6–2.0.1 item types)
+const RESTORE_ITEM_TYPES = new Set([
+    'weapon', 'armor', 'gear', 'bond', 'motivation', 'tome', 'ritual', 'profession', 'vehicle',
+]);
+// Per-world key so collapse state does not leak between worlds on a shared host.
+// Evaluated lazily — `game.world` is not guaranteed at module load time.
+const wizardBarCollapsedKey = () => `${WIZARD_BAR_COLLAPSED_KEY_BASE}:${globalThis.game?.world?.id ?? 'default'}`;
 
 /**
  * Build a collectState()-compatible state object from a Foundry Actor document.
@@ -38,11 +45,15 @@ function buildActorPdfState(actor) {
         CHA: st.cha?.value ?? 10,
     };
 
-    const hp = sys.health?.max ?? sys.health?.value ?? 0;
-    const wp = sys.wp?.max ?? sys.wp?.value ?? 0;
-    const san = sys.sanity?.value ?? 0;
+    // Current and maximum tracked separately (DD Form 315 has MAXIMUM and CURRENT boxes)
+    const hpCur = sys.health?.value ?? sys.health?.max ?? 0;
+    const hpMax = sys.health?.max ?? sys.health?.value ?? 0;
+    const wpCur = sys.wp?.value ?? sys.wp?.max ?? 0;
+    const wpMax = sys.wp?.max ?? sys.wp?.value ?? 0;
+    const sanCur = sys.sanity?.value ?? 0;
+    const sanMax = sys.sanity?.max ?? sys.sanity?.value ?? 0;
     const bp = sys.sanity?.currentBreakingPoint ?? 0;
-    const derived = { hp, wp, san, bp };
+    const derived = { hp: hpCur, hpMax, wp: wpCur, wpMax, san: sanCur, sanMax, bp };
 
     // Plain skills
     const skills = {};
@@ -79,6 +90,11 @@ function buildActorPdfState(actor) {
         .map(i => i.name).join('\n');
 
     const bioSys = sys.biography ?? {};
+    // system.physical.description / system.physical.wounds exist in DG 1.6.6–2.0.1.
+    // system.biography has no `notes` field in any supported schema — personal
+    // details stay blank until a defined source exists.
+    const physicalDesc = (sys.physical?.description ?? '').replace(/<[^>]+>/g, '').trim();
+    const wounds = (sys.physical?.wounds ?? '').replace(/<[^>]+>/g, '').trim();
     const bio = {
         name: actor.name,
         profession: bioSys.profession ?? '',
@@ -87,9 +103,9 @@ function buildActorPdfState(actor) {
         sex: bioSys.sex ?? '',
         age: bioSys.age ?? '',
         education: bioSys.education ?? '',
-        physicalDesc: (sys.physicalDescription ?? '').replace(/<[^>]+>/g, '').trim(),
+        physicalDesc,
         motivations: motivationStrings,
-        personalDetails: bioSys.notes ?? '',
+        personalDetails: '',
     };
 
     return {
@@ -99,7 +115,7 @@ function buildActorPdfState(actor) {
         specialtyInstances,
         bonds,
         sanity: { violence: [false, false, false], helplessness: [false, false, false] },
-        lpNotes: { wounds: '', gear: '', remarks: '' },
+        lpNotes: { wounds, gear: '', remarks: '' },
         lpFeat: {
             STR: st.str?.distinguishing_feature ?? '',
             CON: st.con?.distinguishing_feature ?? '',
@@ -143,7 +159,7 @@ function injectWizardButton(app, element) {
     const content = root.querySelector('.window-content');
     if (!content) return;
 
-    const collapsed = localStorage.getItem(WIZARD_BAR_COLLAPSED_KEY) === '1';
+    const collapsed = localStorage.getItem(wizardBarCollapsedKey()) === '1';
 
     const bar = document.createElement('div');
     bar.className = 'dg-agent-wizard-bar' + (collapsed ? ' dg-wizard-bar-collapsed' : '');
@@ -210,18 +226,86 @@ function injectWizardButton(app, element) {
             try {
                 const text = await file.text();
                 const parsed = JSON.parse(text);
+                // --- Validate the whole payload before touching the actor ---
                 if (!parsed?._format?.startsWith('dg-agent-sheet')) throw new Error('Not a valid DG agent sheet backup.');
-                const updates = { name: parsed.name, img: parsed.img, system: parsed.system };
-                if (parsed.effects?.length) updates.effects = parsed.effects;
-                await actor.update(updates);
-                if (parsed.items?.length) {
-                    const existing = actor.items.map(i => i.id);
-                    if (existing.length) await actor.deleteEmbeddedDocuments('Item', existing);
-                    await actor.createEmbeddedDocuments('Item', parsed.items);
+                if ('system' in parsed && (typeof parsed.system !== 'object' || parsed.system === null)) {
+                    throw new Error('Backup has an invalid system block.');
+                }
+                const replaceItems = 'items' in parsed;   // presence = replace, incl. with an empty list
+                const replaceEffects = 'effects' in parsed;
+                if (replaceItems) {
+                    if (!Array.isArray(parsed.items)) throw new Error('Backup items must be an array.');
+                    for (const it of parsed.items) {
+                        if (!it || typeof it !== 'object' || typeof it.type !== 'string') {
+                            throw new Error('Backup contains a malformed item.');
+                        }
+                        if (!RESTORE_ITEM_TYPES.has(it.type)) {
+                            throw new Error(`Backup contains unsupported item type "${it.type}".`);
+                        }
+                    }
+                }
+                if (replaceEffects && !Array.isArray(parsed.effects)) {
+                    throw new Error('Backup effects must be an array.');
+                }
+
+                // --- Confirm what will be replaced ---
+                const confirmed = await foundry.applications.api.DialogV2.confirm({
+                    window: { title: 'Restore Agent Backup' },
+                    content: `<p>Restore <strong>${file.name}</strong> onto <strong>${actor.name}</strong>?</p>`
+                        + (replaceItems
+                            ? `<p><strong>All existing items will be replaced${parsed.items.length
+                                ? ` by the ${parsed.items.length} item(s) in the backup`
+                                : ' with an empty inventory'}.</strong></p>`
+                            : '')
+                        + (replaceEffects ? '<p>Existing active effects will be replaced.</p>' : ''),
+                });
+                if (!confirmed) return;
+
+                // --- Snapshot for recovery ---
+                const snapshot = {
+                    name: actor.name,
+                    img: actor.img,
+                    system: foundry.utils.deepClone(actor.system),
+                };
+
+                const createdIds = [];
+                try {
+                    const updates = {};
+                    if (parsed.name !== undefined) updates.name = parsed.name;
+                    if (parsed.img !== undefined) updates.img = parsed.img;
+                    if (parsed.system !== undefined) updates.system = parsed.system;
+                    if (replaceEffects) updates.effects = parsed.effects;
+                    if (Object.keys(updates).length) await actor.update(updates);
+
+                    if (replaceItems) {
+                        // Create replacements first; delete originals only on success.
+                        const existingIds = actor.items.map(i => i.id);
+                        const created = parsed.items.length
+                            ? await actor.createEmbeddedDocuments('Item', parsed.items)
+                            : [];
+                        createdIds.push(...created.map(d => d.id));
+                        if (existingIds.length) {
+                            await actor.deleteEmbeddedDocuments('Item', existingIds);
+                        }
+                    }
+                } catch (restoreErr) {
+                    // Best-effort recovery from the in-memory snapshot
+                    try {
+                        if (createdIds.length) {
+                            await actor.deleteEmbeddedDocuments('Item', createdIds).catch(() => { });
+                        }
+                        await actor.update(snapshot);
+                        ui.notifications.warn('Restore failed part-way — the agent was rolled back to its state before the restore.');
+                    } catch (recoverErr) {
+                        console.error('[DG Agent Wizard] Restore recovery failed:', recoverErr);
+                        ui.notifications.error('Restore failed and rollback did not complete — check this agent sheet and the console before continuing.');
+                    }
+                    throw restoreErr;
                 }
                 ui.notifications.info(`${parsed.name ?? 'Agent'} restored from backup.`);
             } catch (err) {
-                ui.notifications.error(`Import failed: ${err.message}`);
+                if (err?.message) ui.notifications.error(`Import failed: ${err.message}`);
+                console.error('[DG Agent Wizard] JSON import failed:', err);
             }
         });
         input.click();
@@ -229,7 +313,7 @@ function injectWizardButton(app, element) {
 
     bar.querySelector('.dg-wizard-bar-toggle').addEventListener('click', () => {
         const isNowCollapsed = bar.classList.toggle('dg-wizard-bar-collapsed');
-        localStorage.setItem(WIZARD_BAR_COLLAPSED_KEY, isNowCollapsed ? '1' : '0');
+        localStorage.setItem(wizardBarCollapsedKey(), isNowCollapsed ? '1' : '0');
         buttonsEl.style.display = isNowCollapsed ? 'none' : 'flex';
         labelEl.style.display = isNowCollapsed ? 'none' : '';
     });
