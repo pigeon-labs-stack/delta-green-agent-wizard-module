@@ -56,9 +56,9 @@ The **Export PDF** button on the agent sheet toolbar exports a filled DD Form 31
 
 ### Persistence
 
-Wizard progress is automatically saved to the actor's flags after every step. If you close the wizard, disconnect, or reload Foundry, reopening the wizard on the same agent resumes exactly where you left off. Progress is cleared when you click **Apply to Sheet**.
+Wizard progress is saved on the Agent after moving between steps. After **Apply to Sheet**, reopening the wizard opens Review with your saved choices. Select a section to edit it, then use **Apply Changes** to apply the difference from your previous build. Unchanged selections keep their existing sheet values and items.
 
-To re-run the wizard on an agent that already has data (e.g. to correct a mistake), simply open the wizard again — the saved state will load. **Note:** applying replaces the agent's **bonds, motivations, and wizard-created equipment** with the wizard's current lists; items you added by hand (gear, weapons, etc.) are left untouched.
+Earlier versions discarded completed choices. For an Agent with sheet data and no saved build, the wizard explains the situation and asks before applying a new build. The Agent sheet is available for direct edits in that case.
 
 ## File Layout
 

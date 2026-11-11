@@ -37,7 +37,7 @@ function flatLeaves(o, prefix = '', out = {}) {
 function applyStateMatchesSnapshot(actor, snap) {
     try {
         if (actor.name !== snap.name) return false;
-        if (JSON.stringify(canonJson(actor.system)) !== JSON.stringify(canonJson(snap.system))) return false;
+        if (!sameValue(actor.toObject().system, snap.system)) return false;
         const fxKey = e => `${e.id ?? e._id}|${e.label}|${e.origin ?? ''}|${JSON.stringify(e.changes ?? [])}`;
         const itemKey = i => `${i.id ?? i._id}|${i.type}|${i.name}|${JSON.stringify(i.system)}|${(i.effects ?? []).map(fxKey).sort().join(';')}`;
         return actor.items.map(itemKey).sort().join('\n') === snap.items.map(itemKey).sort().join('\n');
@@ -51,6 +51,18 @@ function applyStateMatchesSnapshot(actor, snap) {
 // Wizard Application (ApplicationV2, Foundry v13)
 // ---------------------------------------------------------------------------
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
+const FLAG_SCOPE = 'delta-green-agent-wizard';
+const sameValue = (a, b) => JSON.stringify(canonJson(a)) === JSON.stringify(canonJson(b));
+
+function readWizardFlag(actor, key) {
+    const value = actor.getFlag(FLAG_SCOPE, key);
+    return typeof value === 'string' ? JSON.parse(value) : value;
+}
+
+function deletionKey(path) {
+    const i = path.lastIndexOf('.');
+    return path.slice(0, i + 1) + '-=' + path.slice(i + 1);
+}
 
 export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(ApplicationV2) {
 
@@ -59,6 +71,10 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
 
     /** @type {number}  index into STEPS[] */
     #step = 0;
+
+    #applied;
+    #draftWrite = Promise.resolve();
+    #applying = false;
 
     /** Active equipment category filter */
     #equipCategory = 'All';
@@ -95,17 +111,34 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
     // Persist wizard progress to actor flags so it survives disconnects
     // -----------------------------------------------------------------------
     #saveState() {
-        this.#actor.setFlag('delta-green-agent-wizard', 'wizardState', {
-            step: this.#step,
-            data: this.#data,
-        }).catch(() => { });
+        // Store each draft as a value. Foundry merges object-valued updates, which
+        // would otherwise retain skill keys that were removed from a later draft.
+        const draft = JSON.stringify({ step: this.#step, data: this.#data });
+        this.#draftWrite = this.#draftWrite
+            .then(() => this.#actor.setFlag(FLAG_SCOPE, 'wizardState', draft))
+            .catch(err => {
+                console.error('[DG Agent Wizard] Draft save failed:', err);
+                ui.notifications.warn('The wizard draft could not be saved.');
+            });
     }
 
     #loadState() {
-        const saved = this.#actor.getFlag('delta-green-agent-wizard', 'wizardState');
-        if (!saved) return;
-        if (typeof saved.step === 'number') this.#step = saved.step;
-        if (saved.data) this.#data = foundry.utils.mergeObject(this.#data, saved.data, { inplace: false });
+        this.#applied = readWizardFlag(this.#actor, 'wizardApplied');
+        const saved = readWizardFlag(this.#actor, 'wizardState');
+        const data = saved?.data ?? this.#applied?.data;
+        if (Number.isInteger(saved?.step) && STEPS[saved.step]) this.#step = saved.step;
+        else if (this.#applied) this.#step = STEPS.indexOf('review');
+        if (data) this.#data = foundry.utils.mergeObject(this.#data, data, { inplace: false });
+    }
+
+    #hasExistingSheetData() {
+        const system = this.#actor.system;
+        return this.#actor.items.size > 0 || this.#actor.items.length > 0
+            || Object.values(system.biography ?? {}).some(Boolean)
+            || Object.values(system.statistics ?? {}).some(stat => stat.value && stat.value !== 10)
+            || Object.keys(system.typedSkills ?? {}).length > 0
+            || Object.entries(system.skills ?? {}).some(([key, skill]) =>
+                key in SKILL_DEFAULTS && skill.proficiency !== SKILL_DEFAULTS[key]);
     }
 
     static DEFAULT_OPTIONS = {
@@ -182,6 +215,8 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
             totalSteps: STEPS.length,
             isFirst: this.#step === 0,
             isLast: this.#step === STEPS.length - 1,
+            editingApplied: Boolean(this.#applied),
+            rebuilding: !this.#applied && this.#hasExistingSheetData(),
             actor: this.#actor,
             // step-specific
             stats: this.#data.stats,
@@ -957,7 +992,7 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
     // Static action handlers (Foundry v13 ApplicationV2 pattern)
     // -----------------------------------------------------------------------
     static async #onNextStep(event, target) {
-        if (!this.#collectCurrentStep()) return;
+        if (this.#applying || !this.#collectCurrentStep()) return;
         if (this.#step < STEPS.length - 1) {
             this.#step++;
             this.#saveState();
@@ -966,7 +1001,7 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
     }
 
     static async #onPrevStep(event, target) {
-        if (this.#step > 0) {
+        if (!this.#applying && this.#step > 0) {
             this.#collectCurrentStep();
             this.#step--;
             this.#saveState();
@@ -1101,15 +1136,31 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
     }
 
     static async #onFinish(event, target) {
-        if (!this.#collectCurrentStep()) return;
-        await this.#applyToActor();
-        // Clear saved wizard state now that it's been applied
-        await this.#actor.unsetFlag('delta-green-agent-wizard', 'wizardState').catch(() => { });
-        this.close();
-        ui.notifications.info(`${this.#actor.name} is ready for fieldwork.`);
+        if (this.#applying || !this.#collectCurrentStep()) return;
+        this.#applying = true;
+        try {
+            await this.#draftWrite;
+            if (!sameValue(this.#applied, readWizardFlag(this.#actor, 'wizardApplied'))) {
+                ui.notifications.warn('The saved build changed. Reopen the wizard before applying your edits.');
+                return;
+            }
+            if (!this.#applied && this.#hasExistingSheetData()) {
+                const answer = await foundry.applications.api.DialogV2.confirm({
+                    window: { title: 'Apply a new build to this Agent?' },
+                    content: '<p>This Agent has sheet data and no saved wizard build. Applying this build sets statistics, resources, biography, and selected skills, and can replace bonds, motivations, and wizard equipment.</p>',
+                });
+                if (!(answer === true || answer === 'yes' || answer?.button === 'yes')) return;
+            }
+            await this.#applyToActor();
+            this.close();
+            ui.notifications.info(`${this.#actor.name} is ready for fieldwork.`);
+        } finally {
+            this.#applying = false;
+        }
     }
 
     static async #onJumpToStep(event, target) {
+        if (this.#applying) return;
         this.#collectCurrentStep();
         this.#step = parseInt(target.dataset.step, 10);
         this.#saveState();
@@ -1162,11 +1213,12 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
         if (step === 'profession') {
             const key = raw['professionKey'];
             if (!key) { ui.notifications.warn('Please select a profession.'); return false; }
+            const previousProfession = PROFESSIONS[this.#data.professionKey];
             const profChanged = key !== this.#data.professionKey;
             this.#data.professionKey = key;
             const prof = PROFESSIONS[key];
             // Auto-fill biography profession field from profession title
-            if (!this.#data.biography.profession) {
+            if (!this.#data.biography.profession || this.#data.biography.profession === previousProfession?.title) {
                 this.#data.biography.profession = prof.title;
             }
             // Only reset skills + specialty slots when profession actually changes.
@@ -1308,28 +1360,28 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
     // -----------------------------------------------------------------------
     // Write all collected data to the Foundry Actor document
     // -----------------------------------------------------------------------
-    async #applyToActor() {
+    #buildActorUpdates(data) {
         const updates = {};
 
         // Statistics + stat descriptors (distinguishing_feature)
-        for (const [k, v] of Object.entries(this.#data.stats)) {
+        for (const [k, v] of Object.entries(data.stats)) {
             updates[`system.statistics.${k}.value`] = v;
             updates[`system.statistics.${k}.distinguishing_feature`] = getStatDescriptor(k, v);
         }
 
         // HP = (CON + STR) / 2, rounded up; WP = POW
-        const hp = Math.ceil((this.#data.stats.con + this.#data.stats.str) / 2);
+        const hp = Math.ceil((data.stats.con + data.stats.str) / 2);
         updates['system.health.max'] = hp;
         updates['system.health.value'] = hp;
-        updates['system.wp.max'] = this.#data.stats.pow;
-        updates['system.wp.value'] = this.#data.stats.pow;
+        updates['system.wp.max'] = data.stats.pow;
+        updates['system.wp.value'] = data.stats.pow;
 
         // Sanity = POW × 5
-        updates['system.sanity.value'] = this.#data.stats.pow * 5;
-        updates['system.sanity.currentBreakingPoint'] = this.#data.stats.pow * 5 - this.#data.stats.pow;
+        updates['system.sanity.value'] = data.stats.pow * 5;
+        updates['system.sanity.currentBreakingPoint'] = data.stats.pow * 5 - data.stats.pow;
 
         // Skills — base profession values (plain skills only; specialty handled via specialtySlots)
-        for (const [key, value] of Object.entries(this.#data.skills)) {
+        for (const [key, value] of Object.entries(data.skills)) {
             if (key in SKILL_DEFAULTS) {
                 updates[`system.skills.${key}.proficiency`] = value;
             }
@@ -1338,12 +1390,12 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
         // Bonus skill boosts — separate standard keys from custom specialty picks
         const boostCounts = {};
         const customBoostMap = {};  // '{group}__{label}' → {group, label, proficiency}
-        for (let i = 0; i < this.#data.bonusBoosts.length; i++) {
-            const key = this.#data.bonusBoosts[i];
+        for (let i = 0; i < data.bonusBoosts.length; i++) {
+            const key = data.bonusBoosts[i];
             if (!key) continue;
             if (key.startsWith('_custom_')) {
                 const group = key.slice('_custom_'.length);
-                const label = (this.#data.bonusCustom?.[i] ?? '').trim();
+                const label = (data.bonusCustom?.[i] ?? '').trim();
                 if (!label) continue;
                 const mapKey = `${group}__${label}`;
                 if (!customBoostMap[mapKey]) customBoostMap[mapKey] = { group, label, proficiency: 0 };
@@ -1366,7 +1418,7 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
                 if (!bonusTypedMap[tsKey]) bonusTypedMap[tsKey] = { group, label, proficiency: 0 };
                 bonusTypedMap[tsKey].proficiency = Math.min(80, bonusTypedMap[tsKey].proficiency + boosts * 20);
             } else if (key in SKILL_DEFAULTS) {
-                const base = this.#data.skills[key] ?? SKILL_DEFAULTS[key] ?? 0;
+                const base = data.skills[key] ?? SKILL_DEFAULTS[key] ?? 0;
                 updates[`system.skills.${key}.proficiency`] = Math.min(80, base + boosts * 20);
             } else {
                 const sp = parseSpecialtyFromKey(key);
@@ -1377,11 +1429,10 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
             }
         }
 
-        // Build the typed skills object, merging with any already on the actor
-        const typedSkillsToWrite = foundry.utils.deepClone(this.#actor.system.typedSkills ?? {});
+        const typedSkillsToWrite = {};
 
         // Specialty slots from the profession (required) and optional picks
-        for (const slot of this.#data.specialtySlots) {
+        for (const slot of data.specialtySlots) {
             const label = slot.label.trim();
             if (!label) continue;  // skip slots where the user left the subspecialty blank
             const tsKey = ('tskill_wiz_' + slot.group + '_' + label)
@@ -1408,49 +1459,33 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
             typedSkillsToWrite[tsKey] = { label, group, proficiency, failure: false };
         }
 
-        if (Object.keys(typedSkillsToWrite).length > 0) {
-            updates['system.typedSkills'] = typedSkillsToWrite;
+        for (const [key, skill] of Object.entries(typedSkillsToWrite)) {
+            updates[`system.typedSkills.${key}`] = skill;
         }
 
         // Biography — actor name is top-level; standard fields → system.biography.*
-        const bioName = this.#data.biography.name;
+        const bioName = data.biography.name;
         if (bioName) updates['name'] = bioName;
         const dgBioFields = ['profession', 'employer', 'nationality', 'sex', 'age', 'education'];
         for (const k of dgBioFields) {
-            if (this.#data.biography[k] !== undefined) updates[`system.biography.${k}`] = this.#data.biography[k];
+            if (data.biography[k] !== undefined) updates[`system.biography.${k}`] = data.biography[k];
         }
-        // --- Snapshot everything apply can touch, so a mid-way failure can be
-        // fully undone (actor fields, items incl. their active effects) ---
-        const snapshot = {
-            name: this.#actor.name,
-            system: foundry.utils.deepClone(this.#actor.system),
-            items: this.#actor.items.map(i => i.toObject()),
-        };
+        return updates;
+    }
 
-        await this.#actor.update(updates);
-
-        // Bonds, motivations, and wizard equipment are replaced create-then-delete,
-        // and the whole item phase runs as one transaction: if any step fails, every
-        // item created so far is deleted, every item deleted so far is recreated, and
-        // the actor-field update is reverted. The wizard-state flag is cleared by the
-        // caller only after this method resolves, which keeps the draft for a retry;
-        // a retry recomputes old ids from the (restored) live sheet, so it cannot
-        // duplicate items.
-        const replaceBonds = this.#data.bonds.length > 0;
-        const bondItems = replaceBonds
-            ? this.#data.bonds.filter(b => b.name).map(b => ({
-                name: b.name,
-                type: 'bond',
-                system: { score: b.score, relationship: b.relationship ?? '', description: b.description ?? '' },
-            }))
-            : [];
-        const motivationItems = this.#data.motivations.filter(m => m.trim()).map(m => ({
+    #buildItemSections(data) {
+        const bondItems = data.bonds.filter(b => b.name).map(b => ({
+            name: b.name,
+            type: 'bond',
+            system: { score: b.score, relationship: b.relationship ?? '', description: b.description ?? '' },
+        }));
+        const motivationItems = data.motivations.filter(m => m.trim()).map(m => ({
             name: m,
             type: 'motivation',
             system: { disorder: '', crossedOut: false, disorderCured: false },
         }));
         const wizardFlag = { 'delta-green-agent-wizard': { fromWizard: true } };
-        const eqItems = this.#data.equipment
+        const eqItems = data.equipment
             .filter(name => name && name.trim())
             .map(name => {
                 const catalogItem = EQUIPMENT_CATALOG.find(i => i.name === name);
@@ -1466,35 +1501,125 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
                 };
             });
 
-        const sections = [
-            {
-                label: 'bonds',
-                items: bondItems,
-                oldIds: replaceBonds ? this.#actor.items.filter(i => i.type === 'bond').map(i => i.id) : [],
-            },
-            {
-                label: 'motivations',
-                items: motivationItems,
-                oldIds: this.#actor.items.filter(i => i.type === 'motivation').map(i => i.id),
-            },
-            {
-                label: 'wizard equipment',
-                items: eqItems,
-                oldIds: this.#actor.items
-                    .filter(i => i.flags?.['delta-green-agent-wizard']?.fromWizard === true)
-                    .map(i => i.id),
-            },
-        ];
+        return { bonds: bondItems, motivations: motivationItems, equipment: eqItems };
+    }
 
-        const createdIds = [];
-        try {
-            for (const section of sections) {
-                if (section.items.length > 0) {
-                    const created = await this.#actor.createEmbeddedDocuments('Item', section.items);
-                    createdIds.push(...created.map(d => d.id));
+    #applyChanges(next, source, skillBases) {
+        const previous = this.#applied ? this.#buildActorUpdates(this.#applied.data) : {};
+        const updates = {};
+        const resourcePaths = new Set([
+            'system.health.value', 'system.wp.value', 'system.sanity.value', 'system.sanity.currentBreakingPoint',
+        ]);
+
+        for (const [path, value] of Object.entries(next)) {
+            const live = foundry.utils.getProperty(source, path);
+            const before = previous[path];
+            if ((path.startsWith('system.skills.') || path.startsWith('system.typedSkills.'))
+                && !(path in previous) && !(path in skillBases)) {
+                skillBases[path] = live ?? null;
+            }
+            if (sameValue(before, value)) continue;
+
+            if (resourcePaths.has(path) && Number.isFinite(live) && Number.isFinite(before)) {
+                // Keep damage or spent resources relative to the new build.
+                updates[path] = Math.max(0, live + value - before);
+            } else if (path.startsWith('system.typedSkills.') && before && live) {
+                for (const [key, field] of Object.entries(value)) {
+                    if (!sameValue(before[key], field)) updates[`${path}.${key}`] = field;
                 }
-                if (section.oldIds.length > 0) {
-                    await this.#actor.deleteEmbeddedDocuments('Item', section.oldIds);
+            } else if (!sameValue(live, value)) {
+                updates[path] = value;
+            }
+        }
+
+        for (const [path, before] of Object.entries(previous)) {
+            if (path in next || !(path in skillBases)) continue;
+            const original = skillBases[path];
+            const live = foundry.utils.getProperty(source, path);
+            // Preserve a removed choice's current value if it was changed on the sheet.
+            if (sameValue(live, before)) {
+                if (original === null) updates[deletionKey(path)] = null;
+                else updates[path] = original;
+            }
+            delete skillBases[path];
+        }
+        return updates;
+    }
+
+    #planItemChanges(next) {
+        const previous = this.#applied ? this.#buildItemSections(this.#applied.data) : {};
+        const items = this.#actor.items;
+        const initialIds = {
+            bonds: next.bonds.length || this.#data.bonds.length
+                ? items.filter(item => item.type === 'bond').map(item => item.id) : [],
+            motivations: items.filter(item => item.type === 'motivation').map(item => item.id),
+            equipment: items.filter(item => item.flags?.[FLAG_SCOPE]?.fromWizard).map(item => item.id),
+        };
+        const plans = {};
+        for (const [section, selections] of Object.entries(next)) {
+            const oldIds = this.#applied?.itemIds?.[section] ?? initialIds[section];
+            const old = (previous[section] ?? []).map((item, i) => ({ item, id: oldIds[i] }));
+            const ids = Array(selections.length).fill(null);
+            const additions = [];
+            for (const [index, item] of selections.entries()) {
+                const match = old.findIndex(entry => sameValue(entry.item, item));
+                if (match === -1) additions.push({ index, item });
+                else ids[index] = old.splice(match, 1)[0].id ?? null;
+            }
+            const removals = this.#applied ? old.map(entry => entry.id).filter(Boolean) : oldIds;
+            plans[section] = {
+                ids, additions, removals: removals.filter(id => items.some(item => item.id === id)),
+            };
+        }
+        return plans;
+    }
+
+    async #applyToActor() {
+        const data = foundry.utils.deepClone(this.#data);
+        const source = this.#actor.toObject();
+        const snapshot = { name: source.name, system: source.system, items: source.items };
+        const skillBases = foundry.utils.deepClone(this.#applied?.skillBases ?? {});
+        const updates = this.#applyChanges(this.#buildActorUpdates(data), source, skillBases);
+        const plans = this.#planItemChanges(this.#buildItemSections(data));
+        const flagPath = `flags.${FLAG_SCOPE}`;
+        const oldFlags = source.flags?.[FLAG_SCOPE] ?? {};
+        const createdIds = [];
+        let sheetWriteStarted = false;
+        let flagWriteStarted = false;
+        try {
+            if (Object.keys(updates).length) {
+                sheetWriteStarted = true;
+                await this.#actor.update(updates);
+            }
+            for (const { ids, additions, removals } of Object.values(plans)) {
+                if (additions.length) {
+                    sheetWriteStarted = true;
+                    const created = await this.#actor.createEmbeddedDocuments('Item', additions.map(({ item }) => item));
+                    createdIds.push(...created.map(doc => doc.id));
+                    if (created.length !== additions.length) throw new Error('Foundry did not create all selected items.');
+                    for (const [i, doc] of created.entries()) ids[additions[i].index] = doc.id;
+                }
+                if (removals.length) {
+                    sheetWriteStarted = true;
+                    await this.#actor.deleteEmbeddedDocuments('Item', removals);
+                    if (this.#actor.items.some(item => removals.includes(item.id))) {
+                        throw new Error('Foundry did not remove all deselected items.');
+                    }
+                }
+            }
+            const applied = JSON.stringify({
+                data, skillBases,
+                itemIds: Object.fromEntries(Object.entries(plans).map(([key, plan]) => [key, plan.ids])),
+            });
+            if (applied !== oldFlags.wizardApplied || oldFlags.wizardState !== undefined) {
+                flagWriteStarted = true;
+                await this.#actor.update({
+                    [`${flagPath}.wizardApplied`]: applied,
+                    [`${flagPath}.-=wizardState`]: null,
+                });
+                if (this.#actor.getFlag(FLAG_SCOPE, 'wizardApplied') !== applied
+                    || this.#actor.getFlag(FLAG_SCOPE, 'wizardState') !== undefined) {
+                    throw new Error('Foundry did not save the wizard choices.');
                 }
             }
         } catch (err) {
@@ -1523,14 +1648,36 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
             // on Foundry 14, and leaf keys added by the apply are removed when
             // absent from the snapshot.
             try {
-                const revert = flatLeaves({ name: snapshot.name, system: snapshot.system });
-                const liveFlat = flatLeaves({ name: this.#actor.name, system: this.#actor.system });
-                for (const k of Object.keys(liveFlat)) if (!(k in revert)) revert[k] = undefined;
-                await this.#actor.update(revert);
+                const live = this.#actor.toObject();
+                const revert = {};
+                if (sheetWriteStarted) {
+                    const before = flatLeaves({ name: snapshot.name, system: snapshot.system });
+                    const after = flatLeaves({ name: live.name, system: live.system });
+                    for (const [path, value] of Object.entries(before)) {
+                        if (!sameValue(value, after[path])) revert[path] = value;
+                    }
+                    // Remove newly added typed-skill records as a unit.
+                    for (const key of Object.keys(live.system.typedSkills ?? {})) {
+                        if (!(key in (snapshot.system.typedSkills ?? {}))) {
+                            revert[`system.typedSkills.-=${key}`] = null;
+                        }
+                    }
+                }
+                if (flagWriteStarted) {
+                    for (const key of ['wizardApplied', 'wizardState']) {
+                        if (!sameValue(oldFlags[key], live.flags?.[FLAG_SCOPE]?.[key])) {
+                            revert[oldFlags[key] === undefined ? `${flagPath}.-=${key}` : `${flagPath}.${key}`] =
+                                oldFlags[key] ?? null;
+                        }
+                    }
+                }
+                if (Object.keys(revert).length) await this.#actor.update(revert);
             }
             catch (e) { problems.push('agent fields not reverted'); console.error(e); }
             // Report a full rollback only when it verifiably completed.
-            if (problems.length === 0 && applyStateMatchesSnapshot(this.#actor, snapshot)) {
+            const liveFlags = this.#actor.toObject().flags?.[FLAG_SCOPE] ?? {};
+            const flagsRestored = ['wizardApplied', 'wizardState'].every(key => sameValue(oldFlags[key], liveFlags[key]));
+            if (problems.length === 0 && flagsRestored && applyStateMatchesSnapshot(this.#actor, snapshot)) {
                 ui.notifications.warn(
                     'Apply to Sheet failed — all changes were rolled back. Your wizard progress was kept — try again.');
             } else {

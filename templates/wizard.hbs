@@ -18,6 +18,9 @@
         {{#if (eq step "welcome")}}
         <div class="dg-step dg-step-welcome">
             <h2>Welcome, Agent</h2>
+            {{#if rebuilding}}
+            <p class="dg-hint">This Agent has sheet data. Earlier wizard versions discarded their choices after applying. You can continue to build a new set of choices or edit the Agent sheet directly.</p>
+            {{/if}}
             <p class="dg-flavour">
                 You've been read in. The Program needs another agent — someone with the skills,
                 the bonds, and the will to face what lies beyond. Follow these steps to build
@@ -557,7 +560,11 @@
         {{#if (eq step "review")}}
         <div class="dg-step dg-step-review">
             <h2>Review &amp; Confirm</h2>
-            <p class="dg-hint">Verify your agent before committing changes to the actor sheet.</p>
+            {{#if editingApplied}}
+            <p class="dg-hint">These are your saved wizard choices. Select a section to edit it. Applying updates the choices you changed.</p>
+            {{else}}
+            <p class="dg-hint">Verify your agent before applying this build to the sheet.</p>
+            {{/if}}
             {{#unless review.hasBioName}}<p class="dg-warn">⚠ No agent name set — go back to Biography.</p>{{/unless}}
 
             <section class="dg-review-section">
@@ -601,13 +608,11 @@
                     <span class="dg-review-skill dg-review-skill-specialty">{{label}}:
                         <strong>{{value}}%</strong></span>
                     {{/each}}
-                    {{#if review.bonusAllocations.length}}
                     <span class="dg-review-bonus-divider">Bonus picks <button type="button" data-action="jumpToStep"
                             data-step="4" class="dg-review-jump-btn dg-review-jump-inline">✎</button></span>
                     {{#each review.bonusAllocations}}
                     <span class="dg-review-skill dg-review-skill-bonus">{{label}}: <strong>+{{total}}%</strong></span>
                     {{/each}}
-                    {{/if}}
                 </div>
             </section>
 
@@ -645,7 +650,6 @@
             </section>
             {{/if}}
 
-            {{#if review.equipment.length}}
             <section class="dg-review-section">
                 <h3><button type="button" data-action="jumpToStep" data-step="7" class="dg-review-jump-btn">Equipment
                         ({{review.equipment.length}} items) ✎</button></h3>
@@ -655,7 +659,6 @@
                     {{/each}}
                 </div>
             </section>
-            {{/if}}
         </div>
         {{/if}}
 
@@ -668,7 +671,7 @@
         {{/unless}}
         <span class="dg-nav-spacer"></span>
         {{#if isLast}}
-        <button type="button" data-action="finish" class="dg-btn-primary dg-btn-finish">✔ Apply to Sheet</button>
+        <button type="button" data-action="finish" class="dg-btn-primary dg-btn-finish">✔ {{#if editingApplied}}Apply Changes{{else}}Apply to Sheet{{/if}}</button>
         {{else}}
         <button type="button" data-action="nextStep" class="dg-btn-primary">Next →</button>
         {{/if}}
