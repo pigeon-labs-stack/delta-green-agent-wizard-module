@@ -3,7 +3,6 @@ import { PROFESSIONS } from './professions.js';
 import { BONDS } from './bonds.js';
 import { EQUIPMENT_CATALOG, EQUIPMENT_CATEGORIES } from './equipment.js';
 import { generateBio } from './bio-data.js';
-import { exportToPDF } from './pdf-export.js';
 import {
     SKILL_DEFAULTS, BONUS_SKILL_OPTIONS, SPECIALTY_PREFIXES, SPECIALTY_OPTIONS,
     parseSpecialtyFromName, parseSpecialtyFromKey,
@@ -33,6 +32,7 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
     /** Transient data collected across steps before writing to the Actor. */
     #data = {
         stats: { str: 10, con: 10, dex: 10, int: 10, pow: 10, cha: 10 },
+        statsMethod: 'pointbuy',  // 'pointbuy' | 'roll' | 'manual' — 72-pt budget enforced only for pointbuy
         professionKey: '',
         skills: {},          // key → value
         optionalPicks: [],   // indices of chosen optional skills
@@ -91,7 +91,6 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
             randomBio: DeltaGreenChargenWizard.#onRandomBio,
             clearEquipment: DeltaGreenChargenWizard.#onClearEquipment,
             finish: DeltaGreenChargenWizard.#onFinish,
-            applyAndKeep: DeltaGreenChargenWizard.#onApplyAndKeep,
             loadLoadout: DeltaGreenChargenWizard.#onLoadLoadout,
             fillPack: DeltaGreenChargenWizard.#onFillPack,
             jumpToStep: DeltaGreenChargenWizard.#onJumpToStep,
@@ -149,6 +148,7 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
             actor: this.#actor,
             // step-specific
             stats: this.#data.stats,
+            statsMethod: this.#data.statsMethod,
             statLabels: STAT_LABELS,
             statDescriptors,
             pointsRemaining,
@@ -466,134 +466,6 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
     }
 
     // -----------------------------------------------------------------------
-    // Build state object in collectState() shape for exportToPDF
-    // -----------------------------------------------------------------------
-    #buildPdfState() {
-        // Wizard group name → pdf-export.js skill key
-        const GROUP_TO_KEY = {
-            Art: 'art',
-            Craft: 'craft',
-            ForeignLanguage: 'foreign_language',
-            Science: 'science',
-            Pilot: 'pilot',
-            MilitaryScience: 'military_science',
-        };
-
-        // Stats in uppercase-key format (matches csStats in collectState)
-        const csStats = {
-            STR: this.#data.stats.str,
-            CON: this.#data.stats.con,
-            DEX: this.#data.stats.dex,
-            INT: this.#data.stats.int,
-            POW: this.#data.stats.pow,
-            CHA: this.#data.stats.cha,
-        };
-
-        const hp = Math.ceil((this.#data.stats.con + this.#data.stats.str) / 2);
-        const wp = this.#data.stats.pow;
-        const san = this.#data.stats.pow * 5;
-        const bp = san - wp;
-        const derived = { hp, wp, san, bp };
-
-        // Compute effective plain-skill values (base + standard bonus boosts)
-        const skills = { ...this.#data.skills };
-        const boostCounts = {};
-        for (let i = 0; i < this.#data.bonusBoosts.length; i++) {
-            const key = this.#data.bonusBoosts[i];
-            if (!key || key.startsWith('_custom_') || key.startsWith('profslot__')) continue;
-            boostCounts[key] = (boostCounts[key] ?? 0) + 1;
-        }
-        for (const [key, count] of Object.entries(boostCounts)) {
-            // Only boost plain skills here; specialty keys handled via specialtyInstances below
-            if (!(key in skills) && !(key in SKILL_DEFAULTS)) continue;
-            skills[key] = Math.min(80, (skills[key] ?? SKILL_DEFAULTS[key] ?? 0) + count * 20);
-        }
-
-        // Build specialtyInstances from profession specialty slots
-        const specMap = new Map(); // `${key}||${specialty}` → instance object (for dedup/boost merging)
-        for (const sl of this.#data.specialtySlots) {
-            const label = sl.label.trim();
-            if (!label) continue;
-            const pdfKey = GROUP_TO_KEY[sl.group];
-            if (!pdfKey) continue;
-            const mapKey = `${pdfKey}||${label}`;
-            if (specMap.has(mapKey)) {
-                specMap.get(mapKey).value = Math.min(80, specMap.get(mapKey).value + sl.proficiency);
-            } else {
-                specMap.set(mapKey, { key: pdfKey, specialty: label, value: sl.proficiency });
-            }
-        }
-
-        // Apply bonus boosts that target specialty slots (profslot__) or add new ones (_custom_)
-        for (let i = 0; i < this.#data.bonusBoosts.length; i++) {
-            const key = this.#data.bonusBoosts[i];
-            if (!key) continue;
-
-            if (key.startsWith('profslot__')) {
-                // profslot__{group}__{label} — boost or create matching specialty instance
-                const parts = key.split('__');
-                const group = parts[1];  // e.g. 'ForeignLanguage'
-                const label = parts[2];  // e.g. 'Spanish'
-                const pdfKey = GROUP_TO_KEY[group];
-                if (!pdfKey || !label) continue;
-                const mapKey = `${pdfKey}||${label}`;
-                if (specMap.has(mapKey)) {
-                    specMap.get(mapKey).value = Math.min(80, specMap.get(mapKey).value + 20);
-                } else {
-                    specMap.set(mapKey, { key: pdfKey, specialty: label, value: 20 });
-                }
-
-            } else if (key.startsWith('_custom_')) {
-                // _custom_{Group} — user typed a custom specialty label
-                const group = key.slice('_custom_'.length);  // e.g. 'Art'
-                const label = (this.#data.bonusCustom?.[i] ?? '').trim();
-                if (!label) continue;
-                const pdfKey = GROUP_TO_KEY[group];
-                if (!pdfKey) continue;
-                const mapKey = `${pdfKey}||${label}`;
-                if (specMap.has(mapKey)) {
-                    specMap.get(mapKey).value = Math.min(80, specMap.get(mapKey).value + 20);
-                } else {
-                    specMap.set(mapKey, { key: pdfKey, specialty: label, value: 20 });
-                }
-            }
-        }
-
-        const specialtyInstances = [...specMap.values()];
-
-        const bio = {
-            name: this.#data.biography.name,
-            profession: this.#data.biography.profession,
-            employer: this.#data.biography.employer,
-            nationality: this.#data.biography.nationality,
-            sex: this.#data.biography.sex,
-            age: this.#data.biography.age,
-            education: this.#data.biography.education,
-            motivations: this.#data.motivations.filter(m => m.trim()).join('\n'),
-            personalDetails: this.#data.biography.notes,
-        };
-
-        // Distinguishing features from stat descriptors
-        const lpFeat = {};
-        for (const k of ['str', 'con', 'dex', 'int', 'pow', 'cha']) {
-            lpFeat[k.toUpperCase()] = getStatDescriptor(k, this.#data.stats[k]);
-        }
-
-        return {
-            csStats, derived, bio, skills,
-            skillSpecs: {},
-            customSkills: [],
-            specialtyInstances,
-            bonds: this.#data.bonds,
-            sanity: { violence: [false, false, false], helplessness: [false, false, false] },
-            lpNotes: { wounds: '', gear: '', remarks: '' },
-            lpFeat,
-            lpWeapons: [],
-            equipment: this.#data.equipment,
-        };
-    }
-
-    // -----------------------------------------------------------------------
     // _onRender — called after every Handlebars re-render
     // -----------------------------------------------------------------------
     async _onRender(context, options) {
@@ -601,6 +473,7 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
         // Stop any previous pyramid loop when navigating away
         this.element?.querySelector('#dg-welcome-pyramid')?._stopPyramid?.();
         if (STEPS[this.#step] === 'profession') this.#setupProfessionUI();
+        if (STEPS[this.#step] === 'stats') this.#setupStatsMethodUI();
         if (STEPS[this.#step] === 'equipment') this.#buildEquipmentUI();
         if (STEPS[this.#step] === 'skills') { this.#setupSkillsUI(); this.#setupSpecialtyUI(); }
         if (STEPS[this.#step] === 'bonus_skills') this.#setupBonusSkillsUI();
@@ -616,6 +489,20 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
                 const nav = this.element?.querySelector('.dg-wizard-nav');
                 const btn = nav?.querySelector('[data-action="finish"]') ?? nav?.querySelector('[data-action="nextStep"]');
                 btn?.click();
+            });
+        }
+    }
+
+    // -----------------------------------------------------------------------
+    // Stats step: a direct edit of a stat input switches the method to 'manual',
+    // which opts the actor out of the 72-point point-buy budget check.
+    // -----------------------------------------------------------------------
+    #setupStatsMethodUI() {
+        const el = this.element;
+        if (!el) return;
+        for (const input of el.querySelectorAll('input[name^="stats."]')) {
+            input.addEventListener('change', () => {
+                this.#data.statsMethod = 'manual';
             });
         }
     }
@@ -994,20 +881,34 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
     }
 
     #renderEquipmentLoadout(loadoutEl) {
+        loadoutEl.textContent = '';
         if (this.#data.equipment.length === 0) {
-            loadoutEl.innerHTML = '<div class="dg-eq-empty">No items selected.</div>';
+            const empty = document.createElement('div');
+            empty.className = 'dg-eq-empty';
+            empty.textContent = 'No items selected.';
+            loadoutEl.appendChild(empty);
             return;
         }
-        loadoutEl.innerHTML = this.#data.equipment.map((name, idx) => {
+        for (const [idx, name] of this.#data.equipment.entries()) {
             const item = EQUIPMENT_CATALOG.find(i => i.name === name);
             const exp = item?.system?.expense ?? '';
-            const expClass = `dg-exp-${exp.toLowerCase()}`;
-            return `<div class="dg-eq-loadout-item">
-  <span class="dg-eq-loadout-name">${name}</span>
-  <span class="dg-eq-expense ${expClass}">${exp}</span>
-  <button type="button" class="dg-eq-remove-btn" data-item-idx="${idx}" title="Remove">✕</button>
-</div>`;
-        }).join('');
+            const row = document.createElement('div');
+            row.className = 'dg-eq-loadout-item';
+            const nameEl = document.createElement('span');
+            nameEl.className = 'dg-eq-loadout-name';
+            nameEl.textContent = name;
+            const expEl = document.createElement('span');
+            expEl.className = `dg-eq-expense dg-exp-${String(exp).toLowerCase()}`;
+            expEl.textContent = exp;
+            const removeBtn = document.createElement('button');
+            removeBtn.type = 'button';
+            removeBtn.className = 'dg-eq-remove-btn';
+            removeBtn.dataset.itemIdx = String(idx);
+            removeBtn.title = 'Remove';
+            removeBtn.textContent = '✕';
+            row.append(nameEl, expEl, removeBtn);
+            loadoutEl.appendChild(row);
+        }
     }
 
     #updateEquipCountBadge(el) {
@@ -1045,6 +946,7 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
         for (const stat of Object.keys(this.#data.stats)) {
             this.#data.stats[stat] = await rollStat();
         }
+        this.#data.statsMethod = 'roll';
         this.render({ force: true });
     }
 
@@ -1054,6 +956,7 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
         const input = this.element?.querySelector(`input[name="stats.${stat}"]`);
         const current = input ? (parseInt(input.value, 10) || 3) : (this.#data.stats[stat] || 3);
         this.#data.stats[stat] = Math.max(3, Math.min(18, current + delta));
+        this.#data.statsMethod = 'pointbuy';
         this.render({ force: true });
     }
 
@@ -1074,11 +977,13 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
                 }
             }
         }
+        this.#data.statsMethod = 'pointbuy';
         this.render({ force: true });
     }
 
     static async #onResetStats(event, target) {
         for (const k of Object.keys(this.#data.stats)) this.#data.stats[k] = 3;
+        this.#data.statsMethod = 'pointbuy';
         this.render({ force: true });
     }
 
@@ -1167,13 +1072,6 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
         ui.notifications.info(`${this.#actor.name} is ready for fieldwork.`);
     }
 
-    static async #onApplyAndKeep(event, target) {
-        if (!this.#collectCurrentStep()) return;
-        await this.#applyToActor();
-        this.render({ force: true });
-        ui.notifications.info(`Changes applied — wizard still open.`);
-    }
-
     static async #onJumpToStep(event, target) {
         this.#collectCurrentStep();
         this.#step = parseInt(target.dataset.step, 10);
@@ -1210,6 +1108,17 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
                     return false;
                 }
                 this.#data.stats[k] = v;
+            }
+            // The 72-point budget applies to point-buy only; rolled and manual
+            // totals are kept as entered (README advertises all three modes).
+            if (this.#data.statsMethod === 'pointbuy') {
+                const total = Object.values(this.#data.stats).reduce((a, b) => a + b, 0);
+                if (total > 72) {
+                    ui.notifications.warn(
+                        `Point-buy total is ${total}/72 — reduce ${total - 72} point(s) with −, or use Roll All / manual entry for out-of-budget stats.`
+                    );
+                    return false;
+                }
             }
         }
 
@@ -1289,6 +1198,21 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
             // Re-derive optional picks: specialty → specialty slots; plain → skills dict
             this.#data.specialtySlots = this.#data.specialtySlots.filter(sl => sl.required);
             this.#data.optSpecialtyLabels = {};
+            // Drop plain skills that came from optional picks which are no longer
+            // selected (required skills stay). Mirrors the specialty-slot rebuild above.
+            {
+                const requiredKeys = new Set((prof.requiredSkills ?? [])
+                    .filter(s => !parseSpecialtyFromName(s.name))
+                    .map(s => this.#findSkillKey(s.name)));
+                const pickedKeys = new Set();
+                for (const idx of picks) {
+                    const s = prof.optionalSkills[idx];
+                    if (s && !parseSpecialtyFromName(s.name)) pickedKeys.add(this.#findSkillKey(s.name));
+                }
+                for (const k of Object.keys(this.#data.skills)) {
+                    if (!requiredKeys.has(k) && !pickedKeys.has(k)) delete this.#data.skills[k];
+                }
+            }
             for (const idx of picks) {
                 const s = prof.optionalSkills[idx];
                 const sp = parseSpecialtyFromName(s.name);
@@ -1460,61 +1384,81 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
         }
         await this.#actor.update(updates);
 
-        // Bonds — create as Bond items (remove existing first to avoid duplicates)
-        if (this.#data.bonds.length > 0) {
-            const existingBonds = this.#actor.items.filter(i => i.type === 'bond');
-            if (existingBonds.length > 0) {
-                await this.#actor.deleteEmbeddedDocuments('Item', existingBonds.map(i => i.id));
-            }
-            const bondItems = this.#data.bonds
-                .filter(b => b.name)
-                .map(b => ({
-                    name: b.name,
-                    type: 'bond',
-                    system: { score: b.score, relationship: b.relationship ?? '', description: b.description ?? '' },
-                }));
-            if (bondItems.length > 0) {
-                await this.#actor.createEmbeddedDocuments('Item', bondItems);
-            }
-        }
+        // Bonds, motivations, and wizard equipment are replaced create-then-delete:
+        // replacements are created first and originals deleted only on success, so a
+        // failed write never leaves the Agent stripped. The wizard-state flag is
+        // cleared by the caller only after this method resolves, which preserves the
+        // draft for a retry.
+        const replaceBonds = this.#data.bonds.length > 0;
+        const bondItems = replaceBonds
+            ? this.#data.bonds.filter(b => b.name).map(b => ({
+                name: b.name,
+                type: 'bond',
+                system: { score: b.score, relationship: b.relationship ?? '', description: b.description ?? '' },
+            }))
+            : [];
+        const motivationItems = this.#data.motivations.filter(m => m.trim()).map(m => ({
+            name: m,
+            type: 'motivation',
+            system: { disorder: '', crossedOut: false, disorderCured: false },
+        }));
+        const wizardFlag = { 'delta-green-agent-wizard': { fromWizard: true } };
+        const eqItems = this.#data.equipment
+            .filter(name => name && name.trim())
+            .map(name => {
+                const catalogItem = EQUIPMENT_CATALOG.find(i => i.name === name);
+                if (catalogItem) {
+                    // `category` is wizard UI metadata, not part of the DG item schema
+                    const { category, ...itemData } = catalogItem;
+                    return { ...itemData, flags: { ...(itemData.flags ?? {}), ...wizardFlag } };
+                }
+                return {
+                    name, type: 'gear', img: 'icons/svg/item-bag.svg',
+                    flags: wizardFlag, effects: [],
+                    system: { name: '', description: '', equipped: true, expense: '' }
+                };
+            });
 
-        // Motivations — delete existing first to avoid duplicates, then create fresh
-        const existingMotivations = this.#actor.items.filter(i => i.type === 'motivation');
-        if (existingMotivations.length > 0) {
-            await this.#actor.deleteEmbeddedDocuments('Item', existingMotivations.map(i => i.id));
-        }
-        const motivationStrings = this.#data.motivations.filter(m => m.trim());
-        if (motivationStrings.length > 0) {
-            const motivationItems = motivationStrings.map(m => ({
-                name: m,
-                type: 'motivation',
-                system: { disorder: '', crossedOut: false, disorderCured: false },
-            }));
-            await this.#actor.createEmbeddedDocuments('Item', motivationItems);
-        }
+        const sections = [
+            {
+                label: 'bonds',
+                items: bondItems,
+                oldIds: replaceBonds ? this.#actor.items.filter(i => i.type === 'bond').map(i => i.id) : [],
+            },
+            {
+                label: 'motivations',
+                items: motivationItems,
+                oldIds: this.#actor.items.filter(i => i.type === 'motivation').map(i => i.id),
+            },
+            {
+                label: 'wizard equipment',
+                items: eqItems,
+                oldIds: this.#actor.items
+                    .filter(i => i.flags?.['delta-green-agent-wizard']?.fromWizard === true)
+                    .map(i => i.id),
+            },
+        ];
 
-        // Equipment — delete any items previously created by the wizard (flagged), then recreate
-        const existingWizardItems = this.#actor.items.filter(
-            i => i.flags?.['delta-green-agent-wizard']?.fromWizard === true
-        );
-        if (existingWizardItems.length > 0) {
-            await this.#actor.deleteEmbeddedDocuments('Item', existingWizardItems.map(i => i.id));
-        }
-        if (this.#data.equipment.length > 0) {
-            const wizardFlag = { 'delta-green-agent-wizard': { fromWizard: true } };
-            const eqItems = this.#data.equipment
-                .filter(name => name && name.trim())
-                .map(name => {
-                    const catalogItem = EQUIPMENT_CATALOG.find(i => i.name === name);
-                    if (catalogItem) return { ...catalogItem, flags: { ...(catalogItem.flags ?? {}), ...wizardFlag } };
-                    return {
-                        name, type: 'gear', img: 'icons/svg/item-bag.svg',
-                        flags: wizardFlag, effects: [],
-                        system: { name: '', description: '', equipped: true, expense: '' }
-                    };
-                });
-            if (eqItems.length > 0) {
-                await this.#actor.createEmbeddedDocuments('Item', eqItems);
+        for (const section of sections) {
+            const createdIds = [];
+            try {
+                if (section.items.length > 0) {
+                    const created = await this.#actor.createEmbeddedDocuments('Item', section.items);
+                    createdIds.push(...created.map(d => d.id));
+                }
+                if (section.oldIds.length > 0) {
+                    await this.#actor.deleteEmbeddedDocuments('Item', section.oldIds);
+                }
+            } catch (err) {
+                // Undo any partial replacement; originals are still intact.
+                if (createdIds.length > 0) {
+                    await this.#actor.deleteEmbeddedDocuments('Item', createdIds).catch(() => {});
+                }
+                console.error(`[DG Agent Wizard] Apply to Sheet failed while replacing ${section.label}:`, err);
+                ui.notifications.error(
+                    `Apply to Sheet: replacing ${section.label} failed. Existing items were preserved and your wizard progress was kept — try again.`
+                );
+                throw err;
             }
         }
     }
