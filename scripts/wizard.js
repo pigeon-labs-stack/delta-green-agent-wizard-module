@@ -10,21 +10,16 @@ import {
     SKILL_TOOLTIPS, STAT_LABELS, STAT_DESCRIPTOR_TIERS, getStatDescriptor, STEPS,
 } from './constants.js';
 
-/** Strip document ids (incl. nested effect ids) so a document recreates fresh. */
-function stripDocumentIds(doc) {
-    const { _id, id, effects, ...rest } = structuredClone(doc);
-    rest.effects = (effects ?? []).map(({ _id: e1, id: e2, ...r }) => r);
-    return rest;
-}
-
 /** Content-level comparison of the live actor against a pre-apply snapshot.
- * Document ids are excluded: recovered documents are recreated with new ids. */
+ * Includes document ids: recovery recreates with keepId/keepEmbeddedIds, so a
+ * complete rollback must leave item ids, item-effect ids, and effect contents
+ * exactly as they were. */
 function applyStateMatchesSnapshot(actor, snap) {
     try {
         if (actor.name !== snap.name) return false;
         if (JSON.stringify(actor.system) !== JSON.stringify(snap.system)) return false;
-        const fxKey = e => `${e.label}|${e.origin ?? ''}|${JSON.stringify(e.changes ?? [])}`;
-        const itemKey = i => `${i.type}|${i.name}|${JSON.stringify(i.system)}|${(i.effects ?? []).map(fxKey).sort().join(';')}`;
+        const fxKey = e => `${e.id ?? e._id}|${e.label}|${e.origin ?? ''}|${JSON.stringify(e.changes ?? [])}`;
+        const itemKey = i => `${i.id ?? i._id}|${i.type}|${i.name}|${JSON.stringify(i.system)}|${(i.effects ?? []).map(fxKey).sort().join(';')}`;
         return actor.items.map(itemKey).sort().join('\n') === snap.items.map(itemKey).sort().join('\n');
     } catch (err) {
         console.error('[DG Agent Wizard] snapshot comparison failed:', err);
@@ -1490,12 +1485,17 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
                 try { await this.#actor.deleteEmbeddedDocuments('Item', createdIds); }
                 catch (e) { problems.push(`${createdIds.length} created item(s) left on the sheet`); console.error(e); }
             }
-            // 2. Recreate items the apply deleted (toObject() carries `_id`;
-            // Foundry regenerates ids on recreation).
+            // 2. Recreate items the apply deleted, preserving their _ids
+            // (keepId) and effect _ids (keepEmbeddedIds) so existing UUIDs
+            // keep resolving.
             const survivingIds = new Set(this.#actor.items.map(i => i.id));
             const lostItems = snapshot.items.filter(i => !survivingIds.has(i._id ?? i.id));
             if (lostItems.length > 0) {
-                try { await this.#actor.createEmbeddedDocuments('Item', lostItems.map(stripDocumentIds)); }
+                try {
+                    await this.#actor.createEmbeddedDocuments('Item',
+                        lostItems.map(i => foundry.utils.deepClone(i)),
+                        { keepId: true, keepEmbeddedIds: true });
+                }
                 catch (e) { problems.push(`${lostItems.length} original item(s) not recovered`); console.error(e); }
             }
             // 3. Revert the actor-field update.

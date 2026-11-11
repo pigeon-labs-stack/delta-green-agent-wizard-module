@@ -33,14 +33,16 @@ function stripDocumentIds(doc) {
 }
 
 /** Content-level comparison of the live actor against a restore snapshot.
- * Document ids are excluded: recovered documents are recreated with new ids. */
+ * Includes document ids: recovery recreates with keepId/keepEmbeddedIds, so a
+ * complete rollback must leave item ids, active-effect ids, and effect contents
+ * exactly as they were. */
 function restoreSnapshotMatches(actor, snap) {
     try {
         if (actor.name !== snap.name || actor.img !== snap.img) return false;
         if (JSON.stringify(actor.system) !== JSON.stringify(snap.system)) return false;
-        const fxKey = e => `${e.label}|${e.origin ?? ''}|${JSON.stringify(e.changes ?? [])}`;
+        const fxKey = e => `${e.id ?? e._id}|${e.label}|${e.origin ?? ''}|${JSON.stringify(e.changes ?? [])}`;
         if (actor.effects.map(fxKey).sort().join('\n') !== snap.effects.map(fxKey).sort().join('\n')) return false;
-        const itemKey = i => `${i.type}|${i.name}|${JSON.stringify(i.system)}|${(i.effects ?? []).map(fxKey).sort().join(';')}`;
+        const itemKey = i => `${i.id ?? i._id}|${i.type}|${i.name}|${JSON.stringify(i.system)}|${(i.effects ?? []).map(fxKey).sort().join(';')}`;
         if (actor.items.map(itemKey).sort().join('\n') !== snap.items.map(itemKey).sort().join('\n')) return false;
         return true;
     } catch (err) {
@@ -330,22 +332,27 @@ function injectWizardButton(app, element) {
                         try { await actor.deleteEmbeddedDocuments('Item', createdIds); }
                         catch (e) { problems.push(`${createdIds.length} backup item(s) left on the sheet`); console.error(e); }
                     }
-                    // 2. Recreate originals lost to a committed deletion.
-                    // (toObject() carries `_id`; document ids regenerate on recreation.)
+                    // 2. Recreate originals lost to a committed deletion,
+                    // preserving their _ids (keepId) and effect _ids
+                    // (keepEmbeddedIds) so existing UUIDs keep resolving.
                     const survivingIds = new Set(actor.items.map(i => i.id));
                     const lostItems = snapshot.items.filter(i => !survivingIds.has(i._id ?? i.id));
                     if (lostItems.length) {
-                        try { await actor.createEmbeddedDocuments('Item', lostItems.map(stripDocumentIds)); }
+                        try {
+                            await actor.createEmbeddedDocuments('Item',
+                                lostItems.map(i => foundry.utils.deepClone(i)),
+                                { keepId: true, keepEmbeddedIds: true });
+                        }
                         catch (e) { problems.push(`${lostItems.length} original item(s) not recovered`); console.error(e); }
                     }
-                    // 3. Revert fields and active effects.
+                    // 3. Revert fields and active effects (effect _ids preserved).
                     try {
                         await actor.update({
                             name: snapshot.name,
                             img: snapshot.img,
                             system: snapshot.system,
-                            effects: snapshot.effects.map(stripDocumentIds),
-                        });
+                            effects: foundry.utils.deepClone(snapshot.effects),
+                        }, { keepEmbeddedIds: true });
                     } catch (e) { problems.push('agent fields/active effects not reverted'); console.error(e); }
                     // Report a full rollback only when it verifiably completed.
                     if (problems.length === 0 && restoreSnapshotMatches(actor, snapshot)) {
