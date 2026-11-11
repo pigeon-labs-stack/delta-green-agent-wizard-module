@@ -276,6 +276,21 @@ Commit each numbered row as focused commits (AGENTS.md style); bump `module.json
 >
 > Note: a loadout pack that itself contains a Knife makes the swap outcome ambiguous by design (two identical wizard selections — removing one row removes one of them, the other stays tracked). Verified with an unambiguous one-Knife build. "items is undefined" did not recur in this session.
 
+> **Item-id stability on wizard swap — churn verdict 2026-11-11 (rev 2.9). The 3-create/3-delete churn is CLOSED; foundry 14 id-stability PASS. Branch is merge-ready (no merge/tag performed).**
+>
+> Targeted measurement on Foundry 14.370 + DG 2.0.1 (player-owned agent, 13 items incl. loadout pack + hand-added gear; full item-id snapshot before/after each wizard apply, every create/delete logged with names and ids):
+>
+> | Swap scenario | creates | deletes | unchanged items keeping their ids | renames |
+> |---|---|---|---|---|
+> | Knife → Ordinary binoculars | 1 | 1 | **12/12** | 0 |
+> | Immediate re-swap binoculars → flashlight (fresh wizard open) | 1 | 1 | **12/12** | 0 |
+> | Employer change + brass-knuckles → binoculars in one apply | 1 | 1 | **12/12** | 0 |
+> | Swap after a JSON restore (remapped `wizardApplied`) | 1 | 1 | **12/13** (the 13th is the swapped item) | 0 |
+>
+> Every swap touched exactly the replaced item; no unchanged item was ever deleted/recreated and no active-effect ids were disturbed. The earlier 3C/3D log (rev 2.7, observation (c)) was taken on a mid-session build of the 0.1.3 series on a sheet whose loadout pack **also contained a Knife** — with two identical wizard selections the content-matcher churns the duplicate pair. Across four scenarios in the shipped code (596165e), including both original contexts, the 3C/3D pattern does not reproduce. No code change was required; closing as fixed-by-final-code, with the pack-duplicate caveat documented above.
+>
+> **Merge readiness:** `experimental/review-fixes` @ 596165e, fully pushed, clean tree; v13+v14 live matrices (rev 2.6–2.9) all green; v12 unverified (manifest min 13 — no claim). Outstanding pre-merge items are the owner questions (support policy, PDF-export placement, Unnatural pick, license confirmation Q5) — none are blockers discovered in code.
+
 **Open questions for the owner:**
 
 1. **Support policy:** confirm single-release 13+14 policy, `verified: 14` gated on F1+F2, system minimum = oldest tested (1.6.6) — and whether 1.7.0 combinations are documented support or best-effort.
