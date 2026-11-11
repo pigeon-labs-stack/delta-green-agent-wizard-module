@@ -3,6 +3,9 @@ name: Release
 on:
   push:
     tags:
+      # Releases are tagged as v<major>.<minor>.<patch> (matches module.json download URL)
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+      # Legacy bare tags (e.g. 0.1.0) keep working
       - '[0-9]+.[0-9]+.[0-9]+'
 
 jobs:
@@ -15,6 +18,20 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Validate module.json against tag
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          VERSION="$(python3 -c "import json;print(json.load(open('module.json'))['version'])")"
+          DOWNLOAD="$(python3 -c "import json;print(json.load(open('module.json'))['download'])")"
+          if [ "$VERSION" != "$TAG" ]; then
+            echo "::error::module.json version '$VERSION' does not match tag '$GITHUB_REF_NAME' ('$TAG')"
+            exit 1
+          fi
+          if ! echo "$DOWNLOAD" | grep -q "releases/download/${GITHUB_REF_NAME}/"; then
+            echo "::error::module.json download URL '$DOWNLOAD' does not point at tag '${GITHUB_REF_NAME}'"
+            exit 1
+          fi
+
       - name: Build module.zip
         run: |
           zip -r module.zip . \
@@ -22,7 +39,14 @@ jobs:
             --exclude ".github/*" \
             --exclude ".gitignore" \
             --exclude "deploy.ps1" \
+            --exclude "REVIEW-IMPROVEMENTS.md" \
             --exclude "*.zip"
+
+      - name: Verify module.zip layout
+        run: |
+          # Foundry requires module.json at the ZIP root
+          unzip -l module.zip | awk '{print $4}' | grep -qx "module.json" \
+            || { echo "::error::module.json missing from module.zip root"; exit 1; }
 
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
