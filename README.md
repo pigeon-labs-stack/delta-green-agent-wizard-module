@@ -58,7 +58,14 @@ Every Agent sheet gets a small toolbar above the sheet content:
 
 Click **Export PDF** on the Agent sheet to download a prefilled, fillable DD Form 315. The form uses the data currently saved on the sheet, including skills, bonds, weapons, and current and maximum HP, WP, and SAN. Open it in a PDF viewer that supports form fields to edit and save it, or print it for use at the table.
 
-![Personal data on Emily Thompson’s fillable DD Form 315 exported from Foundry v14](Art/emily-thompson-pdf-export.png)
+![Full first page of Emily Thompson’s DD Form 315 showing her personal data, statistics, bonds, and skills](Art/emily-thompson-pdf-export.png)
+
+<details>
+<summary>View page 2 with equipment, weapons, and notes</summary>
+
+![Full second page of Emily Thompson’s DD Form 315 showing her equipment, weapons, and notes](Art/emily-thompson-pdf-export-page-2.png)
+
+</details>
 
 ### Persistence
 
