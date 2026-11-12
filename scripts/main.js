@@ -216,30 +216,29 @@ function injectWizardButton(app, element) {
     const bar = document.createElement('div');
     bar.className = 'dg-agent-wizard-bar' + (collapsed ? ' dg-wizard-bar-collapsed' : '');
     bar.innerHTML = `
-        <div class="dg-wizard-bar-buttons">
-            <button type="button" class="dg-agent-wizard-launch">
-                <i class="fa-solid fa-user-secret"></i> Agent Wizard
+        <div class="dg-wizard-bar-buttons" role="group" aria-label="Agent actions">
+            <button type="button" class="dg-wizard-bar-button dg-agent-wizard-launch">
+                <i class="fa-solid fa-user-secret" aria-hidden="true"></i>
+                <span>Agent Wizard</span>
             </button>
-            <button type="button" class="dg-agent-pdf-export" title="Export to DD Form 315 PDF">
-                <i class="fa-solid fa-file-pdf"></i> Export PDF
+            <button type="button" class="dg-wizard-bar-button dg-agent-pdf-export" title="Export the DD Form 315 PDF">
+                <i class="fa-solid fa-file-pdf" aria-hidden="true"></i>
+                <span>Export PDF</span>
             </button>
-            <button type="button" class="dg-agent-json-export" title="Export wizard state to JSON">
-                <i class="fa-solid fa-file-export"></i> Export JSON
+            <button type="button" class="dg-wizard-bar-button dg-agent-json-export" title="Back up this Agent to JSON">
+                <i class="fa-solid fa-file-export" aria-hidden="true"></i>
+                <span>Export JSON</span>
             </button>
-            <button type="button" class="dg-agent-json-import" title="Import wizard state from JSON">
-                <i class="fa-solid fa-file-import"></i> Import JSON
+            <button type="button" class="dg-wizard-bar-button dg-agent-json-import" title="Restore this Agent from a JSON backup">
+                <i class="fa-solid fa-file-import" aria-hidden="true"></i>
+                <span>Import JSON</span>
             </button>
         </div>
-        <button type="button" class="dg-wizard-bar-toggle" title="Collapse wizard bar">
-            <span class="dg-wizard-bar-triangle"></span>
-            <span class="dg-wizard-bar-toggle-label">Collapse</span>
+        <button type="button" class="dg-wizard-bar-button dg-wizard-bar-toggle"
+                aria-label="Agent tools" aria-expanded="${!collapsed}" title="Show or hide Agent tools">
+            <span class="dg-wizard-bar-toggle-label">Agent tools</span>
+            <i class="fa-solid fa-chevron-down" aria-hidden="true"></i>
         </button>`;
-
-    // Always set display via inline style — Foundry CSS can override class-based flex/block rules
-    const buttonsEl = bar.querySelector('.dg-wizard-bar-buttons');
-    const labelEl = bar.querySelector('.dg-wizard-bar-toggle-label');
-    buttonsEl.style.display = collapsed ? 'none' : 'flex';
-    labelEl.style.display = collapsed ? 'none' : '';
 
     bar.querySelector('.dg-agent-wizard-launch').addEventListener('click', () => {
         new DeltaGreenChargenWizard(actor).render({ force: true });
@@ -482,11 +481,10 @@ function injectWizardButton(app, element) {
         input.click();
     });
 
-    bar.querySelector('.dg-wizard-bar-toggle').addEventListener('click', () => {
+    bar.querySelector('.dg-wizard-bar-toggle').addEventListener('click', event => {
         const isNowCollapsed = bar.classList.toggle('dg-wizard-bar-collapsed');
+        event.currentTarget.setAttribute('aria-expanded', String(!isNowCollapsed));
         localStorage.setItem(wizardBarCollapsedKey(), isNowCollapsed ? '1' : '0');
-        buttonsEl.style.display = isNowCollapsed ? 'none' : 'flex';
-        labelEl.style.display = isNowCollapsed ? 'none' : '';
     });
 
     // v13-era sheets (DG ≤1.7) flow window-content as block: prepend puts the
