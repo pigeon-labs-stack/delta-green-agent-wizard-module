@@ -147,6 +147,7 @@
     min-width: 32px;
     margin-left: auto;
     padding-inline: 8px;
+    transition-property: background-color, border-color, color;
 }
 
 .dg-wizard-bar-toggle[aria-expanded="true"] i {
@@ -158,6 +159,25 @@
     display: none;
 }
 
+.dg-agent-wizard-bar.dg-wizard-bar-collapsed {
+    padding-block: 0;
+}
+
+.dg-agent-wizard-bar.dg-wizard-bar-collapsed button.dg-wizard-bar-toggle {
+    height: 24px;
+    min-height: 24px;
+    padding: 0 6px;
+    gap: 5px;
+    font-size: 0.75rem;
+    border-color: transparent;
+    background: transparent;
+    outline-offset: -2px;
+}
+
+.dg-agent-wizard-bar.dg-wizard-bar-collapsed button.dg-wizard-bar-toggle:hover {
+    background: var(--dg-bg-green-dark);
+}
+
 .dg-wizard-bar-collapsed .dg-wizard-bar-toggle-label {
     display: inline;
 }
@@ -165,10 +185,17 @@
 /* --------------------------------------------------------------------------
    Wrapper & Progress bar
    -------------------------------------------------------------------------- */
+.dg-chargen > .window-content {
+    min-height: 0;
+    padding: 0;
+    overflow: hidden;
+}
+
 .dg-wizard-wrapper {
     display: flex;
     flex-direction: column;
     height: 100%;
+    min-height: 0;
     font-family: var(--font-primary, "Signika", serif);
     background: var(--color-bg, var(--dg-bg-base));
     color: var(--color-text-primary, var(--dg-text));
@@ -240,6 +267,7 @@
    -------------------------------------------------------------------------- */
 .dg-wizard-form {
     flex: 1;
+    min-height: 0;
     overflow-y: auto;
     padding-right: 0.25rem;
 }
@@ -283,25 +311,20 @@
 
 .dg-step-welcome h2 {
     font-size: 2rem;
-    margin-bottom: 1rem;
+    margin-bottom: 0.75rem;
     letter-spacing: 0.12em;
     text-transform: uppercase;
     font-family: 'Courier New', Courier, monospace;
 }
 
-.dg-step-welcome .dg-flavour {
-    font-size: 1.1rem;
-    max-width: 560px;
-    margin: 0 auto 1rem;
-    font-family: 'Courier New', Courier, monospace;
-    line-height: 1.7;
+.dg-step-welcome > p {
+    font-size: 1rem;
+    max-width: 64ch;
+    margin: 0 auto 0.75rem;
 }
 
-.dg-step-welcome>p:not(.dg-flavour) {
-    font-size: 1rem;
-    max-width: 560px;
-    margin: 0 auto 1rem;
-    font-family: 'Courier New', Courier, monospace;
+.dg-step-welcome .dg-flavour {
+    line-height: 1.5;
 }
 
 /* Welcome step: everything is pyramid phosphor green */
@@ -346,8 +369,7 @@
 .dg-welcome-pyramid {
     display: block;
     width: 100%;
-    height: 220px;
-    margin-top: 1.5rem;
+    height: clamp(90px, 18vh, 150px);
 }
 
 /* --------------------------------------------------------------------------
@@ -766,6 +788,7 @@
    -------------------------------------------------------------------------- */
 .dg-wizard-nav {
     display: flex;
+    flex: 0 0 auto;
     align-items: center;
     padding-top: 0.5rem;
     border-top: 1px solid var(--dg-border);

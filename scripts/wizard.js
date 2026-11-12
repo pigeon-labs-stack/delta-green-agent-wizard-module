@@ -102,7 +102,15 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
     };
 
     constructor(actor, options = {}) {
-        super(options);
+        const { clientWidth, clientHeight } = document.documentElement;
+        super({
+            ...options,
+            position: {
+                width: Math.min(900, clientWidth - 24),
+                height: Math.min(760, clientHeight - 24),
+                ...options.position,
+            },
+        });
         this.#actor = actor;
         this.#loadState();
     }
@@ -148,7 +156,6 @@ export class DeltaGreenChargenWizard extends HandlebarsApplicationMixin(Applicat
             title: 'Delta Green — Character Creation Wizard',
             resizable: true,
         },
-        position: { width: 900, height: 700 },
         actions: {
             nextStep: DeltaGreenChargenWizard.#onNextStep,
             prevStep: DeltaGreenChargenWizard.#onPrevStep,
