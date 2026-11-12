@@ -113,4 +113,4 @@ This module is a direct port of the [DELTA-GREEN-STATS](https://github.com/Pigeo
 
 ## License
 
-Licensed under the [PolyForm Noncommercial License 1.0.0](LICENSE) — matching the upstream DELTA-GREEN-STATS project from which the data and PDF mapping are ported. (The README previously stated MIT; that was incorrect for derived data and is corrected here pending owner confirmation — see `REVIEW-IMPROVEMENTS.md` Q5.)
+Licensed under the [PolyForm Noncommercial License 1.0.0](LICENSE).
