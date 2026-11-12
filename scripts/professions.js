@@ -126,15 +126,14 @@ export const PROFESSIONS = {
     },
     "criminal": {
         title: "Criminal",
-        description: "Criminal\nSo much is illegal that there are broad economies of crime. This profile fits a hardened militant or a traditional \"black collar\" criminal: pimp, burglar, extortionist, or thug. If you want a white-collar criminal, choose Computer Scientist or Business Executive and make very risky decisions.\n\nRECOMMENDED STATS: STR, DEX\n\nPROFESSIONAL SKILLS:\n» Alertness 50%\n» Athletics 50%\n» Criminology 60%\n» Dodge 40%\n» Drive 50%\n» Firearms 40%\n» Law 20%\n» Melee Weapons 40%\n» Persuade 50%\n» Stealth 50%\n» Unarmed Combat 50%\n\nChoose two from:\n» Craft (Locksmithing) 40%\n» Demolitions 40%\n» Disguise 50%\n» Foreign Language (choose one) 40%\n» Forensics 40%\n» HUMINT 50%\n» Navigate 50%\n» Occult 50%\n» Pharmacy 40%\n\nBONDS: 4",
+        description: "Criminal\nSo much is illegal that there are broad economies of crime. This profile fits a hardened militant or a traditional \"black collar\" criminal: pimp, burglar, extortionist, or thug. If you want a white-collar criminal, choose Computer Scientist or Business Executive and make very risky decisions.\n\nRECOMMENDED STATS: STR, DEX\n\nPROFESSIONAL SKILLS:\n» Alertness 50%\n» Criminology 60%\n» Dodge 40%\n» Drive 50%\n» Firearms 40%\n» Law 40%\n» Melee Weapons 40%\n» Persuade 50%\n» Stealth 50%\n» Unarmed Combat 50%\n\nChoose two from:\n» Craft (Locksmithing) 40%\n» Demolitions 40%\n» Disguise 50%\n» Foreign Language (choose one) 40%\n» Forensics 40%\n» HUMINT 50%\n» Navigate 50%\n» Occult 50%\n» Pharmacy 40%\n\nBONDS: 3",
         requiredSkills: [
             { name: "Alertness", value: 50 },
-            { name: "Athletics", value: 50 },
             { name: "Criminology", value: 60 },
             { name: "Dodge", value: 40 },
             { name: "Drive", value: 50 },
             { name: "Firearms", value: 40 },
-            { name: "Law", value: 20 },
+            { name: "Law", value: 40 },
             { name: "Melee Weapons", value: 40 },
             { name: "Persuade", value: 50 },
             { name: "Stealth", value: 50 },
