@@ -27,8 +27,6 @@ One module package supports **Foundry VTT v13 and v14**. Install the [Delta Gree
 | v13 | 13.351 | 1.6.5 |
 | v14 | 14.370 | 2.0.1 |
 
-See the [live test results](REVIEW-IMPROVEMENTS.md) for the workflows tested on each combination.
-
 ## Installation
 
 1. Copy the `delta-green-agent-wizard` folder into your Foundry `Data/modules/` directory.
@@ -43,7 +41,7 @@ Click **Agent Wizard** in the toolbar at the top of an **Agent** sheet. If the t
 3. **Skills** — Optional profession skills appear at the top as checkboxes with a pick counter enforcing the correct limit (1–5 depending on profession). Required specialty skills (Foreign Language, Science, Craft, etc.) have inline text inputs. The full required skills table is shown below for reference.
 4. **Bonus Skills** — 8 bonus skill picks from your Agent's background. Choose from preset background packages or pick individually. Specialty skills support free-text subspecialties.
 5. **Bonds** — Add bonds up to the profession's allowed maximum. Suggest random bonds from themed pools (Friends & Family, Delta Green, Underworld, LGBTQ+, PISCES).
-6. **Biography** — Name, profession/job title, employer, nationality, sex, age, and education. Add up to 5 motivations — deeply held beliefs that can restore Willpower once per session. Hit **🎲 Random Bio** to auto-generate details matched to the chosen profession.
+6. **Biography** — Name, profession/job title, employer, nationality, sex, age, and education. Add up to five motivations and open **Tips** for examples and their effects on Willpower, Sanity, and Breaking Points. Hit **🎲 Random Bio** to auto-generate details matched to the chosen profession.
 7. **Equipment** — Choose a preset loadout or browse the full catalog. Filter by category or search by name.
 8. **Review** — Check everything, then click **Apply to Sheet** to write all data to the Foundry actor.
 
@@ -52,19 +50,25 @@ Click **Agent Wizard** in the toolbar at the top of an **Agent** sheet. If the t
 Every Agent sheet gets a small toolbar above the sheet content:
 
 - **Agent Wizard** — launch/resume the wizard.
-- **Export PDF** — fill the official DD Form 315 from the *saved* actor data (fill in the wizard, Apply to Sheet, then export). Physical description and wounds are taken from the agent's sheet; personal details has no source field in the Delta Green schema and stays blank.
+- **Export PDF** — download a fillable DD Form 315 populated from the saved Agent sheet.
 - **Export JSON** — download a backup of the agent's system data, items, and active effects.
 - **Import JSON** — restore such a backup. You are shown a confirmation naming the actor before anything changes. In the backup format, a present `items`/`effects` array is authoritative: restoring a backup with `items: []` replaces the inventory with an empty one. A backup missing those arrays leaves those parts untouched. If a write fails part-way, the restore rolls the agent back to its pre-restore state.
 
 ### PDF Export
 
-The **Export PDF** button on the agent sheet toolbar exports a filled DD Form 315 — the official Delta Green character sheet. Weapons, skills, specialty instances, bonds, distinguishing features, current/maximum HP, WP and SAN, wounds, and physical description are all mapped to the correct PDF fields.
+Click **Export PDF** on the Agent sheet to download a prefilled, fillable DD Form 315. The form uses the data currently saved on the sheet, including skills, bonds, weapons, and current and maximum HP, WP, and SAN. Open it in a PDF viewer that supports form fields to edit and save it, or print it for use at the table.
+
+![Personal data on Emily Thompson’s fillable DD Form 315 exported from Foundry v14](Art/emily-thompson-pdf-export.png)
 
 ### Persistence
 
-Wizard progress is saved on the Agent after moving between steps. After **Apply to Sheet**, reopening the wizard opens Review with your saved choices. Select a section to edit it, then use **Apply Changes** to apply the difference from your previous build. Unchanged selections keep their existing sheet values and items.
+You can reopen the wizard to edit an Agent after you have applied a build. The wizard saves drafts as you move between steps so you can close it and pick up where you left off.
 
-Earlier versions discarded completed choices. For an Agent with sheet data and no saved build, the wizard explains the situation and asks before applying a new build. The Agent sheet is available for direct edits in that case.
+1. Click **Agent Wizard** on the Agent sheet. An applied build opens at **Review & Confirm** unless you have a draft in progress.
+2. On Review, click the heading of the section you want to edit. Make your changes and continue to Review.
+3. Click **Apply Changes** to update the sheet. Choices you leave alone keep their current sheet values and items. For example, changing the employer preserves current HP, skills, bonds, and gear.
+
+An Agent created with an older version may have sheet data without a saved wizard build. The wizard asks for confirmation before applying a new build to that sheet.
 
 ## File Layout
 
