@@ -6,13 +6,13 @@ A step-by-step character creation wizard for the **Delta Green** RPG system in F
 
 ### The Wizard
 
-![Character creation wizard walkthrough](Art/wiz.gif)
+![All nine wizard steps for Emily Thompson’s Scientist build in Foundry v14](Art/wiz.gif)
 
 Walk through Statistics, Profession, Skills, Bonus Picks, Bonds, Biography, Equipment, and Review — all in one guided flow inside Foundry.
 
 ### Applied to the Sheet
 
-![Wizard output applied to the actor sheet](Art/wiz2.gif)
+![All six tabs of Emily Thompson’s completed Agent sheet in Foundry v14](Art/wiz2.gif)
 
 Once you click **Apply to Sheet**, every stat, skill, bond, and biography field is written directly to the Delta Green actor — no copy-pasting required.
 
@@ -20,8 +20,14 @@ Once you click **Apply to Sheet**, every stat, skill, bond, and biography field 
 
 ## Requirements
 
-- Foundry VTT **v13** (declared: `minimum: 13`, `verified: 13`). A static API audit found no v14 blockers, and the module is designed to run on Foundry 13 and 14 from a single release — the `verified: 14` bump is gated on the runtime test matrix in `REVIEW-IMPROVEMENTS.md` (F1/F2).
-- [Delta Green system](https://github.com/deltagreen-foundryvtt/delta-green-foundry-vtt-system) installed and active — data-model writes are verified (source-level) against system releases **1.6.6, 1.7.0, and 2.0.1**
+One module package supports **Foundry VTT v13 and v14**. Install the [Delta Green system](https://github.com/deltagreen-foundryvtt/delta-green-foundry-vtt-system) version that matches your Foundry version.
+
+| Foundry VTT | Tested Foundry build | Tested Delta Green system |
+| --- | --- | --- |
+| v13 | 13.351 | 1.6.5 |
+| v14 | 14.370 | 2.0.1 |
+
+See the [live test results](REVIEW-IMPROVEMENTS.md) for the workflows tested on each combination.
 
 ## Installation
 
@@ -30,7 +36,7 @@ Once you click **Apply to Sheet**, every stat, skill, bond, and biography field 
 
 ## Usage
 
-Open any **Agent** actor sheet. A **Wizard** button appears in the top bar of the sheet. Click it to launch the wizard:
+Click **Agent Wizard** in the toolbar at the top of an **Agent** sheet. If the toolbar is collapsed, click **Agent tools** to expand it.
 
 1. **Statistics** — Set STR / CON / DEX / INT / POW / CHA via point-buy (72 pts), random dice (4d6 drop lowest), or manual entry. The 72-point budget is enforced in point-buy mode; rolled and manually entered totals are kept as set.
 2. **Profession** — Choose from all official Delta Green professions. Full description and bond limit shown.
